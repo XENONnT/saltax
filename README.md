@@ -1,2 +1,2 @@
 # saltax
-Salting MC into straxen
+Salting `wfsim` into `strax` data, followed by comparison and analysis. 
