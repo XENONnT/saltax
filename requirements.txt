@@ -1,0 +1,7 @@
+strax>=1.1.8
+straxen>=1.4.0
+wfsim>=1.0.0
+scipy
+numpy
+pandas
+numba

@@ -1,0 +1,4 @@
+# saltax
+## Scope
+## Structure
+## Examples

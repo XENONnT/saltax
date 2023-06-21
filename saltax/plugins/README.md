@@ -1,0 +1,4 @@
+# Plugins
+## Scope
+## Structure
+## Examples
