@@ -7,6 +7,7 @@ _Before you submit this PR: make sure to put all operations-related information 
 ## Can you give a minimal working example (or illustrate with a figure)?
 
 _Please include the following if applicable:_
+  - [ ] _Add an appropriate tag to this PR_
   - [ ] _Update the docstring(s)_
   - [ ] _Update the documentation_
   - [ ] _Tests to check the (new) code is working as desired._
