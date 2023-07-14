@@ -8,16 +8,16 @@ assignees: ''
 ---
 
 **Describe the feature**
-A clear and concise description of what the feature is.
+_A clear and concise description of what the feature is._
 
 **Expected behavior**
-Make an imaginary example of how the feature would work. 
+_Make an imaginary example of how the feature would work._
 ```python
 YOUR (PSEUDO) CODE GOES HERE
 ```
 
 **Proposed implementation**
-Any rough idea how would you implement this feature? 
+_Any rough idea how would you implement this feature?_ 
 
 **Potential risk**
-Will there be any risk after adding this feature?
+_Will there be any risk after adding this feature?_
