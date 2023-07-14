@@ -27,3 +27,5 @@ _Please add the output of:_
 ```
 straxen.print_versions()
 ```
+
+All _italic_ comments can be removed from this template.
