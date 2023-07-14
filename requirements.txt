@@ -1,6 +1,7 @@
-strax>=1.1.8
-straxen>=1.4.0
+strax>=1.5.2
+straxen>=2.1.1
 wfsim>=1.0.0
+cutax>=1.15.1
 scipy
 numpy
 pandas
