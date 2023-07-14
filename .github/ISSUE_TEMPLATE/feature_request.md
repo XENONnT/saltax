@@ -21,3 +21,5 @@ _Any rough idea how would you implement this feature?_
 
 **Potential risk**
 _Will there be any risk after adding this feature?_
+
+All _italic_ comments can be removed from this template.
