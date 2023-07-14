@@ -8,22 +8,24 @@ assignees: ''
 ---
 
 **Describe the bug**
-A clear and concise description of what the bug is.
+_A clear and concise description of what the bug is._
 
 **To Reproduce**
-Insert the MWE of how to reproduce the error
+_Insert the MWE of how to reproduce the error_
 ```python
 YOUR CODE GOES HERE
 ```
 
 **Expected behavior**
-A clear and concise description of what you expected to happen.
+_A clear and concise description of what you expected to happen._
 
 **Screenshots**
-If applicable, add screenshots to help explain your problem.
+_If applicable, add screenshots to help explain your problem._
 
 **Versions**
-Please add the output of:
+_Please add the output of:_
 ```
 straxen.print_versions()
 ```
+
+All _italic_ comments can be removed from this template.
