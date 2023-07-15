@@ -57,4 +57,3 @@ class RawRecordsFromFaxNT(SimulatorPlugin):
             end=self.sim.chunk_time,
             data=result[data_type],
             data_type=data_type) for data_type in self.provides}
-
