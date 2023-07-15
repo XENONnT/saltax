@@ -8,7 +8,7 @@ export, __all__ = strax.exporter()
 
 
 @export
-class RawRecordsFromFaxNT(SimulatorPlugin):
+class SRawRecordsFromFaxNT(SimulatorPlugin):
     provides = ('raw_records_simu', 'raw_records_he_simu', 'raw_records_aqmon_simu', 'truth')
     data_kind = immutabledict(zip(provides, provides))
 
