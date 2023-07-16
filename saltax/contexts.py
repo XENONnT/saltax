@@ -7,14 +7,15 @@ from cutax.cut_lists.basic import BasicCuts
 import warnings
 
 # straxen XENONnT options/configuration
-XNT_COMMON_OPTS = straxen.contexts.xnt_common_opts
-XNT_COMMON_CONFIG = straxen.contexts.xnt_common_config
-XNT_SIMULATION_CONFIG = straxen.contexts.xnt_simulation_config
+XNT_COMMON_OPTS = straxen.contexts.xnt_common_opts.copy()
+XNT_COMMON_CONFIG = straxen.contexts.xnt_common_config.copy()
+XNT_SIMULATION_CONFIG = straxen.contexts.xnt_simulation_config.copy()
 
 # saltax options overrides
 SXNT_COMMON_OPTS_REGISTER = XNT_COMMON_OPTS['register'].copy()
 SXNT_COMMON_OPTS_REGISTER.remove(straxen.PulseProcessing)
-SXNT_COMMON_OPTS_REGISTER = [saltax.SPulseProcessing] + SXNT_COMMON_OPTS_REGISTER
+SXNT_COMMON_OPTS_REGISTER = [saltax.SPulseProcessing, 
+                             saltax.SRawRecordsFromFaxNT] + SXNT_COMMON_OPTS_REGISTER
 XNT_COMMON_OPTS_OVERRIDE = dict(
     register=SXNT_COMMON_OPTS_REGISTER,
 )
