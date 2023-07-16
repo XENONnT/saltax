@@ -18,7 +18,7 @@ setuptools.setup(
     version='0.0.0',
     install_requires=requires,
     setup_requires=['pytest-runner'],
-    python_requires=">=3.8",
+    python_requires=">=3.9",
     packages=setuptools.find_packages(),
     classifiers=[
     'Development Status :: 2 - Pre-Alpha',
