@@ -56,7 +56,7 @@ def xenonnt_salted(output_folder='./strax_data',
                    cut_list=BasicCuts, 
                    auto_register=True,
                    faxconf_version="sr0_v4",
-                   cmt_version="global_v11",
+                   cmt_version="global_v9",
                    cmt_run_id="026000",
                    **kwargs):
     # Based on cutax.xenonnt_sim_base()
@@ -146,7 +146,7 @@ def sxenonnt(saltax_mode,
              cut_list=BasicCuts, 
              auto_register=True,
              faxconf_version="sr0_v4",
-             cmt_version="global_v11",
+             cmt_version="global_v9",
              wfsim_registry='RawRecordsFromFaxNT',
              cmt_run_id="026000",
              **kwargs):
