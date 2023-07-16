@@ -50,18 +50,15 @@ XENONNT_SIMULATION = cutax.contexts.xenonnt_sim_base
 DEFAULT_XEDOCS_VERSION = cutax.contexts.DEFAULT_XEDOCS_VERSION
 
 
-def xenonnt_salted(output_folder: str = './strax_data',
+def xenonnt_salted(output_folder='./strax_data',
                    xedocs_version=DEFAULT_XEDOCS_VERSION,
-                   cut_list=BasicCuts, auto_register=True,
+                   cut_list=BasicCuts, 
+                   auto_register=True,
                    faxconf_version="sr0_v4",
                    cmt_version="global_v11",
                    cmt_run_id="026000",
-                   latest="sr0_v4",
                    **kwargs):
     # Based on cutax.xenonnt_sim_base()
-    if faxconf_version != latest:
-        warnings.warn(f'WARNING! You are using {faxconf_version.upper()} simulation context!'
-                      f' Consider updating to a newer/pinned version ({latest.upper()})!')
     fax_conf='fax_config_nt_{:s}.json'.format(faxconf_version)
 
     # Based on straxen.contexts.xenonnt_online()
@@ -76,7 +73,7 @@ def xenonnt_salted(output_folder: str = './strax_data',
         **SXNT_COMMON_CONFIG,
     )
     st = strax.Context(
-        storage=strax.DataDirectory(output_folder)
+        storage=strax.DataDirectory(output_folder),
         config=context_config,
         **context_options)
     st.register([straxen.DAQReader, saltax.SRawRecordsFromFaxNT])
@@ -142,33 +139,41 @@ def xenonnt_salted(output_folder: str = './strax_data',
 
     return st
 
-    
-
-
 def sxenonnt(saltax_mode,
+             output_folder='./strax_data',
              xedocs_version=DEFAULT_XEDOCS_VERSION,
-             cut_list=BasicCuts, auto_register=True,
+             cut_list=BasicCuts, 
+             auto_register=True,
              faxconf_version="sr0_v4",
              cmt_version="global_v11",
              wfsim_registry='RawRecordsFromFaxNT',
              cmt_run_id="026000",
-             latest="sr0_v4",
              **kwargs):
     assert saltax_mode in SALTAX_MODES, "saltax_mode must be one of %s"%(SALTAX_MODES)
     
     if saltax_mode == 'data':
         return XENONNT_OFFLINE(
+            output_folder=output_folder,
             xedocs_version=xedocs_version,
             cut_list=cut_list,
             auto_register=auto_register,
             **kwargs)
     elif saltax_mode == 'simu':
         return XENONNT_SIMULATION(
+            output_folder=output_folder,
             faxconf_version=faxconf_version,
             cmt_version=cmt_version,
             wfsim_registry=wfsim_registry,
             cmt_run_id=cmt_run_id,
-            latest=latest,
             cut_list=cut_list,
             **kwargs)
-    
+    elif saltax_mode == 'salt':
+        return xenonnt_salted(
+            output_folder=output_folder,
+            xedocs_version=xedocs_version,
+            cut_list=cut_list, 
+            auto_register=auto_register,
+            faxconf_version=faxconf_version,
+            cmt_version=cmt_version,
+            cmt_run_id=cmt_run_id,
+            **kwargs)    
