@@ -1,11 +1,10 @@
 from immutabledict import immutabledict
 from straxen.plugins.records.records import count_pulses
-import numba
 import numpy as np
 import strax
 import straxen
-from saltax.contexts import SCHANNEL_STARTS_AT
 
+SCHANNEL_STARTS_AT = -494
 export, __all__ = strax.exporter()
 __all__ += ['NO_PULSE_COUNTS']
 
