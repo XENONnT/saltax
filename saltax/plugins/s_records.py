@@ -9,6 +9,7 @@ from saltax.contexts import SCHANNEL_STARTS_AT
 export, __all__ = strax.exporter()
 __all__ += ['NO_PULSE_COUNTS']
 
+
 @export
 class SPulseProcessing(strax.Plugin):
     """
