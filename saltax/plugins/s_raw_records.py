@@ -9,6 +9,10 @@ export, __all__ = strax.exporter()
 
 @export
 class SRawRecordsFromFaxNT(SimulatorPlugin):
+    """
+    Plugin which simulates raw_records_simu from fax instructions.
+    Only modified provides, and the rest are the same as the one in wfsim.
+    """
     provides = ('raw_records_simu', 'raw_records_he_simu', 'raw_records_aqmon_simu', 'truth')
     data_kind = immutabledict(zip(provides, provides))
 
