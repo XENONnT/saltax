@@ -147,7 +147,6 @@ def sxenonnt(saltax_mode,
              auto_register=True,
              faxconf_version="sr0_v4",
              cmt_version="global_v9",
-             wfsim_registry='RawRecordsFromFaxNT',
              cmt_run_id="026000",
              **kwargs):
     assert saltax_mode in SALTAX_MODES, "saltax_mode must be one of %s"%(SALTAX_MODES)
@@ -164,7 +163,6 @@ def sxenonnt(saltax_mode,
             output_folder=output_folder,
             faxconf_version=faxconf_version,
             cmt_version=cmt_version,
-            wfsim_registry=wfsim_registry,
             cmt_run_id=cmt_run_id,
             cut_list=cut_list,
             **kwargs)
