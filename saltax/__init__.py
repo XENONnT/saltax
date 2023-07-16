@@ -4,4 +4,4 @@ from . import instructions
 from . import plugins
 from . import match
 
-from .contexts import *
+from . import contexts
