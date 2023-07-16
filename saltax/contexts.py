@@ -59,6 +59,19 @@ def xenonnt_salted(output_folder='./strax_data',
                    cmt_version="global_v9",
                    cmt_run_id="026000",
                    **kwargs):
+    """
+    Return a strax context for XENONnT data analysis with saltax.
+
+    :param output_folder: Directory where data will be stored, defaults to ./strax_data
+    :param xedocs_version: XENONnT documentation version to use, defaults to DEFAULT_XEDOCS_VERSION
+    :param cut_list: Cut list to use, defaults to BasicCuts
+    :param auto_register: Whether to automatically register cuts, defaults to True
+    :param faxconf_version: fax configuration version to use, defaults to "sr0_v4"
+    :param cmt_version: CMT version to use, defaults to "global_v9"
+    :param cmt_run_id: CMT run ID to use, defaults to "026000"
+    :param kwargs: Extra options to pass to strax.Context
+    :return: strax context
+    """
     # Based on cutax.xenonnt_sim_base()
     fax_conf='fax_config_nt_{:s}.json'.format(faxconf_version)
 
@@ -149,6 +162,20 @@ def sxenonnt(saltax_mode,
              cmt_version="global_v9",
              cmt_run_id="026000",
              **kwargs):
+    """
+    United strax context for XENONnT data, simulation, or salted data.
+
+    :param saltax_mode: 'data', 'simu', or 'salt'
+    :param output_folder: Output folder for strax data, default './strax_data'
+    :param xedocs_version: xedocs version to use, default is synced with cutax latest
+    :param cut_list: List of cuts to register, default is BasicCuts
+    :param auto_register: Whether to auto register cuts, default True
+    :param faxconf_version: fax config version to use, default is synced with cutax latest
+    :param cmt_version: cmt version to use, default is synced with cutax latest
+    :param cmt_run_id: cmt run id to use, default is synced with cutax
+    :param kwargs: Additional kwargs to pass
+    :return: strax context
+    """
     assert saltax_mode in SALTAX_MODES, "saltax_mode must be one of %s"%(SALTAX_MODES)
     
     if saltax_mode == 'data':
