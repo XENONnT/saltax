@@ -19,7 +19,9 @@ SXNT_COMMON_OPTS_REGISTER = [saltax.SPulseProcessing,
 XNT_COMMON_OPTS_OVERRIDE = dict(
     register=SXNT_COMMON_OPTS_REGISTER,
 )
-SXNT_COMMON_OPTS = XNT_COMMON_OPTS.update(XNT_COMMON_OPTS_OVERRIDE)
+SXNT_COMMON_OPTS = XNT_COMMON_OPTS.copy()
+SXNT_COMMON_OPTS['register'] = XNT_COMMON_OPTS_OVERRIDE['register']
+
 
 # saltax configuration overrides
 SCHANNEL_STARTS_AT = -494
@@ -40,7 +42,8 @@ XNT_COMMON_CONFIG_OVERRIDE = dict(
         nveto_blank=(2999, 2999)
     ),
 )
-SXNT_COMMON_CONFIG = XNT_COMMON_CONFIG.update(XNT_COMMON_CONFIG_OVERRIDE)
+SXNT_COMMON_CONFIG = XNT_COMMON_CONFIG.copy()
+SXNT_COMMON_CONFIG['channel_map'] = XNT_COMMON_CONFIG_OVERRIDE['channel_map']
 
 # saltax modes supported
 SALTAX_MODES = ['data', 'simu', 'salt']
@@ -76,10 +79,10 @@ def xenonnt_salted(output_folder='./strax_data',
     fax_conf='fax_config_nt_{:s}.json'.format(faxconf_version)
 
     # Based on straxen.contexts.xenonnt_online()
-    context_options = dict(
-        **SXNT_COMMON_OPTS,
-        **kwargs,
-    )
+    if kwargs is not None:
+        context_options = dict(**SXNT_COMMON_OPTS, **kwargs)
+    else:
+        context_options = SXNT_COMMON_OPTS.copy()
     context_config = dict(
         detector='XENONnT', # from straxen.contexts.xenonnt_simulation()
         fax_config=fax_conf, # from straxen.contexts.xenonnt_simulation()
