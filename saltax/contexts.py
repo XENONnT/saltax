@@ -64,7 +64,6 @@ def xenonnt_salted(output_folder='./strax_data',
                    **kwargs):
     """
     Return a strax context for XENONnT data analysis with saltax.
-
     :param output_folder: Directory where data will be stored, defaults to ./strax_data
     :param xedocs_version: XENONnT documentation version to use, defaults to DEFAULT_XEDOCS_VERSION
     :param cut_list: Cut list to use, defaults to BasicCuts
@@ -128,6 +127,7 @@ def xenonnt_salted(output_folder='./strax_data',
     cmt_options = {key: val['strax_option']
                    for key, val in cmt_options_full.items()}
     # First, fix gain model for simulation
+    # Using placeholders for gain_model_mc
     st.set_config({'gain_model_mc': 
                         ('cmt_run_id', cmt_run_id, "legacy-to-pe://to_pe_placeholder")})
     fax_config_override_from_cmt = dict()
@@ -167,7 +167,6 @@ def sxenonnt(saltax_mode,
              **kwargs):
     """
     United strax context for XENONnT data, simulation, or salted data.
-
     :param saltax_mode: 'data', 'simu', or 'salt'
     :param output_folder: Output folder for strax data, default './strax_data'
     :param xedocs_version: xedocs version to use, default is synced with cutax latest
