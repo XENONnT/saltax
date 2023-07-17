@@ -156,7 +156,7 @@ def xenonnt_salted(output_folder='./strax_data',
 
     return st
 
-def sxenonnt(saltax_mode,
+def sxenonnt(saltax_mode='salt',
              output_folder='./strax_data',
              xedocs_version=DEFAULT_XEDOCS_VERSION,
              cut_list=BasicCuts, 
