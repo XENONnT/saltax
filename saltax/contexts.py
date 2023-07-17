@@ -19,7 +19,9 @@ SXNT_COMMON_OPTS_REGISTER = [saltax.SPulseProcessing,
 XNT_COMMON_OPTS_OVERRIDE = dict(
     register=SXNT_COMMON_OPTS_REGISTER,
 )
-SXNT_COMMON_OPTS = XNT_COMMON_OPTS.update(XNT_COMMON_OPTS_OVERRIDE)
+SXNT_COMMON_OPTS = XNT_COMMON_OPTS.copy()
+SXNT_COMMON_OPTS['register'] = XNT_COMMON_OPTS_OVERRIDE['register']
+
 
 # saltax configuration overrides
 SCHANNEL_STARTS_AT = -494
@@ -40,7 +42,8 @@ XNT_COMMON_CONFIG_OVERRIDE = dict(
         nveto_blank=(2999, 2999)
     ),
 )
-SXNT_COMMON_CONFIG = XNT_COMMON_CONFIG.update(XNT_COMMON_CONFIG_OVERRIDE)
+SXNT_COMMON_CONFIG = XNT_COMMON_CONFIG.copy()
+SXNT_COMMON_CONFIG['channel_map'] = XNT_COMMON_CONFIG_OVERRIDE['channel_map']
 
 # saltax modes supported
 SALTAX_MODES = ['data', 'simu', 'salt']
@@ -66,9 +69,9 @@ def xenonnt_salted(output_folder='./strax_data',
     :param xedocs_version: XENONnT documentation version to use, defaults to DEFAULT_XEDOCS_VERSION
     :param cut_list: Cut list to use, defaults to BasicCuts
     :param auto_register: Whether to automatically register cuts, defaults to True
-    :param faxconf_version: fax configuration version to use, defaults to "sr0_v4"
-    :param cmt_version: CMT version to use, defaults to "global_v9"
-    :param cmt_run_id: CMT run ID to use, defaults to "026000"
+    :param faxconf_version: (for simulation) fax configuration version to use, defaults to "sr0_v4"
+    :param cmt_version: (for simulation) CMT version to use, defaults to "global_v9"
+    :param cmt_run_id: (for simulation) CMT run ID to use, defaults to "026000"
     :param kwargs: Extra options to pass to strax.Context
     :return: strax context
     """
@@ -76,10 +79,10 @@ def xenonnt_salted(output_folder='./strax_data',
     fax_conf='fax_config_nt_{:s}.json'.format(faxconf_version)
 
     # Based on straxen.contexts.xenonnt_online()
-    context_options = dict(
-        **SXNT_COMMON_OPTS,
-        **kwargs,
-    )
+    if kwargs is not None:
+        context_options = dict(**SXNT_COMMON_OPTS, **kwargs)
+    else:
+        context_options = SXNT_COMMON_OPTS.copy()
     context_config = dict(
         detector='XENONnT', # from straxen.contexts.xenonnt_simulation()
         fax_config=fax_conf, # from straxen.contexts.xenonnt_simulation()
@@ -94,7 +97,7 @@ def xenonnt_salted(output_folder='./strax_data',
     st.deregister_plugins_with_missing_dependencies()
         
     # Based on straxen.contexts.xenonnt()
-    st.apply_cmt_version(cmt_version)
+    #st.apply_cmt_version(cmt_version)
     if xedocs_version is not None:
         st.apply_xedocs_configs(version=xedocs_version, **kwargs)
     
@@ -126,7 +129,7 @@ def xenonnt_salted(output_folder='./strax_data',
                    for key, val in cmt_options_full.items()}
     # First, fix gain model for simulation
     st.set_config({'gain_model_mc': 
-                        ('cmt_run_id', cmt_run_id, *cmt_options['gain_model'])})
+                        ('cmt_run_id', cmt_run_id, "legacy-to-pe://to_pe_placeholder")})
     fax_config_override_from_cmt = dict()
     for fax_field, cmt_field in _config_overlap.items():
         value = cmt_options[cmt_field]
