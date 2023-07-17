@@ -97,7 +97,7 @@ def xenonnt_salted(output_folder='./strax_data',
     st.deregister_plugins_with_missing_dependencies()
         
     # Based on straxen.contexts.xenonnt()
-    st.apply_cmt_version(cmt_version)
+    #st.apply_cmt_version(cmt_version)
     if xedocs_version is not None:
         st.apply_xedocs_configs(version=xedocs_version, **kwargs)
     
@@ -129,7 +129,7 @@ def xenonnt_salted(output_folder='./strax_data',
                    for key, val in cmt_options_full.items()}
     # First, fix gain model for simulation
     st.set_config({'gain_model_mc': 
-                        ('cmt_run_id', cmt_run_id, *cmt_options['gain_model'])})
+                        ('cmt_run_id', cmt_run_id, "legacy-to-pe://to_pe_placeholder")})
     fax_config_override_from_cmt = dict()
     for fax_field, cmt_field in _config_overlap.items():
         value = cmt_options[cmt_field]
