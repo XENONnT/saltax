@@ -5,8 +5,8 @@ from packaging import version
 
 
 SALT_TIME_INTERVAL = 1e7 # in unit of ns. The number should be way bigger then full drift time
-Z_RANGE = (-148.15, 0)
-R_RANGE = (0, 66.4)
+Z_RANGE = (-148.15, 0) # in unit of cm
+R_RANGE = (0, 66.4) # in unit of cm
 
 
 def generate_vertex(r_range=R_RANGE, z_range=Z_RANGE, size=1):
