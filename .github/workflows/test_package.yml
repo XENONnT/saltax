@@ -1,0 +1,59 @@
+# Test package every time
+
+name: Test package
+
+# Controls when the action will run.
+
+# Trigger this code when a new release is published
+on:
+  workflow_dispatch:
+  release:
+    types: [created]
+  pull_request:
+  push:
+   branches:
+    - main
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.8'
+      - name: Checkout repo
+        uses: actions/checkout@v2
+      - name: Install python dependencies
+        uses: py-actions/py-dependency-install@v2
+      - name: Install saltax
+        run: python setup.py develop
+      - name: Install requirements
+        run: |
+          pip install -r extra_requirements/requirements-tests.txt
+      - name: Install pytest and hypothesis
+        run: pip install pytest hypothesis flake8 pytest-cov coverage
+      - name: Write utilix config
+        run: |
+            bash .github/scripts/create-utilix-config.sh
+            cp ~/.xenon_config ./
+        env:
+          RUNDB_API_URL: ${{ secrets.RUNDB_API_URL }}
+          RUNDB_API_USER: ${{ secrets.RUNDB_API_USER }}
+          RUNDB_API_PASSWORD: ${{ secrets.RUNDB_API_PASSWORD }}
+          XENT_URL: ${{ secrets.MONGO_URL }}
+          XENT_USER: ${{ secrets.MONGO_USER }}
+          XENT_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
+          XENT_DATABASE: ${{ secrets.MONGO_DATABASE }}
+      - name: Test package
+        env:
+          HAVE_ACCESS_TO_SECTETS: ${{ secrets.RUNDB_API_URL }}
+        if: env.HAVE_ACCESS_TO_SECTETS != null
+        run: coverage run --source saltax setup.py test
+      - name: Coverage report
+        env:
+          HAVE_ACCESS_TO_SECTETS: ${{ secrets.RUNDB_API_URL }}
+        if: env.HAVE_ACCESS_TO_SECTETS != null
+        run: coverage report
+      - name: goodbye
+        run: echo goodbye
