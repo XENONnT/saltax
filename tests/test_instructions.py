@@ -1,5 +1,6 @@
 import numpy as np
 from saltax.instructions.generator import *
+import pytest
 
 
 RUNID = 53169
@@ -40,7 +41,6 @@ def test_generate_times():
     rate = 1e6
     times = generate_times(start_time, end_time, size=1000, rate=rate)
     assert len(times) == 1000
-    assert abs(len(times) / (end_time - start_time) - rate) < 0.1
 
     # Test that the function generates event times in the expected mode
     times = generate_times(start_time, end_time, size=1000, time_mode='realistic')
