@@ -74,7 +74,7 @@ def generate_times(start_time, end_time, size=None, rate=1e9/SALT_TIME_INTERVAL,
 def get_run_start_end(runid):
     """
     Get the start and end time of a run in unix time in ns, from RunDB.
-    :param runid: run number
+    :param runid: run number in integer
     :return: start time, end time in unix time in ns
     """
     # Get the datetime of start and end time of the run from RunDB
