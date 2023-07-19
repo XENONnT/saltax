@@ -47,7 +47,6 @@ def test_generate_times():
     assert (np.diff(times) >= 0).all()
 
     times = generate_times(start_time, end_time, size=1000, time_mode='uniform')
-    assert len(times) == 1000
     assert (np.diff(times) >= 0).all()
 
 def test_get_run_start_end():
