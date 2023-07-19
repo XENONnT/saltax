@@ -24,6 +24,15 @@ jobs:
           python-version: '3.9'
       - name: Checkout repo
         uses: actions/checkout@v2
+      - name: Checkout cutax
+        if: github.repository_owner == 'XENONnT'
+        uses: actions/checkout@v3
+        with:
+          repository: XENONnT/cutax
+          token: ${{ secrets.MY_GITHUB_TOKEN }}
+          path: cutax
+          ref: master
+          fetch-depth: 0
       - name: Install python dependencies
         uses: py-actions/py-dependency-install@v2
       - name: Install saltax
