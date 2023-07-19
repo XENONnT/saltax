@@ -52,6 +52,14 @@ def test_generate_times():
     assert (np.diff(times) >= 0).all()
 
 def test_get_run_start_end():
+    # Test with a non-integer runid
+    with pytest.raises(AssertionError):
+        get_run_start_end('abc')
+
+    # Test with a runid that does not exist in RunDB
+    with pytest.raises(RuntimeError):
+        get_run_start_end(999999)
+
     # Test with runid RUNID
     runid = RUNID
     start_time, end_time = get_run_start_end(runid)
