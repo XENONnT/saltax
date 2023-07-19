@@ -1,7 +1,11 @@
 import numpy as np
 import nestpy
 import wfsim
+import pytz
 from packaging import version
+from zoneinfo import ZoneInfo
+from utilix import xent_collection
+import datetime
 
 
 SALT_TIME_INTERVAL = 1e7 # in unit of ns. The number should be way bigger then full drift time
@@ -67,3 +71,41 @@ def generate_times(start_time, end_time, size=None, rate=1e9/SALT_TIME_INTERVAL,
     elif size >= 0:
         return times[:min(int(size), len(times))]
     
+def get_run_start_end(runid):
+    """
+    Get the start and end time of a run in unix time in ns, from RunDB.
+    :param runid: run number
+    :return: start time, end time in unix time in ns
+    """
+    # Get the datetime of start and end time of the run from RunDB
+    doc = xent_collection().find_one({'number':runid})
+    dt_start, dt_end = doc['start'], doc['end']
+
+    # Get timezones
+    chicago_tz = ZoneInfo('America/Chicago')
+    utc_tz = pytz.utc
+
+    # Transform the datetime to Chicago time
+    dt_start_year, dt_end_year = dt_start.year, dt_end.year
+    dt_start_month, dt_end_month = dt_start.month, dt_end.month
+    dt_start_day, dt_end_day = dt_start.day, dt_end.day
+    dt_start_hour, dt_end_hour = dt_start.hour, dt_end.hour
+    dt_start_minute, dt_end_minute = dt_start.minute, dt_end.minute
+    dt_start_second, dt_end_second = dt_start.second, dt_end.second
+    dt_start_ms, dt_end_ms = dt_start.microsecond, dt_end.microsecond
+    dt_start_transformed = datetime.datetime(dt_start_year, dt_start_month, 
+                                             dt_start_day, dt_start_hour, 
+                                             dt_start_minute, dt_start_second, dt_start_ms,
+                                             tzinfo=utc_tz).astimezone(chicago_tz)
+    dt_end_transformed = datetime.datetime(dt_end_year, dt_end_month, 
+                                           dt_end_day, dt_end_hour,
+                                           dt_end_minute, dt_end_second, dt_end_ms,
+                                           tzinfo=utc_tz).astimezone(chicago_tz)
+    
+    # Transform the datetime to unix time in ns
+    unix_time_start_ns = int(dt_start_transformed.timestamp() * 1e9 + 
+                             dt_start_transformed.microsecond * 1000)
+    unix_time_end_ns = int(dt_end_transformed.timestamp() * 1e9 +
+                           dt_end_transformed.microsecond * 1000)
+    
+    return unix_time_start_ns, unix_time_end_ns
