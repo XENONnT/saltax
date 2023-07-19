@@ -5,4 +5,3 @@ scipy
 numpy
 pandas
 numba
-git+ssh://git@github.com/XENONnT/cutax.git@v1.15.1#egg=cutax
