@@ -70,3 +70,15 @@ def test_get_run_start_end():
 
     # Check that the start time is before the end time
     assert start_time < end_time
+
+def test_generator_flat():
+    # Test with default parameters
+    instr = generator_flat(RUNID, n_tot=20)
+    assert isinstance(instr, np.ndarray)
+    assert len(instr) > 0
+
+    # Test with non-default parameters
+    instr = generator_flat(1, en_range=(10, 20), n_tot=20)
+    assert isinstance(instr, np.ndarray)
+    assert len(instr) > 0
+    assert np.all(instr["e_dep"] >= 10) and np.all(instr["e_dep"] <= 20)

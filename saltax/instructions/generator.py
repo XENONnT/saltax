@@ -2,15 +2,22 @@ import numpy as np
 import nestpy
 import wfsim
 import pytz
-from packaging import version
+import straxen
 from zoneinfo import ZoneInfo
 from utilix import xent_collection
 import datetime
 
 
-SALT_TIME_INTERVAL = 1e7 # in unit of ns. The number should be way bigger then full drift time
+SALT_TIME_INTERVAL = 5e7 # in unit of ns. The number should be way bigger then full drift time
 Z_RANGE = (-148.15, 0) # in unit of cm
 R_RANGE = (0, 66.4) # in unit of cm
+DOWNLOADER = straxen.MongoDownloader()
+NC = nestpy.NESTcalc(nestpy.DetectorExample_XENON10())
+FIELD_FILE = "fieldmap_2D_B2d75n_C2d75n_G0d3p_A4d9p_T0d9n_PMTs1d3n_FSR0d65p_QPTFE_0d5n_0d4p.json.gz"
+FIELD_MAP = straxen.InterpolatingMap(
+    straxen.get_resource(DOWNLOADER.download_single(FIELD_FILE), fmt="json.gz"),
+    method="RegularGridInterpolator",
+)
 
 
 def generate_vertex(r_range=R_RANGE, z_range=Z_RANGE, size=1):
@@ -32,12 +39,13 @@ def generate_vertex(r_range=R_RANGE, z_range=Z_RANGE, size=1):
 
     return x, y, z
 
-def generate_times(start_time, end_time, size=None, rate=1e9/SALT_TIME_INTERVAL, time_mode='uniform'):
+def generate_times(start_time, end_time, size=None, 
+                   rate=1e9/SALT_TIME_INTERVAL, time_mode='uniform'):
     """
     Generate an array of event times in the given time range.
     :param start_time: start time in ns
     :param end_time: end time in ns
-    :param size: rough number of events to generate
+    :param size: rough number of events to generate, default: None i.e. generate events until end_time
     :param rate: rate of events in Hz
     :param time_mode: 'uniform' or 'realistic'
     :return: array of event times in ns
@@ -45,7 +53,8 @@ def generate_times(start_time, end_time, size=None, rate=1e9/SALT_TIME_INTERVAL,
     total_time_ns = end_time - start_time
     estimated_size = int(total_time_ns * rate / 1e9)
 
-    assert time_mode in ["realistic", "uniform"], "timemode must be either 'realistic' or 'uniform'"
+    assert time_mode in ["realistic", "uniform"], "time_mode must be either \
+        'realistic' or 'uniform'"
 
     # Generating event times from exponential
     # This one doesn't work for salting!!!
@@ -78,7 +87,11 @@ def get_run_start_end(runid):
     :return: start time, end time in unix time in ns
     """
     # Get the datetime of start and end time of the run from RunDB
-    doc = xent_collection().find_one({'number':runid})
+    assert type(runid)==int, "runid must be an integer"
+    try:
+        doc = xent_collection().find_one({'number':runid})
+    except:
+        raise RuntimeError("Cannot find runid %d in RunDB"%(runid))
     dt_start, dt_end = doc['start'], doc['end']
 
     # Get timezones
@@ -109,3 +122,69 @@ def get_run_start_end(runid):
                            dt_end_transformed.microsecond * 1000)
     
     return unix_time_start_ns, unix_time_end_ns
+
+def generator_flat(runid, en_range=(0, 30.0), recoil=7,
+                   n_tot=None, rate=1e9/SALT_TIME_INTERVAL, 
+                   fmap=FIELD_MAP, nc=NC, 
+                   r_range=R_RANGE, z_range=Z_RANGE, 
+                   mode="all", time_mode="uniform",):
+    """
+    Generate instructions for a run with flat energy spectrum.
+    :param runid: run number in integer
+    :param en_range: (en_min, en_max) in keV, default: (0, 30.0)
+    :param recoil: NEST recoil type, default: 7 (beta ER)
+    :param n_tot: total number of events to generate, default: None i.e. generate events until end_time
+    :param rate: rate of events in Hz, default: 1e9/SALT_TIME_INTERVAL
+    :param fmap: field map, default: FIELD_MAP, defined above
+    :param nc: NEST calculator, default: NC, defined above
+    :param r_range: (r_min, r_max) in cm, default: R_RANGE, defined above
+    :param z_range: (z_min, z_max) in cm, default: Z_RANGE, defined above
+    :param mode: 's1', 's2', or 'all', default: 'all'
+    :param time_mode: 'uniform' or 'realistic', default: 'uniform'
+    :return: instructions in numpy array
+    """
+    start_time, end_time = get_run_start_end(runid)
+    times = generate_times(start_time, end_time, size=n_tot, 
+                           rate=rate, time_mode=time_mode)
+    n_tot = len(times)
+    
+    instr = np.zeros(2 * n_tot, dtype=wfsim.instruction_dtype)
+    instr["event_number"] = np.arange(1, n_tot + 1).repeat(2)
+    instr["type"][:] = np.tile([1, 2], n_tot)
+    instr["time"][:] = times.repeat(2)
+
+    # Generating unoformely distributed events for give R and Z range
+    x, y, z = generate_vertex(r_range=r_range, z_range=z_range, size=n_tot)
+    instr["x"][:] = x.repeat(2)
+    instr["y"][:] = y.repeat(2)
+    instr["z"][:] = z.repeat(2)
+
+    # Making energy
+    ens = np.random.uniform(en_range[0], en_range[1], size=n_tot)
+    instr["recoil"][:] = recoil
+    instr["e_dep"][:] = ens.repeat(2)
+
+    # Getting local field from field map
+    instr["local_field"] = fmap(np.array([np.sqrt(x**2 + y**2), z]).T).repeat(2)
+
+    # And generating quantas from nest
+    for i in range(0, n_tot):
+        y = nc.GetYields(interaction=nestpy.INTERACTION_TYPE(instr["recoil"][2 * i]),
+                         energy=instr["e_dep"][2 * i],
+                         drift_field=instr["local_field"][2 * i],)
+        quantas = nc.GetQuanta(y)
+        instr["amp"][2 * i] = quantas.photons
+        instr["amp"][2 * i + 1] = quantas.electrons
+        instr["n_excitons"][2 * i : 2 * (i + 1)] = quantas.excitons
+    
+    # Selecting event types
+    if mode == "s1":
+        instr = instr[instr["type"] == 1]
+    elif mode == "s2":
+        instr = instr[instr["type"] == 2]
+    elif mode == "all":
+        pass
+    else:
+        raise RuntimeError("Unknown mode: ", mode)
+    
+    return instr
