@@ -60,20 +60,20 @@ def generate_times(start_time, end_time, size=None,
     # This one doesn't work for salting!!!
     if time_mode == "realistic":
         dt = np.random.exponential(1 / rate, size=estimated_size-1)
-        times = np.append([1.0], 1.0 + dt.cumsum()) * 1e9
+        times = np.append([0], dt.cumsum()) * 1e9
         times = times.round().astype(np.int64)
         times += start_time
 
     # Generating event times from uniform
     elif time_mode == "uniform":
         dt = (1 / rate) * np.ones(estimated_size-1)
-        times = np.append([1.0], 1.0 + dt.cumsum()) * 1e9
+        times = np.append([0], dt.cumsum()) * 1e9
         times = times.round().astype(np.int64)
         times += start_time
     
     # Removing events that are too close to the start or end of the run
-    times = times[times < end_time-1/rate]
-    times = times[times > start_time+1/rate]
+    times = times[times < (end_time-1/rate*1e9)]
+    times = times[times > (start_time+1/rate*1e9)]
 
     if size is None:
         return times
