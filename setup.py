@@ -6,9 +6,6 @@ with open('requirements.txt') as f:
         r.split('/')[-1] if r.startswith('git+') else r
         for r in f.read().splitlines()]
 
-# Manually add cutax which is private
-requires += ['cutax @ git+ssh://git@github.com/XENONnT/cutax.git@v1.15.1']
-
 # Get the long description from the README file
 with open('README.md') as file:
     readme = file.read()
