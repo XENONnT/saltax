@@ -92,7 +92,8 @@ def get_run_start_end(runid):
         doc = xent_collection().find_one({'number':runid})
     except:
         raise RuntimeError("Cannot find runid %d in RunDB"%(runid))
-    assert doc is not None, "Cannot find runid %d in RunDB"%(runid)
+    if doc is None:
+        raise RuntimeError("Cannot find runid %d in RunDB"%(runid))
     dt_start, dt_end = doc['start'], doc['end']
 
     # Get timezones
