@@ -2,6 +2,9 @@ import numpy as np
 from saltax.instructions.generator import *
 
 
+RUNID = 53169
+
+
 def test_generate_vertex():
     # Test that the function returns the expected number of vertices
     x, y, z = generate_vertex(size=10)
@@ -47,3 +50,15 @@ def test_generate_times():
     times = generate_times(start_time, end_time, size=1000, time_mode='uniform')
     assert len(times) == 1000
     assert (np.diff(times) >= 0).all()
+
+def test_get_run_start_end():
+    # Test with runid RUNID
+    runid = RUNID
+    start_time, end_time = get_run_start_end(runid)
+
+    # Check that the start and end times are integers
+    assert isinstance(start_time, int)
+    assert isinstance(end_time, int)
+
+    # Check that the start time is before the end time
+    assert start_time < end_time
