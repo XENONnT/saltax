@@ -61,6 +61,7 @@ def xenonnt_salted(output_folder='./strax_data',
                    faxconf_version="sr0_v4",
                    cmt_version="global_v9",
                    cmt_run_id="026000",
+                   instruction_mode='flat'
                    **kwargs):
     """
     Return a strax context for XENONnT data analysis with saltax.
@@ -71,6 +72,7 @@ def xenonnt_salted(output_folder='./strax_data',
     :param faxconf_version: (for simulation) fax configuration version to use, defaults to "sr0_v4"
     :param cmt_version: (for simulation) CMT version to use, defaults to "global_v9"
     :param cmt_run_id: (for simulation) CMT run ID to use, defaults to "026000"
+    :param instruction_mode: (for simulation) Instruction mode to use, defaults to 'flat'
     :param kwargs: Extra options to pass to strax.Context
     :return: strax context
     """
