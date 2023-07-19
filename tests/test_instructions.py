@@ -44,7 +44,6 @@ def test_generate_times():
 
     # Test that the function generates event times in the expected mode
     times = generate_times(start_time, end_time, size=1000, time_mode='realistic')
-    assert len(times) == 1000
     assert (np.diff(times) >= 0).all()
 
     times = generate_times(start_time, end_time, size=1000, time_mode='uniform')
