@@ -22,8 +22,6 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: '3.9'
-      - name: Checkout repo
-        uses: actions/checkout@v2
       - name: Checkout cutax
         if: github.repository_owner == 'XENONnT'
         uses: actions/checkout@v3
@@ -33,6 +31,8 @@ jobs:
           path: cutax
           ref: master
           fetch-depth: 0
+      - name: Checkout repo
+        uses: actions/checkout@v2
       - name: Install python dependencies
         uses: py-actions/py-dependency-install@v2
       - name: Install saltax
