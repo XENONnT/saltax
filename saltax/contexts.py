@@ -60,7 +60,7 @@ def xenonnt_salted(output_folder='./strax_data',
                    faxconf_version="sr0_v4",
                    cmt_version="global_v9",
                    cmt_run_id="026000",
-                   instruction_mode='flat'
+                   instruction_mode='flat',
                    **kwargs):
     """
     Return a strax context for XENONnT data analysis with saltax.
