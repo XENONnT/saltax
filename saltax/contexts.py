@@ -3,7 +3,7 @@ import saltax
 import cutax
 import strax
 from immutabledict import immutabledict
-from cutax.cut_lists.basic import BasicCuts
+from cutax import BasicCuts
 
 # straxen XENONnT options/configuration
 XNT_COMMON_OPTS = straxen.contexts.xnt_common_opts.copy()
