@@ -3,8 +3,6 @@ import saltax
 import cutax
 import strax
 from immutabledict import immutabledict
-from cutax.cut_lists.basic import BasicCuts
-import warnings
 
 # straxen XENONnT options/configuration
 XNT_COMMON_OPTS = straxen.contexts.xnt_common_opts.copy()
@@ -30,7 +28,7 @@ XNT_COMMON_CONFIG_OVERRIDE = dict(
         # (Minimum channel, maximum channel)
         # Channels must be listed in a ascending order!
         stpc=(SCHANNEL_STARTS_AT, SCHANNEL_STARTS_AT+493), # Salted TPC channels
-        tpc=(0, 493),
+        tpc=(0, 493), # TPC channels
         he=(500, 752),  # high energy
         aqmon=(790, 807),
         aqmon_nv=(808, 815),  # nveto acquisition monitor
@@ -56,22 +54,23 @@ DEFAULT_XEDOCS_VERSION = cutax.contexts.DEFAULT_XEDOCS_VERSION
 
 def xenonnt_salted(output_folder='./strax_data',
                    xedocs_version=DEFAULT_XEDOCS_VERSION,
-                   cut_list=BasicCuts, 
+                   cut_list=cutax.BasicCuts, 
                    auto_register=True,
                    faxconf_version="sr0_v4",
                    cmt_version="global_v9",
                    cmt_run_id="026000",
+                   instruction_mode='flat',
                    **kwargs):
     """
     Return a strax context for XENONnT data analysis with saltax.
-
     :param output_folder: Directory where data will be stored, defaults to ./strax_data
     :param xedocs_version: XENONnT documentation version to use, defaults to DEFAULT_XEDOCS_VERSION
-    :param cut_list: Cut list to use, defaults to BasicCuts
+    :param cut_list: Cut list to use, defaults to cutax.BasicCuts
     :param auto_register: Whether to automatically register cuts, defaults to True
     :param faxconf_version: (for simulation) fax configuration version to use, defaults to "sr0_v4"
     :param cmt_version: (for simulation) CMT version to use, defaults to "global_v9"
     :param cmt_run_id: (for simulation) CMT run ID to use, defaults to "026000"
+    :param instruction_mode: (for simulation) Instruction mode to use, defaults to 'flat'
     :param kwargs: Extra options to pass to strax.Context
     :return: strax context
     """
@@ -128,6 +127,7 @@ def xenonnt_salted(output_folder='./strax_data',
     cmt_options = {key: val['strax_option']
                    for key, val in cmt_options_full.items()}
     # First, fix gain model for simulation
+    # Using placeholders for gain_model_mc
     st.set_config({'gain_model_mc': 
                         ('cmt_run_id', cmt_run_id, "legacy-to-pe://to_pe_placeholder")})
     fax_config_override_from_cmt = dict()
@@ -156,10 +156,10 @@ def xenonnt_salted(output_folder='./strax_data',
 
     return st
 
-def sxenonnt(saltax_mode,
+def sxenonnt(saltax_mode='salt',
              output_folder='./strax_data',
              xedocs_version=DEFAULT_XEDOCS_VERSION,
-             cut_list=BasicCuts, 
+             cut_list=cutax.BasicCuts, 
              auto_register=True,
              faxconf_version="sr0_v4",
              cmt_version="global_v9",
@@ -167,11 +167,10 @@ def sxenonnt(saltax_mode,
              **kwargs):
     """
     United strax context for XENONnT data, simulation, or salted data.
-
     :param saltax_mode: 'data', 'simu', or 'salt'
     :param output_folder: Output folder for strax data, default './strax_data'
     :param xedocs_version: xedocs version to use, default is synced with cutax latest
-    :param cut_list: List of cuts to register, default is BasicCuts
+    :param cut_list: List of cuts to register, default is cutax.BasicCuts
     :param auto_register: Whether to auto register cuts, default True
     :param faxconf_version: fax config version to use, default is synced with cutax latest
     :param cmt_version: cmt version to use, default is synced with cutax latest

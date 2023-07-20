@@ -21,18 +21,9 @@ jobs:
       - name: Setup python
         uses: actions/setup-python@v2
         with:
-          python-version: '3.8'
+          python-version: '3.9'
       - name: Checkout repo
         uses: actions/checkout@v2
-      - name: Install python dependencies
-        uses: py-actions/py-dependency-install@v2
-      - name: Install saltax
-        run: python setup.py develop
-      - name: Install requirements
-        run: |
-          pip install -r extra_requirements/requirements-tests.txt
-      - name: Install pytest and hypothesis
-        run: pip install pytest hypothesis flake8 pytest-cov coverage
       - name: Write utilix config
         run: |
             bash .github/scripts/create-utilix-config.sh
@@ -45,6 +36,24 @@ jobs:
           XENT_USER: ${{ secrets.MONGO_USER }}
           XENT_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
           XENT_DATABASE: ${{ secrets.MONGO_DATABASE }}
+      - name: Checkout cutax
+        uses: actions/checkout@v3
+        with:
+          repository: XENONnT/cutax
+          ssh-key: ${{ secrets.CUTAX_DEPLOY_KEY }}
+          path: cutax
+          ref: master
+          fetch-depth: 0
+      - name: Install python dependencies
+        uses: py-actions/py-dependency-install@v2
+      - name: Install requirements
+        run: |
+          pip install -r extra_requirements/requirements-tests.txt
+          pip install ./cutax
+      - name: Install saltax
+        run: python setup.py develop
+      - name: Install pytest and hypothesis
+        run: pip install pytest hypothesis flake8 pytest-cov coverage
       - name: Test package
         env:
           HAVE_ACCESS_TO_SECTETS: ${{ secrets.RUNDB_API_URL }}
