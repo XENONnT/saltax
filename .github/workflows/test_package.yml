@@ -49,6 +49,7 @@ jobs:
       - name: Install requirements
         run: |
           pip install -r extra_requirements/requirements-tests.txt
+          pip install ./cutax
       - name: Install saltax
         run: python setup.py develop
       - name: Install pytest and hypothesis
