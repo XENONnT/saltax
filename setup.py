@@ -18,7 +18,7 @@ setuptools.setup(
     version='0.0.0',
     install_requires=requires,
     setup_requires=['pytest-runner'],
-    tests_require=['pytest'],
+    tests_require=requires+['pytest', "hypothesis", "boltons"],
     python_requires=">=3.9",
     packages=setuptools.find_packages(),
     classifiers=[
