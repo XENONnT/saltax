@@ -46,11 +46,11 @@ jobs:
           fetch-depth: 0
       - name: Install python dependencies
         uses: py-actions/py-dependency-install@v2
-      - name: Install saltax
-        run: python setup.py develop
       - name: Install requirements
         run: |
           pip install -r extra_requirements/requirements-tests.txt
+      - name: Install saltax
+        run: python setup.py develop
       - name: Install pytest and hypothesis
         run: pip install pytest hypothesis flake8 pytest-cov coverage
       - name: Test package
