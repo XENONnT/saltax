@@ -3,7 +3,6 @@ import saltax
 import cutax
 import strax
 from immutabledict import immutabledict
-from cutax import BasicCuts
 
 # straxen XENONnT options/configuration
 XNT_COMMON_OPTS = straxen.contexts.xnt_common_opts.copy()
@@ -55,7 +54,7 @@ DEFAULT_XEDOCS_VERSION = cutax.contexts.DEFAULT_XEDOCS_VERSION
 
 def xenonnt_salted(output_folder='./strax_data',
                    xedocs_version=DEFAULT_XEDOCS_VERSION,
-                   cut_list=BasicCuts, 
+                   cut_list=cutax.BasicCuts, 
                    auto_register=True,
                    faxconf_version="sr0_v4",
                    cmt_version="global_v9",
@@ -66,7 +65,7 @@ def xenonnt_salted(output_folder='./strax_data',
     Return a strax context for XENONnT data analysis with saltax.
     :param output_folder: Directory where data will be stored, defaults to ./strax_data
     :param xedocs_version: XENONnT documentation version to use, defaults to DEFAULT_XEDOCS_VERSION
-    :param cut_list: Cut list to use, defaults to BasicCuts
+    :param cut_list: Cut list to use, defaults to cutax.BasicCuts
     :param auto_register: Whether to automatically register cuts, defaults to True
     :param faxconf_version: (for simulation) fax configuration version to use, defaults to "sr0_v4"
     :param cmt_version: (for simulation) CMT version to use, defaults to "global_v9"
@@ -160,7 +159,7 @@ def xenonnt_salted(output_folder='./strax_data',
 def sxenonnt(saltax_mode='salt',
              output_folder='./strax_data',
              xedocs_version=DEFAULT_XEDOCS_VERSION,
-             cut_list=BasicCuts, 
+             cut_list=cutax.BasicCuts, 
              auto_register=True,
              faxconf_version="sr0_v4",
              cmt_version="global_v9",
@@ -171,7 +170,7 @@ def sxenonnt(saltax_mode='salt',
     :param saltax_mode: 'data', 'simu', or 'salt'
     :param output_folder: Output folder for strax data, default './strax_data'
     :param xedocs_version: xedocs version to use, default is synced with cutax latest
-    :param cut_list: List of cuts to register, default is BasicCuts
+    :param cut_list: List of cuts to register, default is cutax.BasicCuts
     :param auto_register: Whether to auto register cuts, default True
     :param faxconf_version: fax config version to use, default is synced with cutax latest
     :param cmt_version: cmt version to use, default is synced with cutax latest
