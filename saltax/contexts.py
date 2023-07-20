@@ -4,7 +4,6 @@ import cutax
 import strax
 from immutabledict import immutabledict
 from cutax.cut_lists.basic import BasicCuts
-import warnings
 
 # straxen XENONnT options/configuration
 XNT_COMMON_OPTS = straxen.contexts.xnt_common_opts.copy()
