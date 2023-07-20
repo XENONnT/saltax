@@ -30,7 +30,7 @@ XNT_COMMON_CONFIG_OVERRIDE = dict(
         # (Minimum channel, maximum channel)
         # Channels must be listed in a ascending order!
         stpc=(SCHANNEL_STARTS_AT, SCHANNEL_STARTS_AT+493), # Salted TPC channels
-        tpc=(0, 493),
+        tpc=(0, 493), # TPC channels
         he=(500, 752),  # high energy
         aqmon=(790, 807),
         aqmon_nv=(808, 815),  # nveto acquisition monitor
