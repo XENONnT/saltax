@@ -14,7 +14,7 @@ def test_contexts_definition():
     from saltax.contexts import SALTAX_MODES
     for saltax_mode in SALTAX_MODES:
         if saltax_mode == 'salt':
-            runid == RUNID
+            runid = RUNID
         else:
             runid = None
         st = saltax.contexts.sxenonnt(runid=runid,
