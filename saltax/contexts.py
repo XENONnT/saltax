@@ -52,13 +52,13 @@ XENONNT_SIMULATION = cutax.contexts.xenonnt_sim_base
 DEFAULT_XEDOCS_VERSION = cutax.contexts.DEFAULT_XEDOCS_VERSION
 
 
-def get_generator(instruction_mode):
+def get_generator(generator_name):
     """
     Return the generator function for the given instruction mode.
-    :param instruction_mode: Name of the instruction mode, e.g. 'flat'
+    :param generator_name: Name of the instruction mode, e.g. 'flat'
     :return: generator function
     """
-    generator_func = eval('saltax.generator_'+instruction_mode)
+    generator_func = eval('saltax.generator_'+generator_name)
     return generator_func
 
 def xenonnt_salted(runid, output_folder='./strax_data',
@@ -68,11 +68,11 @@ def xenonnt_salted(runid, output_folder='./strax_data',
                    faxconf_version="sr0_v4",
                    cmt_version="global_v9",
                    cmt_run_id="026000",
-                   instruction_mode='flat',
+                   generator_name='flat',
                    **kwargs):
     """
     Return a strax context for XENONnT data analysis with saltax.
-    :param runid: Run ID to use. Must exist in RunDB!
+    :param runid: run number in integer. Must exist in RunDB.
     :param output_folder: Directory where data will be stored, defaults to ./strax_data
     :param xedocs_version: XENONnT documentation version to use, defaults to DEFAULT_XEDOCS_VERSION
     :param cut_list: Cut list to use, defaults to cutax.BasicCuts
@@ -80,12 +80,12 @@ def xenonnt_salted(runid, output_folder='./strax_data',
     :param faxconf_version: (for simulation) fax configuration version to use, defaults to "sr0_v4"
     :param cmt_version: (for simulation) CMT version to use, defaults to "global_v9"
     :param cmt_run_id: (for simulation) CMT run ID to use, defaults to "026000"
-    :param instruction_mode: (for simulation) Instruction mode to use, defaults to 'flat'
+    :param generator_name: (for simulation) Instruction mode to use, defaults to 'flat'
     :param kwargs: Extra options to pass to strax.Context
     :return: strax context
     """
     # Get salt generator
-    generator_func = get_generator(instruction_mode)
+    generator_func = get_generator(generator_name)
 
     # Based on cutax.xenonnt_sim_base()
     fax_conf='fax_config_nt_{:s}.json'.format(faxconf_version)
