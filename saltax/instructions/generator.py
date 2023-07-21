@@ -7,6 +7,7 @@ import straxen
 from zoneinfo import ZoneInfo
 from utilix import xent_collection
 import datetime
+import os
 
 
 SALT_TIME_INTERVAL = 5e7 # in unit of ns. The number should be way bigger then full drift time
@@ -19,7 +20,8 @@ FIELD_MAP = straxen.InterpolatingMap(
     straxen.get_resource(DOWNLOADER.download_single(FIELD_FILE), fmt="json.gz"),
     method="RegularGridInterpolator",
 )
-BASE_DIR = "/project2/lgrandi/yuanlq/shared/saltax_instr/"
+#BASE_DIR = "/project2/lgrandi/yuanlq/shared/saltax_instr/"
+BASE_DIR = os.getcwd() + '/../../generated/'
 
 
 def generate_vertex(r_range=R_RANGE, z_range=Z_RANGE, size=1):
