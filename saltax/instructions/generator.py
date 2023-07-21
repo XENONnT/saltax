@@ -129,7 +129,7 @@ def get_run_start_end(runid):
     
     return unix_time_start_ns, unix_time_end_ns
 
-def instr_file_name(runid, instr, recoil, generator_name, mode, rate,
+def instr_file_name(runid, instr, recoil, generator_name, mode, rate=1e9/SALT_TIME_INTERVAL,
                     base_dir=BASE_DIR):
     """
     Generate the instruction file name and then save the csv instructions.

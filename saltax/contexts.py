@@ -69,6 +69,8 @@ def xenonnt_salted(runid, output_folder='./strax_data',
                    cmt_version="global_v9",
                    cmt_run_id="026000",
                    generator_name='flat',
+                   recoil=7,
+                   mode='all',                  
                    **kwargs):
     """
     Return a strax context for XENONnT data analysis with saltax.
@@ -81,11 +83,19 @@ def xenonnt_salted(runid, output_folder='./strax_data',
     :param cmt_version: (for simulation) CMT version to use, defaults to "global_v9"
     :param cmt_run_id: (for simulation) CMT run ID to use, defaults to "026000"
     :param generator_name: (for simulation) Instruction mode to use, defaults to 'flat'
+    :param recoil: (for simulation) NEST recoil type, defaults to 7 (beta ER)
+    :param mode: 's1', 's2', or 'all'. Defaults to 'all'
     :param kwargs: Extra options to pass to strax.Context
     :return: strax context
     """
     # Get salt generator
     generator_func = get_generator(generator_name)
+
+    # Generate instructions
+    instr = generator_func(runid=runid)
+    instr_file_name = saltax.instr_file_name(runid=runid, instr=instr, recoil=recoil, 
+                                             generator_name=generator_name, 
+                                             mode=mode)
 
     # Based on cutax.xenonnt_sim_base()
     fax_conf='fax_config_nt_{:s}.json'.format(faxconf_version)
@@ -178,6 +188,9 @@ def sxenonnt(runid=None,
              faxconf_version="sr0_v4",
              cmt_version="global_v9",
              cmt_run_id="026000",
+             generator_name='flat',
+             recoil=7,
+             mode='all',     
              **kwargs):
     """
     United strax context for XENONnT data, simulation, or salted data.
@@ -190,6 +203,9 @@ def sxenonnt(runid=None,
     :param faxconf_version: fax config version to use, default is synced with cutax latest
     :param cmt_version: cmt version to use, default is synced with cutax latest
     :param cmt_run_id: cmt run id to use, default is synced with cutax
+    :param generator_name: (for simulation) Instruction mode to use, defaults to 'flat'
+    :param recoil: (for simulation) NEST recoil type, defaults to 7 (beta ER)
+    :param mode: 's1', 's2', or 'all'. Defaults to 'all'
     :param kwargs: Additional kwargs to pass
     :return: strax context
     """
@@ -221,4 +237,7 @@ def sxenonnt(runid=None,
             faxconf_version=faxconf_version,
             cmt_version=cmt_version,
             cmt_run_id=cmt_run_id,
+            generator_name=generator_name,
+            recoil=recoil,
+            mode=mode,     
             **kwargs)    
