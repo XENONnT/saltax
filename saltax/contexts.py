@@ -177,6 +177,9 @@ def xenonnt_salted(runid, output_folder='./strax_data',
             # FIXME: Remove once all cmt configs are URLConfigs
             st.config[option] = ('cmt_run_id', cmt_run_id, *value)
 
+    # Load instructions
+    st.set_config(dict(fax_file=instr_file_name))
+
     return st
 
 def sxenonnt(runid=None,
