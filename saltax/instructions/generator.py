@@ -220,4 +220,7 @@ def generator_flat(runid, en_range=(0.01, 30.0), recoil=7,
     else:
         raise RuntimeError("Unknown mode: ", mode)
     
+    # Filter out 0 amplitudes
+    instr = instr[instr["amp"] > 0]
+    
     return instr
