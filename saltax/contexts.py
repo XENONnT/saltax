@@ -52,7 +52,16 @@ XENONNT_SIMULATION = cutax.contexts.xenonnt_sim_base
 DEFAULT_XEDOCS_VERSION = cutax.contexts.DEFAULT_XEDOCS_VERSION
 
 
-def xenonnt_salted(output_folder='./strax_data',
+def get_generator(instruction_mode):
+    """
+    Return the generator function for the given instruction mode.
+    :param instruction_mode: Name of the instruction mode, e.g. 'flat'
+    :return: generator function
+    """
+    generator_func = eval('saltax.generator_'+instruction_mode)
+    return generator_func
+
+def xenonnt_salted(runid, output_folder='./strax_data',
                    xedocs_version=DEFAULT_XEDOCS_VERSION,
                    cut_list=cutax.BasicCuts, 
                    auto_register=True,
@@ -63,6 +72,7 @@ def xenonnt_salted(output_folder='./strax_data',
                    **kwargs):
     """
     Return a strax context for XENONnT data analysis with saltax.
+    :param runid: Run ID to use. Must exist in RunDB!
     :param output_folder: Directory where data will be stored, defaults to ./strax_data
     :param xedocs_version: XENONnT documentation version to use, defaults to DEFAULT_XEDOCS_VERSION
     :param cut_list: Cut list to use, defaults to cutax.BasicCuts
@@ -74,6 +84,9 @@ def xenonnt_salted(output_folder='./strax_data',
     :param kwargs: Extra options to pass to strax.Context
     :return: strax context
     """
+    # Get salt generator
+    generator_func = get_generator(instruction_mode)
+
     # Based on cutax.xenonnt_sim_base()
     fax_conf='fax_config_nt_{:s}.json'.format(faxconf_version)
 

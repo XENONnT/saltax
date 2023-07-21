@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import nestpy
 import wfsim
 import pytz
@@ -18,6 +19,7 @@ FIELD_MAP = straxen.InterpolatingMap(
     straxen.get_resource(DOWNLOADER.download_single(FIELD_FILE), fmt="json.gz"),
     method="RegularGridInterpolator",
 )
+BASE_DIR = "/project2/lgrandi/yuanlq/shared/saltax_instr/"
 
 
 def generate_vertex(r_range=R_RANGE, z_range=Z_RANGE, size=1):
@@ -124,6 +126,33 @@ def get_run_start_end(runid):
                            dt_end_transformed.microsecond * 1000)
     
     return unix_time_start_ns, unix_time_end_ns
+
+def instr_file_name(runid, instr, recoil, generator_name, mode, rate,
+                    base_dir=BASE_DIR):
+    """
+    Generate the instruction file name and then save the csv instructions.
+    :param runid: run number in integer
+    :param instr: instructions in numpy array
+    :param recoil: NEST recoil type
+    :param generator_name: name of the generator
+    :param mode: 's1', 's2', or 'all'
+    :param rate: rate of events in Hz
+    :param base_dir: base directory to save the instruction file, default: BASE_DIR
+    :return: instruction file name
+    """
+    # FIXME: this will shoot errors if we are on OSG rather than midway
+    if base_dir[-1] != '/':
+        base_dir += '/'
+
+    rate = int(rate)
+    runid = str(runid).zfill(6)
+    filename = BASE_DIR + "-" + runid + "-" + str(recoil) + "-" + \
+        generator_name + "-" + mode + "-" + str(rate) + ".csv"
+    
+    pd.DataFrame(instr).to_csv(filename, index=False)
+    print("Instruction file at: %s" % (filename))
+
+    return filename
 
 def generator_flat(runid, en_range=(0, 30.0), recoil=7,
                    n_tot=None, rate=1e9/SALT_TIME_INTERVAL, 
