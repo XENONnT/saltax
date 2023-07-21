@@ -169,7 +169,8 @@ def xenonnt_salted(runid, output_folder='./strax_data',
 
     return st
 
-def sxenonnt(saltax_mode='salt',
+def sxenonnt(runid=None,
+             saltax_mode='salt',
              output_folder='./strax_data',
              xedocs_version=DEFAULT_XEDOCS_VERSION,
              cut_list=cutax.BasicCuts, 
@@ -180,6 +181,7 @@ def sxenonnt(saltax_mode='salt',
              **kwargs):
     """
     United strax context for XENONnT data, simulation, or salted data.
+    :param runid: run number in integer. Must exist in RunDB.
     :param saltax_mode: 'data', 'simu', or 'salt'
     :param output_folder: Output folder for strax data, default './strax_data'
     :param xedocs_version: xedocs version to use, default is synced with cutax latest
@@ -209,7 +211,9 @@ def sxenonnt(saltax_mode='salt',
             cut_list=cut_list,
             **kwargs)
     elif saltax_mode == 'salt':
+        assert runid is not None, "runid must be specified for saltax_mode='salt'"
         return xenonnt_salted(
+            runid=runid,
             output_folder=output_folder,
             xedocs_version=xedocs_version,
             cut_list=cut_list, 
