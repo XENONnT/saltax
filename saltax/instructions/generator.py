@@ -21,7 +21,7 @@ FIELD_MAP = straxen.InterpolatingMap(
     method="RegularGridInterpolator",
 )
 #BASE_DIR = "/project2/lgrandi/yuanlq/shared/saltax_instr/"
-BASE_DIR = os.getcwd() + '/../../generated/'
+BASE_DIR = os.path.abspath(__file__)[:-12] + '../../generated/'
 
 
 def generate_vertex(r_range=R_RANGE, z_range=Z_RANGE, size=1):
@@ -148,7 +148,7 @@ def instr_file_name(runid, instr, recoil, generator_name, mode, rate=1e9/SALT_TI
 
     rate = int(rate)
     runid = str(runid).zfill(6)
-    filename = BASE_DIR + "-" + runid + "-" + str(recoil) + "-" + \
+    filename = BASE_DIR + runid + "-" + str(recoil) + "-" + \
         generator_name + "-" + mode + "-" + str(rate) + ".csv"
     
     pd.DataFrame(instr).to_csv(filename, index=False)
