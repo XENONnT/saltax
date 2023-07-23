@@ -14,6 +14,10 @@ log.setLevel('WARNING')
 
 @export
 class ChunkRawRecords(object):
+    """
+    Chunk the raw records from wfsim into strax chunks. Inherited from wfsim.ChunkRawRecords,
+    with plugin names changed.
+    """
     def __init__(self, config, rawdata_generator=wfsim.RawData, **kwargs):
         log.debug(f'Starting {self.__class__.__name__}')
         self.config = config
