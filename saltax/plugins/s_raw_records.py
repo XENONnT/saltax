@@ -23,7 +23,7 @@ class ChunkRawRecords(object):
         self.config = config
         log.debug(f'Setting raw data with {rawdata_generator.__name__}')
         self.rawdata = rawdata_generator(self.config, **kwargs)
-        self.record_buffer = np.zeros(5000000,
+        self.record_buffer = np.zeros(5000000, # 5e6 records
                                       dtype=strax.raw_record_dtype(samples_per_record=strax.DEFAULT_RECORD_LENGTH))
         truth_per_n_pmts = self._n_channels if config.get('per_pmt_truth') else False
         self.truth_dtype = extra_truth_dtype_per_pmt(truth_per_n_pmts)

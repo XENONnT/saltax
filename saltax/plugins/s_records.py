@@ -11,7 +11,7 @@ __all__ += ['NO_PULSE_COUNTS']
 
 
 @export
-class SPulseProcessing(strax.Plugin):
+class SPulseProcessing(strax.OverlapWindowPlugin):
     """
     Split raw_records into:
      - (tpc) records
