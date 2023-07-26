@@ -199,6 +199,8 @@ def xenonnt_salted(runid, output_folder='./strax_data',
 
     # Load raw_records time ranges
     st.set_config(dict(rr_chunk_ranges=get_rr_chunk_ranges(st, runid)))
+    print("Loaded raw_records time ranges. %s chunks in to total"%(
+        len(st.config['rr_chunk_ranges'])))
 
     return st
 
