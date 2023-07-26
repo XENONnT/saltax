@@ -175,9 +175,6 @@ class ChunkRawRecords(object):
         self.record_buffer[:np.sum(~maska)] = self.record_buffer[:self.blevel][~maska]
         self.blevel = np.sum(~maska)
 
-    def source_finished(self):
-        return self.rawdata.source_finished
-
     @property
     def _n_channels(self):
         return self.config['n_tpc_pmts']
