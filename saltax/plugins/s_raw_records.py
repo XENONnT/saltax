@@ -2,6 +2,7 @@ import strax
 import numpy as np
 import wfsim
 import logging
+import cutax
 from wfsim import extra_truth_dtype_per_pmt
 from immutabledict import immutabledict
 from wfsim.strax_interface import SimulatorPlugin, instruction_dtype, rand_instructions, instruction_from_csv
@@ -10,6 +11,8 @@ export, __all__ = strax.exporter()
 logging.basicConfig(handlers=[logging.StreamHandler()])
 log = logging.getLogger('wfsim.interface')
 log.setLevel('WARNING')
+
+RAW_RECORDS_HASH = 'rfzvpzj4mf'
 
 
 @export
@@ -54,7 +57,7 @@ class ChunkRawRecords(object):
         self.chunk_time = self.chunk_time_pre + cksz
         self.current_digitized_right = self.last_digitized_right = 0
 
-        # Loop over the instructions, and fill the record buffer, and yield the results
+        # Loop over the instructions, and simulate and fully fill the record buffer or chunk time is reached
         for channel, left, right, data in self.rawdata(instructions=instructions,
                                                        truth_buffer=self.truth_buffer,
                                                        **kwargs):
@@ -186,12 +189,9 @@ class SRawRecordsFromFaxNT(SimulatorPlugin):
     Plugin which simulates raw_records_simu from fax instructions.
     Only modified provides, and the rest are the same as the one in wfsim.
     """
+    depends_on = ('raw_records')
     provides = ('raw_records_simu', 'raw_records_he_simu', 'raw_records_aqmon_simu', 'truth')
     data_kind = immutabledict(zip(provides, provides))
-
-    def _setup(self):
-        self.sim = ChunkRawRecords(self.config)
-        self.sim_iter = self.sim(self.instructions)
 
     def get_instructions(self):
         if self.config['fax_file']:
@@ -221,7 +221,12 @@ class SRawRecordsFromFaxNT(SimulatorPlugin):
         dtype['truth'] = instruction_dtype + self._truth_dtype
         return dtype
 
-    def compute(self):
+    def compute(self, raw_records, start, end):
+        self.sim = ChunkRawRecords(self.config)
+        instructions = self.instructions
+        instructions = instructions[(instructions['time'] >= start) & 
+                                    (instructions['time'] < end)] # Probably need safeguard here
+        self.sim_iter = self.sim(instructions)
         try:
             result = next(self.sim_iter)
         except StopIteration:
@@ -230,7 +235,7 @@ class SRawRecordsFromFaxNT(SimulatorPlugin):
         # To accomodate nveto raw records, should be the first in provide.
 
         return {data_type: self.chunk(
-            start=self.sim.chunk_time_pre,
-            end=self.sim.chunk_time,
-            data=result[data_type],
-            data_type=data_type) for data_type in self.provides}
+                start=start,
+                end=end,
+                data=result[data_type],
+                data_type=data_type) for data_type in self.provides}
