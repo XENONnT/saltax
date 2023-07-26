@@ -172,8 +172,12 @@ class ChunkRawRecords(object):
                        raw_records_aqmon_simu=records[records['channel'] == 800],
                        truth=_truth)
 
+        # Reset the buffer
         self.record_buffer[:np.sum(~maska)] = self.record_buffer[:self.blevel][~maska]
         self.blevel = np.sum(~maska)
+
+    def source_finished(self):
+        return self.rawdata.source_finished
 
     @property
     def _n_channels(self):
@@ -189,6 +193,12 @@ class SRawRecordsFromFaxNT(SimulatorPlugin):
     depends_on = ('raw_records')
     provides = ('raw_records_simu', 'raw_records_he_simu', 'raw_records_aqmon_simu', 'truth')
     data_kind = immutabledict(zip(provides, provides))
+
+    def is_ready(self, chunk_i):
+        """
+        Force to sync with regular plugin.
+        """
+        return True
 
     def get_instructions(self):
         if self.config['fax_file']:
