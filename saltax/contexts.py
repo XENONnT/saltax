@@ -70,8 +70,8 @@ def get_rr_chunk_ranges(st, runid):
     """
     if type(runid) == int:
         runid = str(runid).zfill(6)
-    assert st.is_stored(runid, 'raw_records'), "%s must be stored!"%(st.key_for(runid, 
-                                                                                'raw_records'))
+    assert st.is_stored(runid, 'raw_records'), "%s must be stored! \
+        Put it into your output_folder please. "%(st.key_for(runid, 'raw_records'))
     metadata = st.get_metadata(runid, 'raw_records')
     chunk_ranges = []
     for chunk in metadata['chunks']:
@@ -199,7 +199,7 @@ def xenonnt_salted(runid, output_folder='./strax_data',
 
     # Load raw_records time ranges
     st.set_config(dict(rr_chunk_ranges=get_rr_chunk_ranges(st, runid)))
-    print("Loaded raw_records time ranges. %s chunks in to total"%(
+    print("Loaded raw_records time ranges. %s chunks in total."%(
         len(st.config['rr_chunk_ranges'])))
 
     return st
