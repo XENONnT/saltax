@@ -2,6 +2,7 @@ import strax
 import numpy as np
 import wfsim
 import logging
+import cutax
 from wfsim import extra_truth_dtype_per_pmt
 from immutabledict import immutabledict
 from wfsim.strax_interface import SimulatorPlugin, instruction_dtype, rand_instructions, instruction_from_csv
@@ -23,7 +24,7 @@ class ChunkRawRecords(object):
         self.config = config
         log.debug(f'Setting raw data with {rawdata_generator.__name__}')
         self.rawdata = rawdata_generator(self.config, **kwargs)
-        self.record_buffer = np.zeros(5000000,
+        self.record_buffer = np.zeros(5000000, # 5e6 fragments of records
                                       dtype=strax.raw_record_dtype(samples_per_record=strax.DEFAULT_RECORD_LENGTH))
         truth_per_n_pmts = self._n_channels if config.get('per_pmt_truth') else False
         self.truth_dtype = extra_truth_dtype_per_pmt(truth_per_n_pmts)
@@ -34,7 +35,7 @@ class ChunkRawRecords(object):
     def __call__(self, instructions, time_zero=None, **kwargs):
         """
         :param instructions: Structured array with instruction dtype in strax_interface module
-        :param time_zero: Starting time of the first chunk
+        :param time_zero: Starting time of the first chunk, default: None
         """
         samples_per_record = strax.DEFAULT_RECORD_LENGTH
         if len(instructions) == 0: # Empty
@@ -47,20 +48,28 @@ class ChunkRawRecords(object):
         cksz = int(self.config['chunk_size'] * 1e9)
 
         # Save the constants as privates
+        # chunk_time_pre is the start of a chunk
+        # chunk_time is the end of a chunk
         self.blevel = 0  # buffer_filled_level
         self.chunk_time_pre = time_zero - rext if time_zero else np.min(instructions['time']) - rext
-        self.chunk_time = self.chunk_time_pre + cksz  # Starting chunk
+        self.chunk_time = self.chunk_time_pre + cksz
         self.current_digitized_right = self.last_digitized_right = 0
+
+        # Loop over the instructions, and simulate and fully fill the record buffer or chunk time is reached
         for channel, left, right, data in self.rawdata(instructions=instructions,
                                                        truth_buffer=self.truth_buffer,
                                                        **kwargs):
             pulse_length = right - left + 1
+            
+            # Number of records fragments needed to store the pulse
             records_needed = int(np.ceil(pulse_length / samples_per_record))
 
+            # Update the digitized right
             if self.rawdata.right != self.current_digitized_right:
                 self.last_digitized_right = self.current_digitized_right
                 self.current_digitized_right = self.rawdata.right
 
+            # Check if the buffer is full, if so, yield the results
             if self.rawdata.left * dt > self.chunk_time + rext:
                 next_left_time = self.rawdata.left * dt
                 log.debug(f'Pause sim loop at {self.chunk_time}, next pulse start at {next_left_time}')
@@ -106,6 +115,9 @@ class ChunkRawRecords(object):
         yield from self.final_results()
 
     def final_results(self):
+        """
+        Yield the final results. 
+        """
         records = self.record_buffer[:self.blevel]  # No copying the records from buffer
         log.debug(f'Yielding chunk from {self.rawdata.__class__.__name__} '
                   f'between {self.chunk_time_pre} - {self.chunk_time}')
@@ -159,6 +171,7 @@ class ChunkRawRecords(object):
                        raw_records_aqmon_simu=records[records['channel'] == 800],
                        truth=_truth)
 
+        # Reset the buffer
         self.record_buffer[:np.sum(~maska)] = self.record_buffer[:self.blevel][~maska]
         self.blevel = np.sum(~maska)
 
@@ -167,8 +180,7 @@ class ChunkRawRecords(object):
 
     @property
     def _n_channels(self):
-        return len(self.config.get('gains', np.arange(straxen.n_tpc_pmts)))
-
+        return self.config['n_tpc_pmts']
 
 @export
 class SRawRecordsFromFaxNT(SimulatorPlugin):
@@ -176,12 +188,15 @@ class SRawRecordsFromFaxNT(SimulatorPlugin):
     Plugin which simulates raw_records_simu from fax instructions.
     Only modified provides, and the rest are the same as the one in wfsim.
     """
+    depends_on = ('raw_records')
     provides = ('raw_records_simu', 'raw_records_he_simu', 'raw_records_aqmon_simu', 'truth')
     data_kind = immutabledict(zip(provides, provides))
 
-    def _setup(self):
-        self.sim = ChunkRawRecords(self.config)
-        self.sim_iter = self.sim(self.instructions)
+    def is_ready(self, chunk_i):
+        """
+        Force to sync with regular plugin.
+        """
+        return True
 
     def get_instructions(self):
         if self.config['fax_file']:
@@ -211,7 +226,12 @@ class SRawRecordsFromFaxNT(SimulatorPlugin):
         dtype['truth'] = instruction_dtype + self._truth_dtype
         return dtype
 
-    def compute(self):
+    def compute(self, raw_records, start, end):
+        self.sim = ChunkRawRecords(self.config)
+        instructions = self.instructions
+        instructions = instructions[(instructions['time'] >= start) & 
+                                    (instructions['time'] < end)] # Probably need safeguard here
+        self.sim_iter = self.sim(instructions)
         try:
             result = next(self.sim_iter)
         except StopIteration:
@@ -220,7 +240,7 @@ class SRawRecordsFromFaxNT(SimulatorPlugin):
         # To accomodate nveto raw records, should be the first in provide.
 
         return {data_type: self.chunk(
-            start=self.sim.chunk_time_pre,
-            end=self.sim.chunk_time,
-            data=result[data_type],
-            data_type=data_type) for data_type in self.provides}
+                start=start,
+                end=end,
+                data=result[data_type],
+                data_type=data_type) for data_type in self.provides}

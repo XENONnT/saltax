@@ -31,7 +31,7 @@ class SPulseProcessing(strax.Plugin):
     overlap with any other pulse), or mean values of baseline and
     baseline rms channel.
     """
-    __version__ = '0.0.0'
+    __version__ = '0.0.1'
 
     parallel = 'process'
     rechunk_on_save = immutabledict(
@@ -252,5 +252,5 @@ def shift_salt_channels(r, n_channel_shift=SCHANNEL_STARTS_AT):
 
     :return: raw_records with shifted channel numbers
     """
-    r['channel'] -= n_channel_shift
+    r['channel'] += n_channel_shift
     return r
