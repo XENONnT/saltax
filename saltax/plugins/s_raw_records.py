@@ -12,8 +12,6 @@ logging.basicConfig(handlers=[logging.StreamHandler()])
 log = logging.getLogger('wfsim.interface')
 log.setLevel('WARNING')
 
-RAW_RECORDS_HASH = 'rfzvpzj4mf'
-
 
 @export
 class ChunkRawRecords(object):
@@ -62,6 +60,7 @@ class ChunkRawRecords(object):
                                                        truth_buffer=self.truth_buffer,
                                                        **kwargs):
             pulse_length = right - left + 1
+            
             # Number of records fragments needed to store the pulse
             records_needed = int(np.ceil(pulse_length / samples_per_record))
 
@@ -182,7 +181,6 @@ class ChunkRawRecords(object):
     @property
     def _n_channels(self):
         return self.config['n_tpc_pmts']
-
 
 @export
 class SRawRecordsFromFaxNT(SimulatorPlugin):
