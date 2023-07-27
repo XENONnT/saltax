@@ -5,6 +5,7 @@ from immutabledict import immutabledict
 from strax.processing.general import _touching_windows
 from strax.dtypes import DIGITAL_SUM_WAVEFORM_CHANNEL
 import straxen
+from .s_records import SCHANNEL_STARTS_AT
 
 
 export, __all__ = strax.exporter()
@@ -168,9 +169,19 @@ class SPeaklets(strax.Plugin):
                 f"interferes with lone_hit definition. "
                 f"See github.com/XENONnT/straxen/issues/295")
 
-        self.to_pe = self.gain_model # FIXME: surgery here
+        # Get the gain model
+        to_pe = np.zeros(SCHANNEL_STARTS_AT + self.n_tpc_pmts, dtype=np.float64)
+        self.to_pe_data = self.gain_model
+        self.to_pe_simu = self.gain_model_mc
+        to_pe[:self.n_tpc_pmts] = self.to_pe_data
+        to_pe[SCHANNEL_STARTS_AT:] = self.to_pe_simu
+        self.to_pe = to_pe
 
-        self.hit_thresholds = self.hit_min_amplitude
+        # Get the hitfinder thresholds
+        hit_thresholds = np.zeros(SCHANNEL_STARTS_AT + self.n_tpc_pmts, dtype=np.int64)
+        hit_thresholds[:self.n_tpc_pmts] = self.hit_min_amplitude
+        hit_thresholds[SCHANNEL_STARTS_AT:] = self.hit_min_amplitude
+        self.hit_thresholds = hit_thresholds
 
         self.channel_range = self.channel_map['tpc']
         
