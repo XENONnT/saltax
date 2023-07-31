@@ -6,6 +6,7 @@ from strax.processing.general import _touching_windows
 from strax.dtypes import DIGITAL_SUM_WAVEFORM_CHANNEL
 import straxen
 from .s_records import SCHANNEL_STARTS_AT
+from straxen.plugins.peaklets import hit_max_sample, get_tight_coin, drop_data_top_field
 
 
 export, __all__ = strax.exporter()
@@ -186,18 +187,20 @@ class SPeaklets(strax.Plugin):
         self.channel_range = self.channel_map['tpc']
         
     def compute(self, records, start, end):
-        r = records
+        # Throw away any non-TPC records
+        r = records[(records['channel']>=SCHANNEL_STARTS_AT)|
+                    (records['channel']<self.n_tpc_pmts)]
 
         # 988 channels
         hits = strax.find_hits(r, min_amplitude=self.hit_thresholds)
 
         # Remove hits in zero-gain channels
         # they should not affect the clustering!
-        hits = hits[self.to_pe[hits['channel']] != 0] # FIXME: surgery here
+        hits = hits[self.to_pe[hits['channel']] != 0]
 
         hits = strax.sort_by_time(hits)
 
-        # FIXME: surgery here
+        # FIXME: surgery here; top/bot array related
         # Use peaklet gap threshold for initial clustering
         # based on gaps between hits
         peaklets = find_peaks(
@@ -221,7 +224,6 @@ class SPeaklets(strax.Plugin):
         # which is asserted inside strax.find_peaks.
         is_lone_hit = strax.fully_contained_in(hits, peaklets) == -1
         lone_hits = hits[is_lone_hit]
-        # FIXME: surgery here
         integrate_lone_hits(
             lone_hits, records, peaklets,
             save_outside_hits=(self.peak_left_extension,
@@ -233,7 +235,6 @@ class SPeaklets(strax.Plugin):
         # Define regions outside of peaks such that _find_hit_integration_bounds
         # is not extended beyond a peak.
         outside_peaks = self.create_outside_peaks_region(peaklets, start, end)
-        # FIXME: surgery here
         strax.find_hit_integration_bounds(
             hits, outside_peaks, records,
             save_outside_hits=(self.peak_left_extension,
@@ -256,11 +257,12 @@ class SPeaklets(strax.Plugin):
 
         # If sum_waveform_top_array is false, don't digitize the top array
         n_top_pmts_if_digitize_top = self.n_top_pmts if self.sum_waveform_top_array else -1
+        # FIXME: surgery here; top/bot array related
         strax.sum_waveform(peaklets, hitlets, r, rlinks, self.to_pe, n_top_channels=n_top_pmts_if_digitize_top)
 
         strax.compute_widths(peaklets)
 
-                # Split peaks using low-split natural breaks;
+        # Split peaks using low-split natural breaks;
         # see https://github.com/XENONnT/straxen/pull/45
         # and https://github.com/AxFoundation/strax/pull/225
         peaklets = strax.split_peaks(
@@ -369,11 +371,9 @@ class SPeaklets(strax.Plugin):
     @staticmethod
     @numba.njit(nogil=True, cache=True)
     def clip_peaklet_times(peaklets, start, end):
-        for p in peaklets:
-            if p['time'] < start:
-                p['time'] = start
-            if strax.endtime(p) > end:
-                p['length'] = (end - p['time']) // p['dt']
+        straxen.plugins.peaklets.Peaklets.clip_peaklet_times(peaklets, 
+                                                             start, 
+                                                             end)
 
     @staticmethod
     def create_outside_peaks_region(peaklets, start, end):
@@ -385,19 +385,9 @@ class SPeaklets(strax.Plugin):
         :param end: Chunk end
         :return: array of strax.time_fields dtype.
         """
-        if not len(peaklets):
-            return np.zeros(0, dtype=strax.time_fields)
-
-        outside_peaks = np.zeros(len(peaklets) + 1,
-                                 dtype=strax.time_fields)
-
-        outside_peaks[0]['time'] = start
-        outside_peaks[0]['endtime'] = peaklets[0]['time']
-        outside_peaks[1:-1]['time'] = strax.endtime(peaklets[:-1])
-        outside_peaks[1:-1]['endtime'] = peaklets['time'][1:]
-        outside_peaks[-1]['time'] = strax.endtime(peaklets[-1])
-        outside_peaks[-1]['endtime'] = end
-        return outside_peaks
+        straxen.plugins.peaklets.Peaklets.create_outside_peaks_region(peaklets, 
+                                                                      start, 
+                                                                      end)
 
     @staticmethod
     def add_hit_features(hitlets, hit_max_times, peaklets):
@@ -407,29 +397,9 @@ class SPeaklets(strax.Plugin):
         :param peaklets: Peaklets for which intervals should be computed.
         :return: array of peaklet_timing dtype.
         """
-        hits_w_max = np.zeros(
-            len(hitlets),
-            strax.merged_dtype(
-                [np.dtype([('max_time', np.int64)]), np.dtype(strax.time_fields)]))
-        hits_w_max['time'] = hitlets['time']
-        hits_w_max['endtime'] = strax.endtime(hitlets)
-        hits_w_max['max_time'] = hit_max_times
-        split_hits = strax.split_by_containment(hits_w_max, peaklets)
-        for peaklet, h_max in zip(peaklets, split_hits):
-            max_time_diff = np.diff(np.sort(h_max['max_time']))
-            if len(max_time_diff) > 0:
-                peaklet['max_diff'] = max_time_diff.max()
-                peaklet['min_diff'] = max_time_diff.min()
-            else:
-                peaklet['max_diff'] = -1
-                peaklet['min_diff'] = -1
-
-def drop_data_top_field(peaklets, goal_dtype, _name_function= '_drop_data_top_field'):
-    """Return peaklets without the data_top field"""
-    peaklets_without_top_field = np.zeros(len(peaklets), dtype=goal_dtype)
-    strax.copy_to_buffer(peaklets, peaklets_without_top_field, _name_function)
-    del peaklets
-    return peaklets_without_top_field
+        straxen.plugins.peaklets.peaklets.Peaklets.add_hit_features(hitlets, 
+                                                                    hit_max_times, 
+                                                                    peaklets)
 
 
 @numba.jit(nopython=True, nogil=True, cache=False)
@@ -599,63 +569,119 @@ def _peak_saturation_correction_inner(channel_saturated, records, p,
                 r['area'] = np.sum(r['data'])
 
 
+
+#@utils.growing_result(dtype=peak_dtype(), chunk_size=int(1e4))
+@export
 @numba.jit(nopython=True, nogil=True, cache=True)
-def get_tight_coin(hit_max_times, hit_channel, peak_max_times, left, right,
-                   channels=(0, 493)):
-    """Calculates the tight coincidence based on PMT channels.
-
-    Defined by number of hits within a specified time range of the
-    the peak's maximum amplitude.
-    Imitates tight_coincidence variable in pax:
-    github.com/XENON1T/pax/blob/master/pax/plugins/peak_processing/BasicProperties.py
-
-    :param hit_max_times: Time of the hit amplitude in ns.
-    :param hit_channel: PMT channels of the hits
-    :param peak_max_times: Time of the peaks maximum in ns.
-    :param left: Left boundary in which we search for the tight
-        coincidence in ns.
-    :param right: Right boundary in which we search for the tight
-        coincidence in ns.
-    :param channel_range: (min/max) channel for the corresponding detector.
-
-    :returns: n_coin_channel of length peaks containing the
-        tight coincidence.
+def find_peaks(hits, adc_to_pe,
+               gap_threshold=300,
+               left_extension=20, right_extension=150,
+               min_area=0,
+               min_channels=2,
+               max_duration=10_000_000,
+               _result_buffer=None, result_dtype=None):
+    """Return peaks made from grouping hits together
+    Assumes all hits have the same dt
+    :param hits: Hit (or any interval) to group
+    :param left_extension: Extend peaks by this many ns left
+    :param right_extension: Extend peaks by this many ns right
+    :param gap_threshold: No hits for this much ns means new peak
+    :param min_area: Peaks with less than min_area are not returned
+    :param min_channels: Peaks with less contributing channels are not returned
+    :param max_duration: max duration time of merged peak in ns
     """
-    left_hit_i = 0
-    n_coin_channel = np.zeros(len(peak_max_times), dtype=np.int16)
-    start_ch, end_ch = channels
-    channels_seen = np.zeros(end_ch - start_ch + 1, dtype=np.bool_)
+    buffer = _result_buffer
+    offset = 0
+    if not len(hits):
+        return
+    assert hits[0]['dt'] > 0, "Hit does not indicate sampling time"
+    assert min_channels >= 1, "min_channels must be >= 1"
+    assert gap_threshold > left_extension + right_extension, \
+        "gap_threshold must be larger than left + right extension"
+    assert max(hits['channel']) < len(adc_to_pe)+1, "more channels than to_pe"
+    # Magic number comes from
+    #   np.iinfo(p['dt'].dtype).max*np.shape(p['data'])[1] = 429496729400 ns
+    # but numba does not like it
+    assert left_extension+max_duration+right_extension < 429496729400, (
+        "Too large max duration causes integer overflow")
 
-    # loop over peaks
-    for p_i, p_t in enumerate(peak_max_times):
-        channels_seen[:] = 0
-        # loop over hits starting from the last one we left at
-        for left_hit_i in range(left_hit_i, len(hit_max_times)):
+    n_channels = len(buffer[0]['area_per_channel'])
+    area_per_channel = np.zeros(n_channels, dtype=np.float32)
 
-            # if the hit is in the window, its a tight coin
-            d = hit_max_times[left_hit_i] - p_t
-            if (-left <= d) & (d <= right):
-                channels_seen[hit_channel[left_hit_i] - start_ch] = 1
+    in_peak = False
+    peak_endtime = 0
+    for hit_i, hit in enumerate(hits):
+        p = buffer[offset]
+        t0 = hit['time']
+        dt = hit['dt']
+        t1 = hit['time'] + dt * hit['length']
 
-            # stop the loop when we know we're outside the range
-            if d > right:
-                n_coin_channel[p_i] = np.sum(channels_seen)
-                break
+        if in_peak:
+            # This hit continues an existing peak
+            p['max_gap'] = max(p['max_gap'], t0 - peak_endtime)
 
-        # Add channel information in case there are no hits beyond
-        # the last peak:
-        n_coin_channel[p_i] = np.sum(channels_seen)
+        else:
+            # This hit starts a new peak candidate
+            area_per_channel *= 0
+            peak_endtime = t1
+            p['time'] = t0 - left_extension
+            p['channel'] = DIGITAL_SUM_WAVEFORM_CHANNEL
+            p['dt'] = dt
+            # These are necessary as prev peak may have been rejected:
+            p['n_hits'] = 0
+            p['area'] = 0
+            in_peak = True
+            p['max_gap'] = 0
 
-    return n_coin_channel
+        # Add hit's properties to the current peak candidate
 
+        # NB! One pulse can result in two hits, if it occours at the 
+        # boundary of a record. This is the default of strax.find_hits.
+        p['n_hits'] += 1
 
-@numba.njit(cache=True, nogil=True)
-def hit_max_sample(records, hits):
-    """Return the index of the maximum sample for hits"""
-    result = np.zeros(len(hits), dtype=np.int16)
-    for i, h in enumerate(hits):
-        r = records[h['record_i']]
-        w = r['data'][h['left']:h['right']]
-        result[i] = np.argmax(w)
-    return result
+        peak_endtime = max(peak_endtime, t1)
+        hit_area_pe = hit['area'] * adc_to_pe[hit['channel']]
+        area_per_channel[hit['channel']] += hit_area_pe
+        p['area'] += hit_area_pe
 
+        # Look at the next hit to see if THIS hit is the last in a peak.
+        # If this is the final hit, it is last by definition.
+        # Finally, make sure that if we include the next hit, we are not
+        # exceeding the max_duration.
+        is_last_hit = hit_i == len(hits) - 1
+        peak_too_long = next_hit_is_far = False
+        if not is_last_hit:
+            # These can only be computed if there is a next hit
+            next_hit = hits[hit_i + 1]
+            next_hit_is_far = next_hit['time'] - peak_endtime >= gap_threshold
+            # Peaks may not extend the max_duration
+            peak_too_long = (next_hit['time'] - p['time']
+                             + next_hit['dt'] * next_hit['length']
+                             + left_extension
+                             + right_extension) > max_duration
+        if is_last_hit or next_hit_is_far or peak_too_long:
+            # Next hit (if it exists) will initialize the new peak candidate
+            in_peak = False
+
+            # Do not save if tests are not met. Next hit will erase temp info
+            if p['area'] < min_area:
+                continue
+            n_channels = (area_per_channel != 0).sum()
+            if n_channels < min_channels:
+                continue
+
+            # Compute final quantities
+            p['length'] = (peak_endtime - p['time'] + right_extension) / dt
+            if p['length'] <= 0:
+                # This is most likely caused by a negative dt
+                raise ValueError(
+                    "Caught attempt to save nonpositive peak length?!")
+            p['area_per_channel'][:] = area_per_channel
+
+            # Save the current peak, advance the buffer
+            offset += 1
+            if offset == len(buffer):
+                yield offset
+                offset = 0
+
+    yield offset
