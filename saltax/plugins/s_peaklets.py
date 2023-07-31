@@ -351,6 +351,9 @@ class SPeaklets(strax.Plugin):
                     lone_hits=lone_hits)
 
     def natural_breaks_threshold(self, peaks):
+        """
+        Pasted from https://github.com/XENONnT/straxen/blob/5f232eb2c1ab39e11fb14d4e6ee2db369ed2c2ec/straxen/plugins/peaklets/peaklets.py#L332-L348
+        """
         rise_time = -peaks['area_decile_from_midpoint'][:, 1]
 
         # This is ~1 for an clean S2, ~0 for a clean S1,
