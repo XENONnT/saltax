@@ -1,12 +1,13 @@
 import numba
 import numpy as np
 import strax
+from strax import utils
 from immutabledict import immutabledict
 from strax.processing.general import _touching_windows
 from strax.dtypes import DIGITAL_SUM_WAVEFORM_CHANNEL
 import straxen
 from .s_records import SCHANNEL_STARTS_AT
-from straxen.plugins.peaklets import hit_max_sample, get_tight_coin, drop_data_top_field
+from straxen.plugins.peaklets.peaklets import hit_max_sample, get_tight_coin, drop_data_top_field
 
 
 export, __all__ = strax.exporter()
@@ -203,7 +204,7 @@ class SPeaklets(strax.Plugin):
         # FIXME: surgery here; top/bot array related
         # Use peaklet gap threshold for initial clustering
         # based on gaps between hits
-        peaklets = strax.find_peaks(
+        peaklets = find_peaks(
             hits, self.to_pe,
             gap_threshold=self.peaklet_gap_threshold,
             left_extension=self.peak_left_extension,
@@ -570,3 +571,123 @@ def _peak_saturation_correction_inner(channel_saturated, records, p,
             else:
                 r['data'][slice(*r_slice)] = b_sumwf[slice(*b_slice)] * scale
                 r['area'] = np.sum(r['data'])
+
+
+@export
+@utils.growing_result(dtype=strax.dtypes.peak_dtype(), chunk_size=int(1e4))
+@numba.jit(nopython=True, nogil=True, cache=True)
+def find_peaks(hits, adc_to_pe,
+               gap_threshold=300,
+               left_extension=20, right_extension=150,
+               min_area=0,
+               min_channels=2,
+               max_duration=10_000_000,
+               _result_buffer=None, result_dtype=None):
+    """Return peaks made from grouping hits together
+    Assumes all hits have the same dt
+    :param hits: Hit (or any interval) to group
+    :param left_extension: Extend peaks by this many ns left
+    :param right_extension: Extend peaks by this many ns right
+    :param gap_threshold: No hits for this much ns means new peak
+    :param min_area: Peaks with less than min_area are not returned
+    :param min_channels: Peaks with less contributing channels are not returned
+    :param max_duration: max duration time of merged peak in ns
+
+    Modified based on https://github.com/AxFoundation/strax/blob/9b508f7f8d441bf1fe441695115d292c59ce631a/strax/processing/peak_building.py#L13
+    """
+    buffer = _result_buffer
+    offset = 0
+    if not len(hits):
+        return
+    assert hits[0]['dt'] > 0, "Hit does not indicate sampling time"
+    assert min_channels >= 1, "min_channels must be >= 1"
+    assert gap_threshold > left_extension + right_extension, \
+        "gap_threshold must be larger than left + right extension"
+    assert max(hits['channel']) < len(adc_to_pe), "more channels than to_pe"
+    # Magic number comes from
+    #   np.iinfo(p['dt'].dtype).max*np.shape(p['data'])[1] = 429496729400 ns
+    # but numba does not like it
+    assert left_extension+max_duration+right_extension < 429496729400, (
+        "Too large max duration causes integer overflow")
+
+    n_channels = len(buffer[0]['area_per_channel'])
+    area_per_channel = np.zeros(n_channels, dtype=np.float32)
+
+    in_peak = False
+    peak_endtime = 0
+    for hit_i, hit in enumerate(hits):
+        p = buffer[offset]
+        t0 = hit['time']
+        dt = hit['dt']
+        t1 = hit['time'] + dt * hit['length']
+
+        if in_peak:
+            # This hit continues an existing peak
+            p['max_gap'] = max(p['max_gap'], t0 - peak_endtime)
+
+        else:
+            # This hit starts a new peak candidate
+            area_per_channel *= 0
+            peak_endtime = t1
+            p['time'] = t0 - left_extension
+            p['channel'] = DIGITAL_SUM_WAVEFORM_CHANNEL
+            p['dt'] = dt
+            # These are necessary as prev peak may have been rejected:
+            p['n_hits'] = 0
+            p['area'] = 0
+            in_peak = True
+            p['max_gap'] = 0
+
+        # Add hit's properties to the current peak candidate
+
+        # NB! One pulse can result in two hits, if it occours at the 
+        # boundary of a record. This is the default of strax.find_hits.
+        p['n_hits'] += 1
+
+        peak_endtime = max(peak_endtime, t1)
+        hit_area_pe = hit['area'] * adc_to_pe[hit['channel']]
+        area_per_channel[hit['channel']] += hit_area_pe
+        p['area'] += hit_area_pe
+
+        # Look at the next hit to see if THIS hit is the last in a peak.
+        # If this is the final hit, it is last by definition.
+        # Finally, make sure that if we include the next hit, we are not
+        # exceeding the max_duration.
+        is_last_hit = hit_i == len(hits) - 1
+        peak_too_long = next_hit_is_far = False
+        if not is_last_hit:
+            # These can only be computed if there is a next hit
+            next_hit = hits[hit_i + 1]
+            next_hit_is_far = next_hit['time'] - peak_endtime >= gap_threshold
+            # Peaks may not extend the max_duration
+            peak_too_long = (next_hit['time'] - p['time']
+                             + next_hit['dt'] * next_hit['length']
+                             + left_extension
+                             + right_extension) > max_duration
+        if is_last_hit or next_hit_is_far or peak_too_long:
+            # Next hit (if it exists) will initialize the new peak candidate
+            in_peak = False
+
+            # Do not save if tests are not met. Next hit will erase temp info
+            if p['area'] < min_area:
+                continue
+            n_channels = (area_per_channel != 0).sum()
+            if n_channels < min_channels:
+                continue
+
+            # Compute final quantities
+            p['length'] = (peak_endtime - p['time'] + right_extension) / dt
+            if p['length'] <= 0:
+                # This is most likely caused by a negative dt
+                raise ValueError(
+                    "Caught attempt to save nonpositive peak length?!")
+            p['area_per_channel'][:] = area_per_channel
+
+            # Save the current peak, advance the buffer
+            offset += 1
+            if offset == len(buffer):
+                yield offset
+                offset = 0
+
+    yield offset
+
