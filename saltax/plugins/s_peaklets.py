@@ -226,7 +226,9 @@ class SPeaklets(strax.Plugin):
         # which is asserted inside strax.find_peaks.
         is_lone_hit = strax.fully_contained_in(hits, peaklets) == -1
         lone_hits = hits[is_lone_hit]
-        integrate_lone_hits(
+
+        # Update the area of lone_hits to the integral in ADCcounts x samples
+        strax.integrate_lone_hits(
             lone_hits, records, peaklets,
             save_outside_hits=(self.peak_left_extension,
                                self.peak_right_extension),
@@ -237,8 +239,20 @@ class SPeaklets(strax.Plugin):
         # Define regions outside of peaks such that _find_hit_integration_bounds
         # is not extended beyond a peak.
         outside_peaks = self.create_outside_peaks_region(peaklets, start, end)
+        # Still assuming we have 2*n_tpc_channels to reduce bias from pileup cases
         strax.find_hit_integration_bounds(
-            hits, outside_peaks, records,
+            hits[hits['channel']<self.n_tpc_pmts], 
+            outside_peaks, 
+            records[records['channel']<self.n_tpc_pmts],
+            save_outside_hits=(self.peak_left_extension,
+                               self.peak_right_extension),
+            n_channels=len(self.to_pe[:self.n_tpc_pmts]),
+            allow_bounds_beyond_records=True,
+        )
+        strax.find_hit_integration_bounds(
+            hits[hits['channel']>=SCHANNEL_STARTS_AT], 
+            outside_peaks, 
+            records[records['channel']>=SCHANNEL_STARTS_AT],
             save_outside_hits=(self.peak_left_extension,
                                self.peak_right_extension),
             n_channels=len(self.to_pe),
@@ -374,7 +388,6 @@ class SPeaklets(strax.Plugin):
             *np.transpose(thresholds[1])))
 
     @staticmethod
-    @numba.njit(nogil=True, cache=True)
     def clip_peaklet_times(peaklets, start, end):
         straxen.plugins.peaklets.Peaklets.clip_peaklet_times(peaklets, 
                                                              start, 
