@@ -172,6 +172,7 @@ class SPeaklets(strax.Plugin):
                 f"See github.com/XENONnT/straxen/issues/295")
 
         # Get the gain model
+        # It should have length 3494 for XENONnT
         to_pe = np.zeros(SCHANNEL_STARTS_AT + self.n_tpc_pmts, dtype=np.float64)
         self.to_pe_data = self.gain_model
         self.to_pe_simu = self.gain_model_mc
@@ -583,7 +584,7 @@ def find_peaks(hits, adc_to_pe,
                min_channels=2,
                max_duration=10_000_000,
                _result_buffer=None, result_dtype=None):
-    """Return peaks made from grouping hits together
+    """Return peaks made from grouping hits together. Modified parts related to area_per_channel
     Assumes all hits have the same dt
     :param hits: Hit (or any interval) to group
     :param left_extension: Extend peaks by this many ns left
@@ -646,7 +647,12 @@ def find_peaks(hits, adc_to_pe,
 
         peak_endtime = max(peak_endtime, t1)
         hit_area_pe = hit['area'] * adc_to_pe[hit['channel']]
-        area_per_channel[hit['channel']] += hit_area_pe
+        
+        # Manually shift channels for area_per_channel
+        if hit['channel']>=SCHANNEL_STARTS_AT:
+            area_per_channel[hit['channel']-SCHANNEL_STARTS_AT] += hit_area_pe
+        else:
+            area_per_channel[hit['channel']] += hit_area_pe
         p['area'] += hit_area_pe
 
         # Look at the next hit to see if THIS hit is the last in a peak.
