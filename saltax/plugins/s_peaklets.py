@@ -392,9 +392,10 @@ class SPeaklets(strax.Plugin):
         :param end: Chunk end
         :return: array of strax.time_fields dtype.
         """
-        straxen.plugins.peaklets.Peaklets.create_outside_peaks_region(peaklets, 
-                                                                      start, 
-                                                                      end)
+        outside_peaks = straxen.plugins.peaklets.Peaklets.create_outside_peaks_region(peaklets, 
+                                                                                      start, 
+                                                                                      end)
+        return outside_peaks
 
     @staticmethod
     def add_hit_features(hitlets, hit_max_times, peaklets):
