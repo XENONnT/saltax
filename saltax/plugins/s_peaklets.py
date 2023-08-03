@@ -1,12 +1,13 @@
 import numba
 import numpy as np
 import strax
+from strax.processing.peak_building import _build_hit_waveform
 from strax import utils
 from immutabledict import immutabledict
 from strax.processing.general import _touching_windows
 from strax.dtypes import DIGITAL_SUM_WAVEFORM_CHANNEL
-import straxen
 from .s_records import SCHANNEL_STARTS_AT
+import straxen
 from straxen.plugins.peaklets.peaklets import hit_max_sample, get_tight_coin, drop_data_top_field
 
 
@@ -187,6 +188,9 @@ class SPeaklets(strax.Plugin):
         self.hit_thresholds = hit_thresholds
 
         self.channel_range = self.channel_map['tpc']
+
+        # Override strax.sum_waveform
+        setattr(strax, "sum_waveform", sum_waveform_salted)
         
     def compute(self, records, start, end):
         # Throw away any non-TPC records
@@ -267,6 +271,7 @@ class SPeaklets(strax.Plugin):
 
         strax.compute_widths(peaklets)
 
+        # hitlets here are still 3494 channels
         # Split peaks using low-split natural breaks;
         # see https://github.com/XENONnT/straxen/pull/45
         # and https://github.com/AxFoundation/strax/pull/225
@@ -392,9 +397,10 @@ class SPeaklets(strax.Plugin):
         :param end: Chunk end
         :return: array of strax.time_fields dtype.
         """
-        straxen.plugins.peaklets.Peaklets.create_outside_peaks_region(peaklets, 
-                                                                      start, 
-                                                                      end)
+        outside_peaks = straxen.plugins.peaklets.Peaklets.create_outside_peaks_region(peaklets, 
+                                                                                      start, 
+                                                                                      end)
+        return outside_peaks
 
     @staticmethod
     def add_hit_features(hitlets, hit_max_times, peaklets):
@@ -404,9 +410,9 @@ class SPeaklets(strax.Plugin):
         :param peaklets: Peaklets for which intervals should be computed.
         :return: array of peaklet_timing dtype.
         """
-        straxen.plugins.peaklets.peaklets.Peaklets.add_hit_features(hitlets, 
-                                                                    hit_max_times, 
-                                                                    peaklets)
+        straxen.plugins.peaklets.Peaklets.add_hit_features(hitlets, 
+                                                           hit_max_times, 
+                                                           peaklets)
 
 
 @numba.jit(nopython=True, nogil=True, cache=False)
@@ -416,7 +422,10 @@ def peak_saturation_correction(records, rlinks, peaks, hitlets, to_pe,
                                use_classification=False,
                                n_top_channels=0,
                                ):
-    """Correct the area and per pmt area of peaks from saturation
+    """WARNING: This probably doesn't work when we have the salted channel also saturated!!!
+    We will be using only the real TPC channels to correct the saturation!!! This is dangerous
+    if you are salting things outside WIMP/LowER regions!!!
+    Correct the area and per pmt area of peaks from saturation
     :param records: Records
     :param rlinks: strax.record_links of corresponding records.
     :param peaks: Peaklets / Peaks
@@ -477,10 +486,16 @@ def peak_saturation_correction(records, rlinks, peaks, hitlets, to_pe,
                 r['time'] // dt, r['length'],
                 p['time'] // dt, p['length'] * p['dt'] // dt)
 
+            # Shift channels to handle salted channels
             ch = r['channel']
+            if ch >= SCHANNEL_STARTS_AT:
+                ch_shifted = ch - SCHANNEL_STARTS_AT
+            else:
+                ch_shifted = ch
+
             if channel_saturated[ch]:
-                b_pulse[ch, slice(*b_slice)] += r['data'][slice(*r_slice)]
-                b_index[ch, np.argmin(b_index[ch])] = record_i
+                b_pulse[ch_shifted, slice(*b_slice)] += r['data'][slice(*r_slice)]
+                b_index[ch_shifted, np.argmin(b_index[ch_shifted])] = record_i
             else:
                 b_sumwf[slice(*b_slice)] += r['data'][slice(*r_slice)] \
                                             * to_pe[ch]
@@ -504,7 +519,10 @@ def _peak_saturation_correction_inner(channel_saturated, records, p,
                                       reference_length=100,
                                       min_reference_length=20,
                                       ):
-    """Would add a third level loop in peak_saturation_correction
+    """WARNING: This probably doesn't work when we have the salted channel also saturated!!!
+    We will be using only the real TPC channels to correct the saturation!!! This is dangerous
+    if you are salting things outside WIMP/LowER regions!!!
+    Would add a third level loop in peak_saturation_correction
     Which is not ideal for numba, thus this function is written
     :param channel_saturated: (bool, n_channels)
     :param p: One peak/peaklet
@@ -698,4 +716,151 @@ def find_peaks(hits, adc_to_pe,
                 offset = 0
 
     yield offset
+
+@export
+@numba.jit(nopython=True, nogil=True, cache=True)
+def sum_waveform_salted(peaks, hits, records, record_links, adc_to_pe, n_top_channels=0,
+                 select_peaks_indices=None):
+    """Modified to handle array channels range.
+    Compute sum waveforms for all peaks in peaks. Only builds summed
+    waveform other regions in which hits were found. This is required
+    to avoid any bias due to zero-padding and baselining.
+    Will downsample sum waveforms if they do not fit in per-peak buffer
+
+    :param peaks: Peaks for which the summed waveform should be build.
+    :param hits: Hits which are inside peaks. Must be sorted according
+        to record_i.
+    :param records: Records to be used to build peaks.
+    :param record_links: Tuple of previous and next records.
+    :param n_top_channels: Number of top array channels.
+    :param select_peaks_indices: Indices of the peaks for partial
+    processing. In the form of np.array([np.int, np.int, ..]). If
+    None (default), all the peaks are used for the summation.
+
+    Assumes all peaks AND pulses have the same dt!
+    """
+    if not len(records):
+        return
+    if not len(peaks):
+        return
+    if select_peaks_indices is None:
+        select_peaks_indices = np.arange(len(peaks))
+    if not len(select_peaks_indices):
+        return
+    dt = records[0]['dt']
+    n_samples_record = len(records[0]['data'])
+    prev_record_i, next_record_i = record_links
+
+    # Big buffer to hold even largest sum waveforms
+    # Need a little more even for downsampling..
+    swv_buffer = np.zeros(peaks['length'].max() * 2, dtype=np.float32)
+
+    if n_top_channels > 0:
+        twv_buffer = np.zeros(peaks['length'].max() * 2, dtype=np.float32)
+
+    n_channels = len(peaks[0]['area_per_channel'])
+    area_per_channel = np.zeros(n_channels, dtype=np.float32)
+
+    # Hit index for hits in peaks
+    left_h_i = 0
+    # Create hit waveform buffer
+    hit_waveform = np.zeros(hits['length'].max(), dtype=np.float32)
+
+    for peak_i in select_peaks_indices:
+        p = peaks[peak_i]
+        # Clear the relevant part of the swv buffer for use
+        # (we clear a bit extra for use in downsampling)
+        p_length = p['length']
+        swv_buffer[:min(2 * p_length, len(swv_buffer))] = 0
+
+        if n_top_channels > 0:
+            twv_buffer[:min(2 * p_length, len(twv_buffer))] = 0
+
+        # Clear area and area per channel
+        # (in case find_peaks already populated them)
+        area_per_channel *= 0
+        p['area'] = 0
+
+        # Find first hit that contributes to this peak
+        for left_h_i in range(left_h_i, len(hits)):
+            h = hits[left_h_i]
+            # TODO: need test that fails if we replace < with <= here
+            if p['time'] < h['time'] + h['length'] * dt:
+                break
+        else:
+            # Hits exhausted before peaks exhausted
+            # TODO: this is a strange case, maybe raise warning/error?
+            break
+
+        # Scan over hits that overlap with peak
+        for right_h_i in range(left_h_i, len(hits)):
+            h = hits[right_h_i]
+            record_i = h['record_i']
+            
+            # Shift salted channel
+            ch = h['channel']
+            ch_shifted = ch
+            if ch >= n_channels:
+                ch_shifted = ch - SCHANNEL_STARTS_AT
+
+            assert p['dt'] == h['dt'], "Hits and peaks must have same dt"
+
+            shift = (p['time'] - h['time']) // dt
+            n_samples_hit = h['length']
+            n_samples_peak = p_length
+
+            if shift <= -n_samples_peak:
+                # Hit is completely to the right of the peak;
+                # we've seen all overlapping records
+                break
+
+            if n_samples_hit <= shift:
+                # The (real) data in this record does not actually overlap
+                # with the peak
+                # (although a previous, longer hit did overlap)
+                continue
+
+            # Get overlapping samples between hit and peak:
+            (h_start, h_end), (p_start, p_end) = strax.overlap_indices(
+                h['time'] // dt, n_samples_hit,
+                p['time'] // dt, n_samples_peak)
+
+            hit_waveform[:] = 0
+
+            # Get record which belongs to main part of hit (wo integration bounds):
+            r = records[record_i]
+
+            is_saturated = _build_hit_waveform(h, r, hit_waveform)
+
+            # Now check if we also have to go to prev/next record due to integration bounds.
+            # If bounds are outside of peak we chop when building the summed waveform later.
+            if h['left_integration'] < 0 and prev_record_i[record_i] != -1:
+                r = records[prev_record_i[record_i]]
+                is_saturated |= _build_hit_waveform(h, r, hit_waveform)
+
+            if h['right_integration'] > n_samples_record and next_record_i[record_i] != -1:
+                r = records[next_record_i[record_i]]
+                is_saturated |= _build_hit_waveform(h, r, hit_waveform)
+
+            p['saturated_channel'][ch_shifted] |= is_saturated
+
+            hit_data = hit_waveform[h_start:h_end]
+            hit_data *= adc_to_pe[ch]
+            swv_buffer[p_start:p_end] += hit_data
+
+            if n_top_channels > 0:
+                if ch_shifted < n_top_channels:
+                    twv_buffer[p_start:p_end] += hit_data
+
+            area_pe = hit_data.sum()
+            area_per_channel[ch_shifted] += area_pe
+            p['area'] += area_pe
+
+        if n_top_channels > 0:
+            strax.store_downsampled_waveform(p, swv_buffer, True, twv_buffer)
+        else:
+            strax.store_downsampled_waveform(p, swv_buffer)
+
+        p['n_saturated_channels'] = p['saturated_channel'].sum()
+        p['area_per_channel'][:] = area_per_channel
 
