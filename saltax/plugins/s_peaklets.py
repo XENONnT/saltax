@@ -410,7 +410,7 @@ class SPeaklets(strax.Plugin):
         :param peaklets: Peaklets for which intervals should be computed.
         :return: array of peaklet_timing dtype.
         """
-        straxen.plugins.peaklets.peaklets.Peaklets.add_hit_features(hitlets, 
+        straxen.plugins.peaklets.Peaklets.add_hit_features(hitlets, 
                                                                     hit_max_times, 
                                                                     peaklets)
 
