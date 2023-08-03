@@ -411,8 +411,8 @@ class SPeaklets(strax.Plugin):
         :return: array of peaklet_timing dtype.
         """
         straxen.plugins.peaklets.Peaklets.add_hit_features(hitlets, 
-                                                                    hit_max_times, 
-                                                                    peaklets)
+                                                           hit_max_times, 
+                                                           peaklets)
 
 
 @numba.jit(nopython=True, nogil=True, cache=False)
