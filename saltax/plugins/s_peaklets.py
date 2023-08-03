@@ -1,12 +1,13 @@
 import numba
 import numpy as np
 import strax
+from strax.processing.peak_building import _build_hit_waveform
 from strax import utils
 from immutabledict import immutabledict
 from strax.processing.general import _touching_windows
 from strax.dtypes import DIGITAL_SUM_WAVEFORM_CHANNEL
-import straxen
 from .s_records import SCHANNEL_STARTS_AT
+import straxen
 from straxen.plugins.peaklets.peaklets import hit_max_sample, get_tight_coin, drop_data_top_field
 
 
@@ -187,6 +188,9 @@ class SPeaklets(strax.Plugin):
         self.hit_thresholds = hit_thresholds
 
         self.channel_range = self.channel_map['tpc']
+
+        # Override strax.sum_waveform
+        setattr(strax, "sum_waveform", self.sum_waveform_salted)
         
     def compute(self, records, start, end):
         # Throw away any non-TPC records
@@ -263,7 +267,7 @@ class SPeaklets(strax.Plugin):
         # If sum_waveform_top_array is false, don't digitize the top array
         n_top_pmts_if_digitize_top = self.n_top_pmts if self.sum_waveform_top_array else -1
         # FIXME: surgery here; top/bot array related
-        sum_waveform(peaklets, hitlets, r, rlinks, self.to_pe, n_top_channels=n_top_pmts_if_digitize_top)
+        strax.sum_waveform(peaklets, hitlets, r, rlinks, self.to_pe, n_top_channels=n_top_pmts_if_digitize_top)
 
         strax.compute_widths(peaklets)
 
@@ -702,7 +706,7 @@ def find_peaks(hits, adc_to_pe,
 
 @export
 @numba.jit(nopython=True, nogil=True, cache=True)
-def sum_waveform(peaks, hits, records, record_links, adc_to_pe, n_top_channels=0,
+def sum_waveform_salted(peaks, hits, records, record_links, adc_to_pe, n_top_channels=0,
                  select_peaks_indices=None):
     """Modified to handle array channels range.
     Compute sum waveforms for all peaks in peaks. Only builds summed
@@ -813,17 +817,17 @@ def sum_waveform(peaks, hits, records, record_links, adc_to_pe, n_top_channels=0
             # Get record which belongs to main part of hit (wo integration bounds):
             r = records[record_i]
 
-            is_saturated = strax._build_hit_waveform(h, r, hit_waveform)
+            is_saturated = _build_hit_waveform(h, r, hit_waveform)
 
             # Now check if we also have to go to prev/next record due to integration bounds.
             # If bounds are outside of peak we chop when building the summed waveform later.
             if h['left_integration'] < 0 and prev_record_i[record_i] != -1:
                 r = records[prev_record_i[record_i]]
-                is_saturated |= strax._build_hit_waveform(h, r, hit_waveform)
+                is_saturated |= _build_hit_waveform(h, r, hit_waveform)
 
             if h['right_integration'] > n_samples_record and next_record_i[record_i] != -1:
                 r = records[next_record_i[record_i]]
-                is_saturated |= strax._build_hit_waveform(h, r, hit_waveform)
+                is_saturated |= _build_hit_waveform(h, r, hit_waveform)
 
             p['saturated_channel'][ch_shifted] |= is_saturated
 
