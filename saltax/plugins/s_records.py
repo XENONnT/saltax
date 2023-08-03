@@ -5,7 +5,7 @@ import strax
 import straxen
 from straxen.plugins.records.records import NO_PULSE_COUNTS
 
-SCHANNEL_STARTS_AT = -494
+SCHANNEL_STARTS_AT = 3000
 export, __all__ = strax.exporter()
 __all__ += ['NO_PULSE_COUNTS']
 
@@ -31,7 +31,7 @@ class SPulseProcessing(strax.Plugin):
     overlap with any other pulse), or mean values of baseline and
     baseline rms channel.
     """
-    __version__ = '0.0.1'
+    __version__ = '0.0.2'
 
     parallel = 'process'
     rechunk_on_save = immutabledict(
