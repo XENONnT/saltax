@@ -241,18 +241,7 @@ class SPeaklets(strax.Plugin):
         outside_peaks = self.create_outside_peaks_region(peaklets, start, end)
         # Still assuming we have 2*n_tpc_channels to reduce bias from pileup cases
         strax.find_hit_integration_bounds(
-            hits[hits['channel']<self.n_tpc_pmts], 
-            outside_peaks, 
-            records[records['channel']<self.n_tpc_pmts],
-            save_outside_hits=(self.peak_left_extension,
-                               self.peak_right_extension),
-            n_channels=len(self.to_pe[:self.n_tpc_pmts]),
-            allow_bounds_beyond_records=True,
-        )
-        strax.find_hit_integration_bounds(
-            hits[hits['channel']>=SCHANNEL_STARTS_AT], 
-            outside_peaks, 
-            records[records['channel']>=SCHANNEL_STARTS_AT],
+            hits, outside_peaks, records,
             save_outside_hits=(self.peak_left_extension,
                                self.peak_right_extension),
             n_channels=len(self.to_pe),
