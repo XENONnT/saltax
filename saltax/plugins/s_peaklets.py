@@ -271,6 +271,7 @@ class SPeaklets(strax.Plugin):
 
         strax.compute_widths(peaklets)
 
+        # hitlets here are still 3494 channels
         # Split peaks using low-split natural breaks;
         # see https://github.com/XENONnT/straxen/pull/45
         # and https://github.com/AxFoundation/strax/pull/225
@@ -482,10 +483,16 @@ def peak_saturation_correction(records, rlinks, peaks, hitlets, to_pe,
                 r['time'] // dt, r['length'],
                 p['time'] // dt, p['length'] * p['dt'] // dt)
 
+            # Shift channels to handle salted channels
             ch = r['channel']
+            if ch >= SCHANNEL_STARTS_AT:
+                ch_shifted -= SCHANNEL_STARTS_AT
+            else:
+                ch_shifted = ch
+
             if channel_saturated[ch]:
-                b_pulse[ch, slice(*b_slice)] += r['data'][slice(*r_slice)]
-                b_index[ch, np.argmin(b_index[ch])] = record_i
+                b_pulse[ch_shifted, slice(*b_slice)] += r['data'][slice(*r_slice)]
+                b_index[ch_shifted, np.argmin(b_index[ch_shifted])] = record_i
             else:
                 b_sumwf[slice(*b_slice)] += r['data'][slice(*r_slice)] \
                                             * to_pe[ch]
