@@ -132,7 +132,7 @@ def xenonnt_salted(runid, output_folder='./strax_data',
         storage=strax.DataDirectory(output_folder),
         config=context_config,
         **context_options)
-    st.register([straxen.DAQReader, saltax.SRawRecordsFromFaxNT])
+    st.register([straxen.DAQReader, saltax.SRawRecordsFromFaxNT, saltax.SPeaklets])
     st.deregister_plugins_with_missing_dependencies()
         
     # Based on straxen.contexts.xenonnt()
