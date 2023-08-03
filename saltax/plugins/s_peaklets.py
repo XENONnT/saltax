@@ -190,7 +190,7 @@ class SPeaklets(strax.Plugin):
         self.channel_range = self.channel_map['tpc']
 
         # Override strax.sum_waveform
-        setattr(strax, "sum_waveform", self.sum_waveform_salted)
+        setattr(strax, "sum_waveform", sum_waveform_salted)
         
     def compute(self, records, start, end):
         # Throw away any non-TPC records
