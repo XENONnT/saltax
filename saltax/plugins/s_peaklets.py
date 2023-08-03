@@ -422,7 +422,10 @@ def peak_saturation_correction(records, rlinks, peaks, hitlets, to_pe,
                                use_classification=False,
                                n_top_channels=0,
                                ):
-    """Correct the area and per pmt area of peaks from saturation
+    """WARNING: This probably doesn't work when we have the salted channel also saturated!!!
+    We will be using only the real TPC channels to correct the saturation!!! This is dangerous
+    if you are salting things outside WIMP/LowER regions!!!
+    Correct the area and per pmt area of peaks from saturation
     :param records: Records
     :param rlinks: strax.record_links of corresponding records.
     :param peaks: Peaklets / Peaks
@@ -486,7 +489,7 @@ def peak_saturation_correction(records, rlinks, peaks, hitlets, to_pe,
             # Shift channels to handle salted channels
             ch = r['channel']
             if ch >= SCHANNEL_STARTS_AT:
-                ch_shifted -= SCHANNEL_STARTS_AT
+                ch_shifted = ch - SCHANNEL_STARTS_AT
             else:
                 ch_shifted = ch
 
@@ -516,7 +519,10 @@ def _peak_saturation_correction_inner(channel_saturated, records, p,
                                       reference_length=100,
                                       min_reference_length=20,
                                       ):
-    """Would add a third level loop in peak_saturation_correction
+    """WARNING: This probably doesn't work when we have the salted channel also saturated!!!
+    We will be using only the real TPC channels to correct the saturation!!! This is dangerous
+    if you are salting things outside WIMP/LowER regions!!!
+    Would add a third level loop in peak_saturation_correction
     Which is not ideal for numba, thus this function is written
     :param channel_saturated: (bool, n_channels)
     :param p: One peak/peaklet
