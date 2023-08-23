@@ -41,7 +41,7 @@ class SPeaklets(strax.Plugin):
     parallel = 'process'
     compressor = 'zstd'
 
-    __version__ = '0.0.0'
+    __version__ = '0.0.1'
 
     peaklet_gap_threshold = straxen.URLConfig(
         default=700, infer_type=False,
