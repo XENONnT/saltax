@@ -12,7 +12,10 @@ logging.basicConfig(handlers=[logging.StreamHandler()])
 log = logging.getLogger('wfsim.interface')
 log.setLevel('WARNING')
 
-
+@strax.takes_config(
+    strax.Option('saltax_mode', default='salt', track=False, infer_type=False,
+                 help="'data', 'simu', or 'salt'"), 
+)
 @export
 class ChunkRawRecords(object):
     """
