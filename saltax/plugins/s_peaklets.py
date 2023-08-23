@@ -14,6 +14,10 @@ from straxen.plugins.peaklets.peaklets import hit_max_sample, get_tight_coin, dr
 export, __all__ = strax.exporter()
 
 @export
+@strax.takes_config(
+    strax.Option('saltax_mode', default='salt', track=False, infer_type=False,
+                 help="'data', 'simu', or 'salt'"), 
+)
 class SPeaklets(strax.Plugin):
     """
     Split records into:
