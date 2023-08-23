@@ -193,9 +193,16 @@ class SPeaklets(strax.Plugin):
         setattr(strax, "sum_waveform", sum_waveform_salted)
         
     def compute(self, records, start, end):
-        # Throw away any non-TPC records
-        r = records[(records['channel']>=SCHANNEL_STARTS_AT)|
-                    (records['channel']<self.n_tpc_pmts)]
+        # Based on saltax_mode, determine what channels to involve
+        if self.config['saltax_mode'] == 'salt':
+            r = records[(records['channel']>=SCHANNEL_STARTS_AT)|
+                        (records['channel']<self.n_tpc_pmts)]
+        elif self.config['saltax_mode'] == 'simu':
+            r = records[(records['channel']>=SCHANNEL_STARTS_AT)]
+        elif self.config['saltax_mode'] == 'data':
+            r = records[(records['channel']<self.n_tpc_pmts)]
+        else:
+            raise ValueError(f"Unknown saltax_mode {self.config['saltax_mode']}")
 
         # 988 channels
         hits = strax.find_hits(r, min_amplitude=self.hit_thresholds)
