@@ -7,4 +7,5 @@ Modified `straxen` [data structure](https://straxen.readthedocs.io/en/latest/ref
 - `s_peaklets.py`: Modified `peaklets`, which build peaks as there are `2*n_tpc_pmts` channels, but sum up per-channel information (`area_per_channel` and top-bottom specific fields) as if there are only `n_tpc_pmts`.
 ## Data Structure
 <img width="521" alt="image" src="https://github.com/FaroutYLq/saltax/assets/47046530/9c3ef86c-a171-4082-914a-98f6eee14a58">
+
 Here the numbers are marking number of channels in the plugin.
