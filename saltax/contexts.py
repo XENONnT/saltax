@@ -22,7 +22,7 @@ SXNT_COMMON_OPTS['register'] = XNT_COMMON_OPTS_OVERRIDE['register']
 
 
 # saltax configuration overrides
-SCHANNEL_STARTS_AT = -494
+SCHANNEL_STARTS_AT = 3000
 XNT_COMMON_CONFIG_OVERRIDE = dict(
     channel_map=immutabledict(
         # (Minimum channel, maximum channel)
@@ -56,23 +56,6 @@ def get_generator(generator_name):
     """
     generator_func = eval('saltax.generator_'+generator_name)
     return generator_func
-
-def get_rr_chunk_ranges(st, runid):
-    """
-    Return the chunk ranges for raw_records.
-    :param st: strax context
-    :param runid: run number in string
-    :return: chunk ranges in list, e.g. [[0, 1000000], [1000000, 2000000], ...]
-    """
-    if type(runid) == int:
-        runid = str(runid).zfill(6)
-    assert st.is_stored(runid, 'raw_records'), "%s must be stored! \
-        Put it into your output_folder please. "%(st.key_for(runid, 'raw_records'))
-    metadata = st.get_metadata(runid, 'raw_records')
-    chunk_ranges = []
-    for chunk in metadata['chunks']:
-        chunk_ranges.append([chunk['start'], chunk['end']])
-    return chunk_ranges
 
 def xenonnt_salted(runid, 
                    saltax_mode='salt',
