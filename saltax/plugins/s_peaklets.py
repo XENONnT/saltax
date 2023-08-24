@@ -191,7 +191,8 @@ class SPeaklets(strax.Plugin):
         hit_thresholds[SCHANNEL_STARTS_AT:] = self.hit_min_amplitude
         self.hit_thresholds = hit_thresholds
 
-        self.channel_range = self.channel_map['tpc']
+        self.channel_range = (min(min(self.channel_map['tpc']), min(self.channel_map['stpc'])),
+                              max(max(self.channel_map['tpc']), max(self.channel_map['stpc'])))
 
         # Override strax.sum_waveform
         setattr(strax, "sum_waveform", sum_waveform_salted)
