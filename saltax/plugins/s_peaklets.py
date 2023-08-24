@@ -14,6 +14,10 @@ from straxen.plugins.peaklets.peaklets import hit_max_sample, get_tight_coin, dr
 export, __all__ = strax.exporter()
 
 @export
+@strax.takes_config(
+    strax.Option('saltax_mode', default='salt', track=True, infer_type=False,
+                 help="'data', 'simu', or 'salt'"), 
+)
 class SPeaklets(strax.Plugin):
     """
     Split records into:
@@ -41,7 +45,7 @@ class SPeaklets(strax.Plugin):
     parallel = 'process'
     compressor = 'zstd'
 
-    __version__ = '0.0.0'
+    __version__ = '0.0.3'
 
     peaklet_gap_threshold = straxen.URLConfig(
         default=700, infer_type=False,
@@ -187,15 +191,24 @@ class SPeaklets(strax.Plugin):
         hit_thresholds[SCHANNEL_STARTS_AT:] = self.hit_min_amplitude
         self.hit_thresholds = hit_thresholds
 
-        self.channel_range = self.channel_map['tpc']
+        self.channel_range = (min(min(self.channel_map['tpc']), min(self.channel_map['stpc'])),
+                              max(max(self.channel_map['tpc']), max(self.channel_map['stpc'])))
 
         # Override strax.sum_waveform
         setattr(strax, "sum_waveform", sum_waveform_salted)
         
     def compute(self, records, start, end):
-        # Throw away any non-TPC records
-        r = records[(records['channel']>=SCHANNEL_STARTS_AT)|
-                    (records['channel']<self.n_tpc_pmts)]
+        # Based on saltax_mode, determine what channels to involve
+        if self.config['saltax_mode'] == 'salt':
+            records = records[(records['channel']>=SCHANNEL_STARTS_AT)|
+                        (records['channel']<self.n_tpc_pmts)]
+        elif self.config['saltax_mode'] == 'simu':
+            records = records[(records['channel']>=SCHANNEL_STARTS_AT)]
+        elif self.config['saltax_mode'] == 'data':
+            records = records[(records['channel']<self.n_tpc_pmts)]
+        else:
+            raise ValueError(f"Unknown saltax_mode {self.config['saltax_mode']}")
+        r = records
 
         # 988 channels
         hits = strax.find_hits(r, min_amplitude=self.hit_thresholds)

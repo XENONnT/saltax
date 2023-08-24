@@ -2,7 +2,6 @@ import strax
 import numpy as np
 import wfsim
 import logging
-import cutax
 from wfsim import extra_truth_dtype_per_pmt
 from immutabledict import immutabledict
 from wfsim.strax_interface import SimulatorPlugin, instruction_dtype, rand_instructions, instruction_from_csv
@@ -11,7 +10,6 @@ export, __all__ = strax.exporter()
 logging.basicConfig(handlers=[logging.StreamHandler()])
 log = logging.getLogger('wfsim.interface')
 log.setLevel('WARNING')
-
 
 @export
 class ChunkRawRecords(object):
