@@ -11,6 +11,8 @@ logging.basicConfig(handlers=[logging.StreamHandler()])
 log = logging.getLogger('wfsim.interface')
 log.setLevel('WARNING')
 
+NS_NO_INSTRUCTION_BEFORE_CHUNK_END = 5e7
+
 @export
 class ChunkRawRecords(object):
     """
@@ -228,7 +230,7 @@ class SRawRecordsFromFaxNT(SimulatorPlugin):
         self.sim = ChunkRawRecords(self.config)
         instructions = self.instructions
         instructions = instructions[(instructions['time'] >= start) & 
-                                    (instructions['time'] < end)] # Probably need safeguard here
+                                    (instructions['time'] < end-NS_NO_INSTRUCTION_BEFORE_CHUNK_END)]
         self.sim_iter = self.sim(instructions)
         try:
             result = next(self.sim_iter)
