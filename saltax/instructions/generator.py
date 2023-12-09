@@ -156,7 +156,7 @@ def instr_file_name(runid, instr, recoil, generator_name, mode, rate=1e9/SALT_TI
 
     return filename
 
-def generator_flat(runid, en_range=(0.01, 30.0), recoil=7,
+def generator_flat(runid, en_range=(0.01, 15.0), recoil=7,
                    n_tot=None, rate=1e9/SALT_TIME_INTERVAL, 
                    fmap=FIELD_MAP, nc=NC, 
                    r_range=R_RANGE, z_range=Z_RANGE, 
