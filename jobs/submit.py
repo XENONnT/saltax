@@ -64,7 +64,7 @@ class Submit(object):
         """
         Submit a single job.
         """
-        jobname = JOB_TITLE + '_{:03}'.format(loop_index)
+        jobname = JOB_TITLE + '_{:03}'.format(loop_item)
         # Modify here for the script to run
         jobstring = "python job.py %s"%(loop_item)
         print(jobstring)
