@@ -77,6 +77,7 @@ p = Submit()
 
 # Modify here for the runs to process
 loop_over = RUNIDS
+print("Going to process these runs:", loop_over)
 print('Number of runs to process: ', len(loop_over))
 print('Your log files are in: ', LOG_DIR)
 p.execute(loop_over=loop_over, max_num_submit=MAX_NUM_SUBMIT)

@@ -2,6 +2,7 @@ import saltax
 import straxen
 import configparser
 from datetime import datetime
+import sys
 straxen.print_versions()
 
 now = datetime.now()
