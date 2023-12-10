@@ -37,7 +37,7 @@ class Submit(object):
     def execute(self, *args, **kwargs):
         eval('self.{name}(*args, **kwargs)'.format(name = self.name().lower()))
 
-    def submit(self, loop_over=[], max_num_submit=10, nmax=3):
+    def submit(self, loop_over=[], max_num_submit=10, nmax=10000):
         _start = 0
         self.max_num_submit = max_num_submit
         self.loop_over = loop_over
