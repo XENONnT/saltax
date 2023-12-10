@@ -10,7 +10,6 @@ config = configparser.ConfigParser()
 config.read('config.ini')
 
 MAX_NUM_SUBMIT = config.getint('utilix', 'max_num_submit')
-N_MAX = config.getint('utilix', 'nmax')
 T_SLEEP = config.getfloat('utilix', 't_sleep')
 USER = config.get('slurm', 'username')
 ACCOUNT = config.get('slurm', 'account')
@@ -62,7 +61,7 @@ class Submit(object):
     def _submit_single(self, loop_index, loop_item):
         jobname = JOB_TITLE + '_{:03}'.format(loop_index)
         # Modify here for the script to run
-        jobstring = "python ../job.py %s"%(loop_item)
+        jobstring = "python job.py %s"%(loop_item)
         print(jobstring)
 
         # Modify here for the log name
@@ -78,6 +77,6 @@ p = Submit()
 
 # Modify here for the runs to process
 loop_over = RUNIDS
-print('Run lists to check completeness: ', len(loop_over))
+print('Number of runs to process: ', len(loop_over))
 print('Your log files are in: ', LOG_DIR)
-p.execute(loop_over=loop_over, max_num_submit=MAX_NUM_SUBMIT, nmax=N_MAX)
+p.execute(loop_over=loop_over, max_num_submit=MAX_NUM_SUBMIT)
