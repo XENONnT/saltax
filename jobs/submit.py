@@ -27,10 +27,6 @@ os.makedirs(LOG_DIR, exist_ok=True)
 
 
 class Submit(object):
-    '''
-        Take maximum number of nodes to use at once
-        Submit each group to a node and excute
-    '''
     def name(self):
         return self.__class__.__name__
 
@@ -38,6 +34,9 @@ class Submit(object):
         eval('self.{name}(*args, **kwargs)'.format(name = self.name().lower()))
 
     def submit(self, loop_over=[], max_num_submit=10, nmax=10000):
+        """
+        Submit jobs to slurm.
+        """
         _start = 0
         self.max_num_submit = max_num_submit
         self.loop_over = loop_over
@@ -54,11 +53,17 @@ class Submit(object):
 
     # check my jobs
     def working_job(self):
+        """
+        Check how many jobs are running.
+        """
         cmd='squeue --user={user} | wc -l'.format(user = USER)
         jobNum=int(os.popen(cmd).read())
         return  jobNum -1
 
     def _submit_single(self, loop_index, loop_item):
+        """
+        Submit a single job.
+        """
         jobname = JOB_TITLE + '_{:03}'.format(loop_index)
         # Modify here for the script to run
         jobstring = "python job.py %s"%(loop_item)
