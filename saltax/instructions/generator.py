@@ -156,6 +156,43 @@ def instr_file_name(runid, instr, recoil, generator_name, mode, rate=1e9/SALT_TI
 
     return filename
 
+def generator_se(runid, 
+                 n_tot=None, rate=1e9/SALT_TIME_INTERVAL, 
+                 r_range=R_RANGE, z_range=Z_RANGE, 
+                 time_mode="uniform", *args):
+    """
+    Generate instructions for a run with single electron.
+    :param runid: run number in integer
+    :param n_tot: total number of events to generate, default: None i.e. generate events until end_time
+    :param rate: rate of events in Hz, default: 1e9/SALT_TIME_INTERVAL
+    :param r_range: (r_min, r_max) in cm, default: R_RANGE, defined above
+    :param z_range: (z_min, z_max) in cm, default: Z_RANGE, defined above
+    :param time_mode: 'uniform' or 'realistic', default: 'uniform'
+    :return: instructions in numpy array
+    """
+    start_time, end_time = get_run_start_end(runid)
+    times = generate_times(start_time, end_time, size=n_tot, 
+                           rate=rate, time_mode=time_mode)
+    n_tot = len(times)
+    
+    instr = np.zeros(n_tot, dtype=wfsim.instruction_dtype)
+    instr["event_number"] = np.arange(1, n_tot + 1)
+    instr["type"][:] = 2
+    instr["time"][:] = times
+
+    # Generating unoformely distributed events for give R and Z range
+    x, y, z = generate_vertex(r_range=r_range, z_range=z_range, size=n_tot)
+    instr["x"][:] = x
+    instr["y"][:] = y
+    instr["z"][:] = z
+
+    # And generating quantas from nest
+    for i in range(0, n_tot):
+        instr["amp"][i] = 1
+        instr["n_excitons"][i] = 0
+        
+    return instr
+
 def generator_flat(runid, en_range=(0.2, 15.0), recoil=7,
                    n_tot=None, rate=1e9/SALT_TIME_INTERVAL, 
                    fmap=FIELD_MAP, nc=NC, 
