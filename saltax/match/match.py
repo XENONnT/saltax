@@ -118,7 +118,7 @@ def pair_events_to_filtered_truth(truth, events):
         
         # If no event is found, then we consider lost
         if len(j_selected_events) == 0:
-            matched_to[i] = np.nan
+            matched_to[i] = -99999
         # If only one event is found, then we consider matched
         elif len(j_selected_events) == 1:
             matched_to[i] = j_selected_events[0]
@@ -148,7 +148,7 @@ def pair_events_to_matched_simu(matched_simu, events):
         
         # If no event is found, then we consider lost
         if len(j_selected_events) == 0:
-            matched_to[i] = np.nan
+            matched_to[i] = -99999
         # If only one event is found, then we consider matched
         elif len(j_selected_events) == 1:
             matched_to[i] = j_selected_events[0]
@@ -171,7 +171,7 @@ def pair_salt_to_simu(truth, match, events_simu, events_salt):
     #truth_filtered, match_filtered = filter_out_not_found(truth_filtered, match_filtered) 
 
     ind_simu_matched_to_truth = pair_events_to_filtered_truth(truth_filtered, events_simu)
-    events_simu_matched_to_truth = events_simu[~np.isnan(ind_simu_matched_to_truth)]
+    events_simu_matched_to_truth = events_simu[ind_simu_matched_to_truth>=0]
 
     ind_salt_matched_to_simu = pair_events_to_matched_simu(events_simu_matched_to_truth, 
                                                            events_salt)
@@ -193,8 +193,8 @@ def match(truth, match, events_simu, events_salt):
             truth_filtered, \
                 match_filtered = pair_salt_to_simu(truth, match, events_simu, events_salt)
 
-    events_simu_matched_to_truth = events_simu[~np.isnan(ind_simu_matched_to_truth)]
-    events_salt_matched_to_simu = events_salt[~np.isnan(ind_salt_matched_to_simu)]
+    events_simu_matched_to_truth = events_simu[ind_simu_matched_to_truth>=0]
+    events_salt_matched_to_simu = events_salt[ind_salt_matched_to_simu>=0]
     events_simu_matched_to_salt = events_simu_matched_to_truth[ind_salt_matched_to_simu]
 
     return events_salt_matched_to_simu, events_simu_matched_to_salt
