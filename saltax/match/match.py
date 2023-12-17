@@ -107,10 +107,13 @@ def pair_events_to_filtered_truth(truth, events):
     for i,e_simu in enumerate(tqdm(matched_truth_events_timing)):
         # Find the events whose S1 and S2 overlap with the truth's S1 and S2 time ranges
         # Note that we only care about main S1 and main S2, otherwise we consider lost
+        # Temporary S1 only
         j_selected_events = np.where((events['s1_endtime']>=e_simu['s1_time'])&
-                                     (e_simu['s1_endtime']>=events['s1_time'])&
-                                     (events['s2_endtime']>=e_simu['s2_time'])&
-                                     (e_simu['s2_endtime']>=events['s2_time']))[0]
+                                     (e_simu['s1_endtime']>=events['s1_time']))[0]
+        #j_selected_events = np.where((events['s1_endtime']>=e_simu['s1_time'])&
+        #                             (e_simu['s1_endtime']>=events['s1_time'])&
+        #                             (events['s2_endtime']>=e_simu['s2_time'])&
+        #                             (e_simu['s2_endtime']>=events['s2_time']))[0]
         assert len(j_selected_events) <= 1, "Multiple events found for one truth event!?"
         
         # If no event is found, then we consider lost
@@ -134,6 +137,9 @@ def pair_events_to_matched_simu(matched_simu, events):
     for i,e_simu in enumerate(tqdm(matched_simu)):
         # Find the events whose S1 and S2 overlap with the truth's S1 and S2 time ranges
         # Note that we only care about main S1 and main S2, otherwise we consider lost
+        j_selected_events = np.where((events['s1_endtime']>=e_simu['s1_time'])&
+                                     (e_simu['s1_endtime']>=events['s1_time']))[0]
+        
         j_selected_events = np.where((events['s1_endtime']>=e_simu['s1_time'])&
                                      (e_simu['s1_endtime']>=events['s1_time'])&
                                      (events['s2_endtime']>=e_simu['s2_time'])&
@@ -161,7 +167,8 @@ def pair_salt_to_simu(truth, match, events_simu, events_salt):
     """
     truth_filtered, match_filtered = filter_out_missing_s1_s2(truth, match)
     truth_filtered, match_filtered = filter_out_multiple_s1_s2(truth_filtered, match_filtered)
-    truth_filtered, match_filtered = filter_out_not_found(truth_filtered, match_filtered)
+    # Temporarily turn off this filter because of wfsim bug in s2 timing
+    #truth_filtered, match_filtered = filter_out_not_found(truth_filtered, match_filtered) 
 
     ind_simu_matched_to_truth = pair_events_to_filtered_truth(truth_filtered, events_simu)
     events_simu_matched_to_truth = events_simu[~np.isnan(ind_simu_matched_to_truth)]
