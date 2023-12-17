@@ -70,10 +70,11 @@ def filter_out_not_found(truth, match):
     for event_id in np.arange(max_event_number)+1:
         selected_truth = truth[truth['event_number']==event_id]
         indices = np.where(truth['event_number']==event_id)
+        selected_match = match[indices]
         
         # The only outcome should be "found", otherwise remove the event
-        if len(selected_truth['outcome']) == 1:
-            if np.unique(selected_truth['outcome'])[0] != "found":
+        if len(selected_match['outcome']) == 1:
+            if np.unique(selected_match['outcome'])[0] != "found":
                 bad_mask[indices] = True
         else:
             bad_mask[indices] = True
