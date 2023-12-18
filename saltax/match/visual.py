@@ -17,6 +17,8 @@ def plot_wf(ind, st_salt, st_simu, st_data, runid, matched_simu,
     :param s1_ext_window_samples: time window in samples to plot around S1, default 25 samples
     :param s2_ext_window_samples: time window in samples to plot around S2, default 100 samples
     """
+    print("Loading peaks and lone_hits for event %s"%ind)
+
     # Get time ranges in indices for events, S1 and S2
     extended_simu_event_timerange_ns = (matched_simu['s1_time'][ind]-event_ext_window_ns, 
                                         matched_simu['s2_endtime'][ind]+event_ext_window_ns)
@@ -48,6 +50,7 @@ def plot_wf(ind, st_salt, st_simu, st_data, runid, matched_simu,
 
 
     # Get waveforms for the event
+    print("Building waveforms...")
     total_length = int((extended_simu_event_timerange_ns[1] - extended_simu_event_timerange_ns[0])/10)
     to_pes = st_data.get_single_plugin(runid, 'peaklets').to_pe
     
@@ -112,9 +115,9 @@ def plot_wf(ind, st_salt, st_simu, st_data, runid, matched_simu,
             amp = l['area'] * to_pes[l['channel']]
             wf_data[time_i] += amp/10
     
-
     # Plot full event waveform
-    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(15, 8), dpi=200)
+    print("Plotting waveforms for the whole event...")
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(15, 8), dpi=150)
     ax1.plot(wf_data, label='Data', color='k', alpha=0.2)
     ax1.plot(wf_simu_s1, label='Simu S1', color='tab:blue')
     ax1.plot(wf_simu_s2, label='Simu S2', color='tab:orange')
@@ -140,7 +143,8 @@ def plot_wf(ind, st_salt, st_simu, st_data, runid, matched_simu,
     fig.show()
     
     # Zoom into S1 and S2 waveforms
-    fig, axs = plt.subplots(2, 2, figsize=(15, 8), dpi=200)
+    print("Zooming into S1 and S2 respectively...")
+    fig, axs = plt.subplots(2, 2, figsize=(15, 8), dpi=150)
     axs[0,0].plot(wf_data, label='Data', color='k', alpha=0.2)
     axs[0,0].plot(wf_simu_s1, label='Simu S1', color='tab:blue')
     axs[0,0].plot(wf_simu_s2, label='Simu S2', color='tab:orange')
