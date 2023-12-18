@@ -17,7 +17,7 @@ def plot_wf(ind, st_salt, st_simu, st_data, runid, matched_simu,
     :param s1_ext_window_samples: time window in samples to plot around S1, default 25 samples
     :param s2_ext_window_samples: time window in samples to plot around S2, default 100 samples
     """
-    print("Loading peaks and lone_hits for event %s"%ind)
+    print("Loading peaks and lone_hits for run %s event %s"%(runid, ind))
 
     # Get time ranges in indices for events, S1 and S2
     extended_simu_event_timerange_ns = (matched_simu['s1_time'][ind]-event_ext_window_ns, 
