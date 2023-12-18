@@ -61,7 +61,6 @@ if saltax_mode == 'salt':
     st.make(strrunid, 'merged_s2s')
     st.make(strrunid, 'event_basics')
     st.make(strrunid, 'event_info')
-    st.make(strrunid, 'cuts_basic')
 
     print("Used time:", datetime.now() - now)
     now = datetime.now()
@@ -70,12 +69,12 @@ if saltax_mode == 'salt':
            saltax mode %s. "%(runid, 'data'))
 
     st = saltax.contexts.sxenonnt(runid = runid,
-                              saltax_mode = 'simu',
-                              output_folder = output_folder,
-                              faxconf_version = faxconf_version,
-                              generator_name = generator_name,
-                              recoil = recoil,
-                              mode = mode)
+                                  saltax_mode = 'simu',
+                                  output_folder = output_folder,
+                                  faxconf_version = faxconf_version,
+                                  generator_name = generator_name,
+                                  recoil = recoil,
+                                  mode = mode)
     st.make(strrunid, 'raw_records_simu')
     st.make(strrunid, 'records')
     st.make(strrunid, 'peaklets')
