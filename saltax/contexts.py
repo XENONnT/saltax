@@ -3,6 +3,7 @@ import saltax
 import cutax
 import strax
 from immutabledict import immutabledict
+import pema
 
 # straxen XENONnT options/configuration
 XNT_COMMON_OPTS = straxen.contexts.xnt_common_opts.copy()
@@ -180,6 +181,9 @@ def xenonnt_salted(runid,
     st.set_config(dict(fax_file=instr_file_name))
     st.set_config(dict(saltax_mode=saltax_mode))
 
+    # Register pema plugins
+    st.register_all(pema.match_plugins)
+    
     return st
 
 def sxenonnt(runid=None,

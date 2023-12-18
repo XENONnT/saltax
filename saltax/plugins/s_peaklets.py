@@ -876,4 +876,3 @@ def sum_waveform_salted(peaks, hits, records, record_links, adc_to_pe, n_top_cha
 
         p['n_saturated_channels'] = p['saturated_channel'].sum()
         p['area_per_channel'][:] = area_per_channel
-
