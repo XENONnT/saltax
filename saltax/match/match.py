@@ -171,7 +171,7 @@ def pair_salt_to_simu(truth, match, events_simu, events_salt):
     #truth_filtered, match_filtered = filter_out_not_found(truth_filtered, match_filtered) 
 
     ind_simu_matched_to_truth = pair_events_to_filtered_truth(truth_filtered, events_simu)
-    events_simu_matched_to_truth = events_simu[ind_simu_matched_to_truth>=0]
+    events_simu_matched_to_truth = events_simu[ind_simu_matched_to_truth[ind_simu_matched_to_truth>=0]]
 
     ind_salt_matched_to_simu = pair_events_to_matched_simu(events_simu_matched_to_truth, 
                                                            events_salt)
@@ -190,11 +190,10 @@ def match(truth, match, events_simu, events_salt):
     """
     ind_salt_matched_to_simu, \
         ind_simu_matched_to_truth, \
-            truth_filtered, \
-                match_filtered = pair_salt_to_simu(truth, match, events_simu, events_salt)
+            _, _ = pair_salt_to_simu(truth, match, events_simu, events_salt)
 
-    events_simu_matched_to_truth = events_simu[ind_simu_matched_to_truth>=0]
-    events_salt_matched_to_simu = events_salt[ind_salt_matched_to_simu>=0]
-    events_simu_matched_to_salt = events_simu_matched_to_truth[ind_salt_matched_to_simu]
+    events_simu_matched_to_truth = events_simu[ind_simu_matched_to_truth[ind_simu_matched_to_truth>=0]]
+    events_salt_matched_to_simu = events_salt[ind_salt_matched_to_simu[ind_salt_matched_to_simu>=0]]
+    events_simu_matched_to_salt = events_simu_matched_to_truth[ind_salt_matched_to_simu>=0]
 
     return events_salt_matched_to_simu, events_simu_matched_to_salt
