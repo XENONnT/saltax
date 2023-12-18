@@ -125,7 +125,7 @@ def plot_wf(ind, st_salt, st_simu, st_data, runid, matched_simu,
     ax1.axvspan(matched_simu_s1_timerange_i[0],matched_simu_s1_timerange_i[1], color='tab:blue', alpha=0.1, label='Simu S1 Range')
     ax1.axvspan(matched_simu_s2_timerange_i[0],matched_simu_s2_timerange_i[1], color='tab:orange', alpha=0.1, label='Simu S2 Range')
     ax1.legend()
-    ax1.set_title("Event %s: Simu CS1=%sPE, Simu CS2=%sPE"%(ind, 
+    ax1.set_title("Run %s Event %s: Simu CS1=%sPE, Simu CS2=%sPE"%(runid, ind, 
                                                         int(10*matched_simu['cs1'][ind])/10, 
                                                         int(10*matched_simu['cs2'][ind])/10))
     
