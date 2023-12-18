@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import numpy as np
 
 def plot_wf(ind, st_salt, st_simu, st_data, runid, matched_simu, 
             event_ext_window_ns=2.4e6, 
