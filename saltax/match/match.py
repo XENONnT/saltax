@@ -66,9 +66,11 @@ def filter_out_not_found(truth, match):
     max_event_number = np.max(np.unique(truth['event_number']))
     
     for event_id in np.arange(max_event_number)+1:
-        selected_truth = truth[truth['event_number']==event_id]
+        # Temporarily only match S1 because of the timing bug in wfsim
+        selected_truth = truth[(truth['event_number']==event_id)&(truth['type']==1)]
         indices = np.where(truth['event_number']==event_id)
-        selected_match = match[indices]
+        indices_s1 = np.where((truth['event_number']==event_id)&(truth['type']==1))
+        selected_match = match[indices_s1]
         
         # The only outcome should be "found", otherwise remove the event
         if len(selected_match['outcome']) == 1:
