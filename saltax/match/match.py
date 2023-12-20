@@ -2,10 +2,11 @@ import numpy as np
 from tqdm import tqdm
 
 
-def filter_out_missing_s1_s2(truth):
+def filter_out_missing_s1_s2(truth, match):
     """
     Filter out simulated events that have no S1 or S2 or both
     :param truth: truth from wfsim
+    :param match: match_acceptance_extended from pema
     :return: filtered truth
     """
     bad_mask = np.zeros(len(truth), dtype=bool)
@@ -29,13 +30,14 @@ def filter_out_missing_s1_s2(truth):
 
     print("Filter out %s percent of events due to missing S1 or S2 or both"\
            % (np.sum(bad_mask)/len(truth)*100))
-    return truth[~bad_mask]
+    return truth[~bad_mask], match[~bad_mask]
 
 
-def filter_out_multiple_s1_s2(truth):
+def filter_out_multiple_s1_s2(truth, match):
     """
     Filter out simulated events that have multiple S1 or S2 reconstructed from wfsim.
     :param truth: truth from wfsim
+    :param match: match_acceptance_extended from pema
     :return: filtered truth
     """
     bad_mask = np.zeros(len(truth), dtype=bool)
@@ -52,7 +54,7 @@ def filter_out_multiple_s1_s2(truth):
 
     print("Filter out %s percent of events due to multiple S1 or S2"\
            % (np.sum(bad_mask)/len(truth)*100))
-    return truth[~bad_mask]
+    return truth[~bad_mask], match[~bad_mask]
 
 
 def filter_out_not_found(truth, match):
@@ -156,18 +158,18 @@ def pair_events_to_matched_simu(matched_simu, events):
     return matched_to
 
 
-def pair_salt_to_simu(truth, events_simu, events_salt):
+def pair_salt_to_simu(truth, match, events_simu, events_salt):
     """
     Filter out bad simulation truth and then pair salted events to matched simulation events.
     :param truth: filtered truth
+    :param match: match_acceptance_extended from pema
     :param events_simu: events from wfsim
     :param events_salt: events from saltax after reconstruction
-    :return: ind_salt_matched_to_simu, ind_simu_matched_to_truth, truth_filtered
+    :return: ind_salt_matched_to_simu, ind_simu_matched_to_truth, truth_filtered, match_filtered
     """
-    truth_filtered = filter_out_missing_s1_s2(truth)
-    truth_filtered = filter_out_multiple_s1_s2(truth_filtered)
-    # Temporarily turn off this filter because of wfsim bug in s2 timing
-    #truth_filtered, match_filtered = filter_out_not_found(truth_filtered, match_filtered) 
+    truth_filtered, match_filtered = filter_out_missing_s1_s2(truth, match)
+    truth_filtered, match_filtered = filter_out_multiple_s1_s2(truth_filtered, match_filtered)
+    truth_filtered, match_filtered = filter_out_not_found(truth_filtered, match_filtered) 
 
     ind_simu_matched_to_truth = pair_events_to_filtered_truth(truth_filtered, events_simu)
     events_simu_matched_to_truth = events_simu[ind_simu_matched_to_truth[ind_simu_matched_to_truth>=0]]
@@ -175,10 +177,10 @@ def pair_salt_to_simu(truth, events_simu, events_salt):
     ind_salt_matched_to_simu = pair_events_to_matched_simu(events_simu_matched_to_truth, 
                                                            events_salt)
     
-    return ind_salt_matched_to_simu, ind_simu_matched_to_truth, truth_filtered
+    return ind_salt_matched_to_simu, ind_simu_matched_to_truth, truth_filtered, match_filtered
 
 
-def match(truth, events_simu, events_salt):
+def match(truth, match, events_simu, events_salt):
     """
     Match salted events to simulation events.
     :param truth: truth from wfsim
@@ -189,7 +191,7 @@ def match(truth, events_simu, events_salt):
     """
     ind_salt_matched_to_simu, \
         ind_simu_matched_to_truth, \
-            _ = pair_salt_to_simu(truth, events_simu, events_salt)
+            _, _ = pair_salt_to_simu(truth, match, events_simu, events_salt)
 
     events_simu_matched_to_truth = events_simu[ind_simu_matched_to_truth[ind_simu_matched_to_truth>=0]]
     events_salt_matched_to_simu = events_salt[ind_salt_matched_to_simu[ind_salt_matched_to_simu>=0]]
