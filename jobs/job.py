@@ -38,6 +38,8 @@ st.make(strrunid, 'peaklets')
 st.make(strrunid, 'merged_s2s')
 st.make(strrunid, 'event_basics')
 st.make(strrunid, 'event_info')
+st.make(strrunid, 'event_shadow')
+st.make(strrunid, 'event_ambience')
 st.make(strrunid, 'cuts_basic')
 
 print("Used time:", datetime.now() - now)
@@ -62,6 +64,8 @@ if saltax_mode == 'salt':
     st.make(strrunid, 'merged_s2s')
     st.make(strrunid, 'event_basics')
     st.make(strrunid, 'event_info')
+    st.make(strrunid, 'event_shadow')
+    st.make(strrunid, 'event_ambience')
 
     print("Used time:", datetime.now() - now)
     now = datetime.now()
