@@ -330,7 +330,7 @@ class SPeaklets(strax.Plugin):
         #     possibly due to its currently primitive scheduling.
         hitlet_time_shift = (hitlets['left'] - hitlets['left_integration']) * hitlets['dt']
         hit_max_times = (
-            hitlets['time'] + hitlet_time_shift
+            hitlets_time + hitlet_time_shift
         )  # add time shift again to get correct maximum
         hit_max_times += hitlets['dt'] * hit_max_sample(records, hitlets)
 
