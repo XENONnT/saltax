@@ -23,6 +23,11 @@ mode = config.get('job', 'mode')
 process_data = config.getboolean('job', 'process_data')
 storage_to_patch = config.get('job', 'storage_to_patch').split(',')
 
+to_process_dtypes = ['records', 'peaklets', 'merged_s2s', 'peak_basics',
+					 'events', 'event_basics', 'event_info', 'event_pattern_fit',
+					 'event_shadow', 'event_ambience', 'event_n_channel','veto_intervals',
+					 'cuts_basic']
+
 print("Used time:", datetime.now() - now)
 now = datetime.now()
 
@@ -41,22 +46,9 @@ if len(storage_to_patch) and storage_to_patch[0] != "":
 
 st.make(strrunid, 'raw_records_simu')
 gc.collect()
-st.make(strrunid, 'records', save=('records'))
-gc.collect()
-st.make(strrunid, 'peaklets')
-gc.collect()
-st.make(strrunid, 'merged_s2s')
-gc.collect()
-st.make(strrunid, 'peak_basics')
-st.make(strrunid, 'events', save=('events'))
-st.make(strrunid, 'event_basics')
-st.make(strrunid, 'event_info')
-st.make(strrunid, 'event_pattern_fit')
-st.make(strrunid, 'event_shadow')
-st.make(strrunid, 'event_ambience')
-st.make(strrunid, 'event_n_channel')
-st.make(strrunid, 'veto_intervals')
-st.make(strrunid, 'cuts_basic')
+for dt in to_process_dtypes:
+	st.make(strrunid, dt, save=(dt))
+	gc.collect()
 
 print("Used time:", datetime.now() - now)
 now = datetime.now()
@@ -79,22 +71,10 @@ if saltax_mode == 'salt':
 		if len(storage_to_patch) and storage_to_patch[0] != "":
 			for d in storage_to_patch:
 				st.storage.append(strax.DataDirectory(d, readonly=True))
-
-		st.make(strrunid, 'records', save=True)
-    	gc.collect()
-		st.make(strrunid, 'peaklets')
-		gc.collect()
-		st.make(strrunid, 'merged_s2s')
-		gc.collect()
-		st.make(strrunid, 'events', save=('events'))
-		st.make(strrunid, 'event_basics')
-		st.make(strrunid, 'event_info')
-		st.make(strrunid, 'event_pattern_fit')
-		st.make(strrunid, 'event_shadow')
-		st.make(strrunid, 'event_ambience')
-		st.make(strrunid, 'event_n_channel')
-		st.make(strrunid, 'veto_intervals')
-		st.make(strrunid, 'cuts_basic')
+		
+		for dt in to_process_dtypes:
+			st.make(strrunid, dt, save=(dt))
+			gc.collect()
 
 		print("Used time:", datetime.now() - now)
 		now = datetime.now()
@@ -117,21 +97,9 @@ if saltax_mode == 'salt':
 			
 	st.make(strrunid, 'raw_records_simu')
 	gc.collect()
-	st.make(strrunid, 'records', save=('records'))
-	gc.collect()
-	st.make(strrunid, 'peaklets')
-	gc.collect()
-	st.make(strrunid, 'merged_s2s')
-	gc.collect()
-	st.make(strrunid, 'events', save=('events'))
-	st.make(strrunid, 'event_basics')
-	st.make(strrunid, 'event_info')
-	st.make(strrunid, 'event_pattern_fit')
-	st.make(strrunid, 'event_shadow')
-	st.make(strrunid, 'event_ambience')
-	st.make(strrunid, 'event_n_channel')
-	st.make(strrunid, 'veto_intervals')
-	st.make(strrunid, 'cuts_basic')
+	for dt in to_process_dtypes:
+		st.make(strrunid, dt, save=(dt))
+		gc.collect()
 
 	print("Used time:", datetime.now() - now)
 	now = datetime.now()
