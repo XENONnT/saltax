@@ -4,6 +4,7 @@ import straxen
 import configparser
 from datetime import datetime
 import sys
+import gc
 straxen.print_versions()
 
 now = datetime.now()
@@ -35,13 +36,19 @@ st = saltax.contexts.sxenonnt(runid = runid,
                               recoil = recoil,
                               mode = mode)
 if len(storage_to_patch) and storage_to_patch[0] != "":
-	for d in st.storage:
-		st.storage.append(strax.DataDirectory(d))
+	for d in storage_to_patch:
+		st.storage.append(strax.DataDirectory(d, readonly=True))
 
 st.make(strrunid, 'raw_records_simu')
-st.make(strrunid, 'records')
+gc.collect()
+st.make(strrunid, 'records', save=('records'))
+gc.collect()
 st.make(strrunid, 'peaklets')
+gc.collect()
 st.make(strrunid, 'merged_s2s')
+gc.collect()
+st.make(strrunid, 'peak_basics')
+st.make(strrunid, 'events', save=('events'))
 st.make(strrunid, 'event_basics')
 st.make(strrunid, 'event_info')
 st.make(strrunid, 'event_pattern_fit')
@@ -70,12 +77,16 @@ if saltax_mode == 'salt':
 									  recoil = recoil,
 									  mode = mode)
 		if len(storage_to_patch) and storage_to_patch[0] != "":
-			for d in st.storage:
-				st.storage.append(strax.DataDirectory(d))
+			for d in storage_to_patch:
+				st.storage.append(strax.DataDirectory(d, readonly=True))
 
 		st.make(strrunid, 'records', save=True)
+                gc.collect()
 		st.make(strrunid, 'peaklets')
+                gc.collect()
 		st.make(strrunid, 'merged_s2s')
+                gc.collect()
+                st.make(strrunid, 'events', save=('events'))
 		st.make(strrunid, 'event_basics')
 		st.make(strrunid, 'event_info')
 		st.make(strrunid, 'event_pattern_fit')
@@ -102,12 +113,17 @@ if saltax_mode == 'salt':
                                   mode = mode)
 	if len(storage_to_patch) and storage_to_patch[0] != "":
 		for d in st.storage:
-			st.storage.append(strax.DataDirectory(d))
+			st.storage.append(strax.DataDirectory(d, readonly=True))
 			
 	st.make(strrunid, 'raw_records_simu')
-	st.make(strrunid, 'records')
+        gc.collect()
+	st.make(strrunid, 'records', save=('records'))
+        gc.collect()
 	st.make(strrunid, 'peaklets')
+        gc.collect()
 	st.make(strrunid, 'merged_s2s')
+        gc.collect()
+        st.make(strrunid, 'events', save=('events'))
 	st.make(strrunid, 'event_basics')
 	st.make(strrunid, 'event_info')
 	st.make(strrunid, 'event_pattern_fit')
