@@ -47,7 +47,9 @@ if len(storage_to_patch) and storage_to_patch[0] != "":
 st.make(strrunid, 'raw_records_simu')
 gc.collect()
 for dt in to_process_dtypes:
+	print("Making %s. "%dt)
 	st.make(strrunid, dt, save=(dt))
+	print("Done with %s. "%dt)
 	gc.collect()
 
 print("Used time:", datetime.now() - now)
@@ -73,7 +75,9 @@ if saltax_mode == 'salt':
 				st.storage.append(strax.DataDirectory(d, readonly=True))
 		
 		for dt in to_process_dtypes:
+			print("Making %s. "%dt)
 			st.make(strrunid, dt, save=(dt))
+			print("Done with %s. "%dt)
 			gc.collect()
 
 		print("Used time:", datetime.now() - now)
@@ -98,7 +102,9 @@ if saltax_mode == 'salt':
 	st.make(strrunid, 'raw_records_simu')
 	gc.collect()
 	for dt in to_process_dtypes:
+		print("Making %s. "%dt)
 		st.make(strrunid, dt, save=(dt))
+		print("Done with %s. "%dt)
 		gc.collect()
 
 	print("Used time:", datetime.now() - now)
