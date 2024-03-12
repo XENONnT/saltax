@@ -21,6 +21,7 @@ generator_name = config.get('job', 'generator_name')
 recoil = config.getint('job', 'recoil')
 mode = config.get('job', 'mode')
 process_data = config.getboolean('job', 'process_data')
+process_simu = config.getboolean('job', 'process_simu')
 storage_to_patch = config.get('job', 'storage_to_patch').split(',')
 
 to_process_dtypes = ['records', 'peaklets', 'merged_s2s', 'peak_basics',
@@ -88,29 +89,32 @@ if saltax_mode == 'salt':
 	else:
 		print("You specified process_data = False, so we will not process data.")
 		
-	st = saltax.contexts.sxenonnt(runid = runid,
-                                  saltax_mode = 'simu',
-                                  output_folder = output_folder,
-                                  faxconf_version = faxconf_version,
-                                  generator_name = generator_name,
-                                  recoil = recoil,
-                                  mode = mode)
-	if len(storage_to_patch) and storage_to_patch[0] != "":
-		for d in st.storage:
-			st.storage.append(strax.DataDirectory(d, readonly=True))
-			
-	st.make(strrunid, 'raw_records_simu')
-	gc.collect()
-	for dt in to_process_dtypes:
-		print("Making %s. "%dt)
-		st.make(strrunid, dt, save=(dt))
-		print("Done with %s. "%dt)
+	if process_simu:
+		st = saltax.contexts.sxenonnt(runid = runid,
+									saltax_mode = 'simu',
+									output_folder = output_folder,
+									faxconf_version = faxconf_version,
+									generator_name = generator_name,
+									recoil = recoil,
+									mode = mode)
+		if len(storage_to_patch) and storage_to_patch[0] != "":
+			for d in st.storage:
+				st.storage.append(strax.DataDirectory(d, readonly=True))
+				
+		st.make(strrunid, 'raw_records_simu')
 		gc.collect()
+		for dt in to_process_dtypes:
+			print("Making %s. "%dt)
+			st.make(strrunid, dt, save=(dt))
+			print("Done with %s. "%dt)
+			gc.collect()
 
-	print("Used time:", datetime.now() - now)
-	now = datetime.now()
+		print("Used time:", datetime.now() - now)
+		now = datetime.now()
 
-	print("Finished making all the computation for run %d in \
-           saltax mode %s. "%(runid, 'simu'))
+		print("Finished making all the computation for run %d in \
+			saltax mode %s. "%(runid, 'simu'))
+	else:
+		print("You specified process_simu = False, so we will not process simu.")
 
 print("Finished all. Exiting.")
