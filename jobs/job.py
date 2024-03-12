@@ -5,6 +5,7 @@ import configparser
 from datetime import datetime
 import sys
 import gc
+import os
 straxen.print_versions()
 
 now = datetime.now()
@@ -22,12 +23,16 @@ recoil = config.getint('job', 'recoil')
 mode = config.get('job', 'mode')
 process_data = config.getboolean('job', 'process_data')
 process_simu = config.getboolean('job', 'process_simu')
+skip_records = config.getboolean('job', 'skip_records')
 storage_to_patch = config.get('job', 'storage_to_patch').split(',')
+delete_records = config.getboolean('job', 'delete_records')
 
-to_process_dtypes = ['records', 'peaklets', 'merged_s2s', 'peak_basics',
+to_process_dtypes = ['peaklets', 'merged_s2s', 'peak_basics',
 					 'events', 'event_basics', 'event_info', 'event_pattern_fit',
 					 'event_shadow', 'event_ambience', 'event_n_channel','veto_intervals',
 					 'cuts_basic']
+if not skip_records:
+	to_process_dtypes = ['records'] + to_process_dtypes
 
 print("Used time:", datetime.now() - now)
 now = datetime.now()
@@ -57,7 +62,15 @@ print("Used time:", datetime.now() - now)
 now = datetime.now()
 
 print("Finished making all the computation for run %d in \
-       saltax mode %s. "%(runid, saltax_mode))
+	saltax mode salt. "%(runid))
+if delete_records:
+	print("Deleting records.")
+	records_name = st.key_for('records')
+	records_path = os.path.join(output_folder, records_name)
+	if os.path.exists(records_path):
+		os.rmdir(records_path)
+		gc.collect()
+		print("Deleted records for run %d in saltax mode salt. "%(runid))
 
 if saltax_mode == 'salt':
 	print("Since you specified saltax_mode = salt, \
@@ -86,6 +99,17 @@ if saltax_mode == 'salt':
 
 		print("Finished making all the computation for run %d in \
 			saltax mode %s. "%(runid, 'data'))
+
+		print("Finished making all the computation for run %d in \
+			saltax mode data. "%(runid))
+		if delete_records:
+			print("Deleting records.")
+			records_name = st.key_for('records')
+			records_path = os.path.join(output_folder, records_name)
+			if os.path.exists(records_path):
+				os.rmdir(records_path)
+				gc.collect()
+				print("Deleted records for run %d in saltax mode data. "%(runid))
 	else:
 		print("You specified process_data = False, so we will not process data.")
 		
@@ -114,6 +138,17 @@ if saltax_mode == 'salt':
 
 		print("Finished making all the computation for run %d in \
 			saltax mode %s. "%(runid, 'simu'))
+
+		print("Finished making all the computation for run %d in \
+			saltax mode simu. "%(runid))
+		if delete_records:
+			print("Deleting records.")
+			records_name = st.key_for('records')
+			records_path = os.path.join(output_folder, records_name)
+			if os.path.exists(records_path):
+				os.rmdir(records_path)
+				gc.collect()
+				print("Deleted records for run %d in saltax mode simu. "%(runid))
 	else:
 		print("You specified process_simu = False, so we will not process simu.")
 
