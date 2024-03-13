@@ -15,7 +15,7 @@ strrunid = str(runid).zfill(6)
 
 config = configparser.ConfigParser()
 config.read('config.ini')
-output_folder = config.get('job', 'output_folder')
+output_folder = str(config.get('job', 'output_folder'))
 saltax_mode = config.get('job', 'saltax_mode')
 faxconf_version = config.get('job', 'faxconf_version')
 generator_name = config.get('job', 'generator_name')
@@ -66,7 +66,7 @@ print("Finished making all the computation for run %d in \
 	saltax mode salt. "%(runid))
 if delete_records:
 	print("Deleting records.")
-	records_name = st.key_for('records')
+	records_name = str(st.key_for(strrunid, 'records'))
 	records_path = os.path.join(output_folder, records_name)
 	if os.path.exists(records_path):
 		os.rmdir(records_path)
@@ -107,7 +107,7 @@ if saltax_mode == 'salt':
 			saltax mode data. "%(runid))
 		if delete_records:
 			print("Deleting records.")
-			records_name = st.key_for('records')
+			records_name = str(st.key_for(strrunid, 'records'))
 			records_path = os.path.join(output_folder, records_name)
 			if os.path.exists(records_path):
 				os.rmdir(records_path)
@@ -149,7 +149,7 @@ if saltax_mode == 'salt':
 			saltax mode simu. "%(runid))
 		if delete_records:
 			print("Deleting records.")
-			records_name = st.key_for('records')
+			records_name = str(st.key_for(strrunid, 'records'))
 			records_path = os.path.join(output_folder, records_name)
 			if os.path.exists(records_path):
 				os.rmdir(records_path)
