@@ -55,8 +55,11 @@ st.make(strrunid, 'raw_records_simu')
 gc.collect()
 for dt in to_process_dtypes:
 	print("Making %s. "%dt)
-	st.make(strrunid, dt, save=(dt))
-	print("Done with %s. "%dt)
+	try:
+		st.make(strrunid, dt, save=(dt))
+		print("Done with %s. "%dt)
+	except NotImplementedError as e:
+		print("The cut_basics for run %d is not implemented. "%runid)
 	gc.collect()
 
 print("Used time:", datetime.now() - now)
@@ -93,8 +96,11 @@ if saltax_mode == 'salt':
 		
 		for dt in to_process_dtypes:
 			print("Making %s. "%dt)
-			st.make(strrunid, dt, save=(dt))
-			print("Done with %s. "%dt)
+			try:
+				st.make(strrunid, dt, save=(dt))
+				print("Done with %s. "%dt)
+			except NotImplementedError as e:
+				print("The cut_basics for run %d is not implemented. "%runid)
 			gc.collect()
 
 		print("Used time:", datetime.now() - now)
@@ -135,8 +141,11 @@ if saltax_mode == 'salt':
 		gc.collect()
 		for dt in to_process_dtypes:
 			print("Making %s. "%dt)
-			st.make(strrunid, dt, save=(dt))
-			print("Done with %s. "%dt)
+			try:
+				st.make(strrunid, dt, save=(dt))
+				print("Done with %s. "%dt)
+			except NotImplementedError as e:
+				print("The cut_basics for run %d is not implemented. "%runid)
 			gc.collect()
 
 		print("Used time:", datetime.now() - now)
