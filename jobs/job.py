@@ -67,16 +67,6 @@ now = datetime.now()
 
 print("Finished making all the computation for run %d in \
 	saltax mode salt. "%(runid))
-if delete_records:
-	print("Deleting records.")
-	records_name = str(st.key_for(strrunid, 'records'))
-	records_path = os.path.join(output_folder, records_name)
-	if os.path.exists(records_path):
-		os.rmdir(records_path)
-		gc.collect()
-		print("Deleted records for run %d in saltax mode salt. "%(runid))
-print('====================')
-
 
 if saltax_mode == 'salt':
 	if process_data:
@@ -111,14 +101,6 @@ if saltax_mode == 'salt':
 
 		print("Finished making all the computation for run %d in \
 			saltax mode data. "%(runid))
-		if delete_records:
-			print("Deleting records.")
-			records_name = str(st.key_for(strrunid, 'records'))
-			records_path = os.path.join(output_folder, records_name)
-			if os.path.exists(records_path):
-				os.rmdir(records_path)
-				gc.collect()
-				print("Deleted records for run %d in saltax mode data. "%(runid))
 		print('====================')
 	else:
 		print("You specified process_data = False, so we will not process data.")
@@ -156,16 +138,18 @@ if saltax_mode == 'salt':
 
 		print("Finished making all the computation for run %d in \
 			saltax mode simu. "%(runid))
-		if delete_records:
-			print("Deleting records.")
-			records_name = str(st.key_for(strrunid, 'records'))
-			records_path = os.path.join(output_folder, records_name)
-			if os.path.exists(records_path):
-				os.rmdir(records_path)
-				gc.collect()
-				print("Deleted records for run %d in saltax mode simu. "%(runid))
 		print('====================')
 	else:
 		print("You specified process_simu = False, so we will not process simu.")
+
+if delete_records:
+	print("Deleting records.")
+	records_name = str(st.key_for(strrunid, 'records'))
+	records_path = os.path.join(output_folder, records_name)
+	if os.path.exists(records_path):
+		os.rmdir(records_path)
+		gc.collect()
+		print("Deleted records for run %d in saltax mode salt. "%(runid))
+print('====================')
 
 print("Finished all. Exiting.")
