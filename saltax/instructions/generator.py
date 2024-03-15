@@ -151,7 +151,12 @@ def instr_file_name(runid, instr, recoil, generator_name, mode, rate=1e9/SALT_TI
     filename = BASE_DIR + runid + "-" + str(recoil) + "-" + \
         generator_name + "-" + mode + "-" + str(rate) + ".csv"
     
-    pd.DataFrame(instr).to_csv(filename, index=False)
+    # if the file already exists, we don't want to overwrite it
+    if not os.path.exists(filename):
+        pd.DataFrame(instr).to_csv(filename, index=False)
+    else:
+        print("Instruction file already exists at: %s" % (filename))
+        
     print("Instruction file at: %s" % (filename))
 
     return filename
