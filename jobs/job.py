@@ -101,6 +101,7 @@ if saltax_mode == 'salt':
 
 		print("Finished making all the computation for run %d in \
 			saltax mode data. "%(runid))
+
 		print('====================')
 	else:
 		print("You specified process_data = False, so we will not process data.")
@@ -123,6 +124,7 @@ if saltax_mode == 'salt':
 		gc.collect()
 		for dt in to_process_dtypes:
 			print("Making %s. "%dt)
+
 			try:
 				st.make(strrunid, dt, save=(dt))
 				print("Done with %s. "%dt)
@@ -151,5 +153,6 @@ if delete_records:
 		gc.collect()
 		print("Deleted records for run %d in saltax mode salt. "%(runid))
 print('====================')
+
 
 print("Finished all. Exiting.")
