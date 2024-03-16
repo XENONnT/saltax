@@ -66,44 +66,44 @@ def load_peaks(runs, st_salt, st_simu):
     :param runs: list of runs.
     :param st_salt: saltax context for salt mode
     :param st_simu: saltax context for simu mode
-    :return: pb_simu: peak_basics+peak_positions from simulated dataset
-    :return: pb_salt: peak_basics+peak_positions from sprinkled dataset
+    :return: peaks_simu: peak_basics+peak_positions from simulated dataset
+    :return: peaks_salt: peak_basics+peak_positions from sprinkled dataset
     :return: truth: truth information in simulation
     :return: match: pema match information
-    :return: pb_salt_matched_to_simu: peak_basics+peak_positions from sprinkled matched to simulated
-    :return: pb_simu_matched_to_salt: peak_basics+peak_positions from simulated matched to sprinkled
+    :return: peaks_salt_matched_to_simu: peak_basics+peak_positions from sprinkled matched to simulated
+    :return: peaks_simu_matched_to_salt: peak_basics+peak_positions from simulated matched to sprinkled
     """
     for i, run in enumerate(runs):
         print("Loading run %s"%(run))
 
-        pb_simu_i = st_simu.get_array(run, ('peak_basics', 'peak_positions'), progress_bar=False)
-        pb_salt_i = st_salt.get_array(run, ('peak_basics', 'peak_positions'), progress_bar=False)
+        peaks_simu_i = st_simu.get_array(run, ('peak_basics', 'peak_positions'), progress_bar=False)
+        peaks_salt_i = st_salt.get_array(run, ('peak_basics', 'peak_positions'), progress_bar=False)
         truth_i = st_simu.get_array(run, 'truth', progress_bar=False)
         match_i = st_simu.get_array(run, 'match_acceptance_extended', progress_bar=False)
 
         # Ugly hardcoding for FV cut
-        pb_salt_matched_to_simu_i, \
-            pb_simu_matched_to_salt_i = saltax.match(truth_i[(truth_i['z']<-13)&(truth_i['z']>-145)&(truth_i['x']**2+truth_i['y']**2<64**2)], 
+        peaks_salt_matched_to_simu_i, \
+            peaks_simu_matched_to_salt_i = saltax.match(truth_i[(truth_i['z']<-13)&(truth_i['z']>-145)&(truth_i['x']**2+truth_i['y']**2<64**2)], 
                                                      match_i[(truth_i['z']<-13)&(truth_i['z']>-145)&(truth_i['x']**2+truth_i['y']**2<64**2)])    
 
         if i==0:
-            pb_simu = pb_simu_i
-            pb_salt = pb_salt_i
+            peaks_simu = peaks_simu_i
+            peaks_salt = peaks_salt_i
             truth = truth_i
             match = match_i
-            pb_salt_matched_to_simu = pb_salt_matched_to_simu_i
-            pb_simu_matched_to_salt = pb_simu_matched_to_salt_i
+            peaks_salt_matched_to_simu = peaks_salt_matched_to_simu_i
+            peaks_simu_matched_to_salt = peaks_simu_matched_to_salt_i
         else:
-            pb_simu = np.concatenate((pb_simu,pb_simu_i))
-            pb_salt = np.concatenate((pb_salt,pb_salt_i))
+            peaks_simu = np.concatenate((peaks_simu,peaks_simu_i))
+            peaks_salt = np.concatenate((peaks_salt,peaks_salt_i))
             truth = np.concatenate((truth,truth_i))
             match = np.concatenate((match,match_i))
-            pb_salt_matched_to_simu = np.concatenate((pb_salt_matched_to_simu,
-                                                      pb_salt_matched_to_simu_i))
-            pb_simu_matched_to_salt = np.concatenate((pb_simu_matched_to_salt,
-                                                      pb_simu_matched_to_salt_i))
+            peaks_salt_matched_to_simu = np.concatenate((peaks_salt_matched_to_simu,
+                                                      peaks_salt_matched_to_simu_i))
+            peaks_simu_matched_to_salt = np.concatenate((peaks_simu_matched_to_salt,
+                                                      peaks_simu_matched_to_salt_i))
 
-    return pb_simu, pb_salt, truth, match, pb_salt_matched_to_simu, pb_simu_matched_to_salt
+    return peaks_simu, peaks_salt, truth, match, peaks_salt_matched_to_simu, peaks_simu_matched_to_salt
 
 
 def load_events(runs, st_salt, st_simu):
