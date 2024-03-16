@@ -60,9 +60,55 @@ AmBe_CUTS_EXCEPT_S2PatternS1Width = np.array([
             'cut_cs2_area_fraction_top',])
 
 
+def load_peaks(runs, st_salt, st_simu):
+    """
+    Load peaks from the runs and do basic filtering suggeted by saltax.match
+    :param runs: list of runs.
+    :param st_salt: saltax context for salt mode
+    :param st_simu: saltax context for simu mode
+    :return: pb_simu: peak_basics+peak_positions from simulated dataset
+    :return: pb_salt: peak_basics+peak_positions from sprinkled dataset
+    :return: truth: truth information in simulation
+    :return: match: pema match information
+    :return: pb_salt_matched_to_simu: peak_basics+peak_positions from sprinkled matched to simulated
+    :return: pb_simu_matched_to_salt: peak_basics+peak_positions from simulated matched to sprinkled
+    """
+    for i, run in enumerate(runs):
+        print("Loading run %s"%(run))
+
+        pb_simu_i = st_simu.get_array(run, ('peak_basics', 'peak_positions'), progress_bar=False)
+        pb_salt_i = st_salt.get_array(run, ('peak_basics', 'peak_positions'), progress_bar=False)
+        truth_i = st_simu.get_array(run, 'truth', progress_bar=False)
+        match_i = st_simu.get_array(run, 'match_acceptance_extended', progress_bar=False)
+
+        # Ugly hardcoding for FV cut
+        pb_salt_matched_to_simu_i, \
+            pb_simu_matched_to_salt_i = saltax.match(truth_i[(truth_i['z']<-13)&(truth_i['z']>-145)&(truth_i['x']**2+truth_i['y']**2<64**2)], 
+                                                     match_i[(truth_i['z']<-13)&(truth_i['z']>-145)&(truth_i['x']**2+truth_i['y']**2<64**2)])    
+
+        if i==0:
+            pb_simu = pb_simu_i
+            pb_salt = pb_salt_i
+            truth = truth_i
+            match = match_i
+            pb_salt_matched_to_simu = pb_salt_matched_to_simu_i
+            pb_simu_matched_to_salt = pb_simu_matched_to_salt_i
+        else:
+            pb_simu = np.concatenate((pb_simu,pb_simu_i))
+            pb_salt = np.concatenate((pb_salt,pb_salt_i))
+            truth = np.concatenate((truth,truth_i))
+            match = np.concatenate((match,match_i))
+            pb_salt_matched_to_simu = np.concatenate((pb_salt_matched_to_simu,
+                                                      pb_salt_matched_to_simu_i))
+            pb_simu_matched_to_salt = np.concatenate((pb_simu_matched_to_salt,
+                                                      pb_simu_matched_to_salt_i))
+
+    return pb_simu, pb_salt, truth, match, pb_salt_matched_to_simu, pb_simu_matched_to_salt
+
+
 def load_events(runs, st_salt, st_simu):
     """
-    Load events from the runs and do basic filtering suggeted by saltax.match
+    Load events from the runs and do basic filtering suggeted by saltax.match_events
     :param runs: list of runs.
     :param st_salt: saltax context for salt mode
     :param st_simu: saltax context for simu mode
@@ -80,11 +126,13 @@ def load_events(runs, st_salt, st_simu):
         events_salt_i = st_salt.get_array(run, ('event_info', 'cuts_basic'), progress_bar=False)
         truth_i = st_simu.get_array(run, 'truth', progress_bar=False)
         match_i = st_simu.get_array(run, 'match_acceptance_extended', progress_bar=False)
+
+        # Ugly hardcoding for FV cut
         events_salt_matched_to_simu_i, \
-            events_simu_matched_to_salt_i = saltax.match(truth_i[(truth_i['z']<-13)&(truth_i['z']>-145)&(truth_i['x']**2+truth_i['y']**2<64**2)], 
-                                                         match_i[(truth_i['z']<-13)&(truth_i['z']>-145)&(truth_i['x']**2+truth_i['y']**2<64**2)],
-                                                         events_simu_i[(events_simu_i['z']<-13)&(events_simu_i['z']>-145)&(events_simu_i['r']<64)], 
-                                                         events_salt_i[(events_salt_i['z']<-13)&(events_salt_i['z']>-145)])    
+            events_simu_matched_to_salt_i = saltax.match_events(truth_i[(truth_i['z']<-13)&(truth_i['z']>-145)&(truth_i['x']**2+truth_i['y']**2<64**2)], 
+                                                                match_i[(truth_i['z']<-13)&(truth_i['z']>-145)&(truth_i['x']**2+truth_i['y']**2<64**2)],
+                                                                events_simu_i[(events_simu_i['z']<-13)&(events_simu_i['z']>-145)&(events_simu_i['r']<64)], 
+                                                                events_salt_i[(events_salt_i['z']<-13)&(events_salt_i['z']>-145)])    
         if i==0:
             events_simu = events_simu_i
             events_salt = events_salt_i
@@ -103,6 +151,7 @@ def load_events(runs, st_salt, st_simu):
                                                           events_simu_matched_to_salt_i))
     
     return events_simu, events_salt, truth, match, events_salt_matched_to_simu, events_simu_matched_to_salt
+
 
 def compare_templates(events_salt_matched_to_simu, events_simu_matched_to_salt, 
                       n_bins = 31, title='Ambience Interference in SR0 AmBe'):
@@ -167,6 +216,7 @@ def compare_templates(events_salt_matched_to_simu, events_simu_matched_to_salt,
     plt.title(title)
     plt.show()
 
+
 def apply_n_minus_1_cuts(events_with_cuts, cut_oi, 
                          all_cuts = ALL_CUTS_EXCEPT_S2PatternS1Width):
     """
@@ -183,6 +233,7 @@ def apply_n_minus_1_cuts(events_with_cuts, cut_oi,
     
     return mask
 
+
 def apply_single_cut(events_with_cuts, cut_oi, all_cuts = None):
     """
     Apply a single cut to the events.
@@ -195,6 +246,7 @@ def apply_single_cut(events_with_cuts, cut_oi, all_cuts = None):
         mask &= events_with_cuts[cut]
     return mask
 
+
 def apply_cut_lists(events_with_cuts, 
                     all_cuts = ALL_CUTS_EXCEPT_S2PatternS1Width):
     """
@@ -206,6 +258,7 @@ def apply_cut_lists(events_with_cuts,
     for cut in all_cuts:
         mask &= events_with_cuts[cut]
     return mask
+
 
 def get_n_minus_1_cut_acc(events_salt_matched_to_simu, events_simu_matched_to_salt,
                           all_cut_list = ALL_CUTS):
@@ -239,6 +292,7 @@ def get_n_minus_1_cut_acc(events_salt_matched_to_simu, events_simu_matched_to_sa
     # Print the table
     print(tabulate(table_data, headers=headers, tablefmt='grid'))
 
+
 def get_single_cut_acc(events_salt_matched_to_simu, events_simu_matched_to_salt,
                        all_cut_list = ALL_CUTS):
     """
@@ -268,6 +322,7 @@ def get_single_cut_acc(events_salt_matched_to_simu, events_simu_matched_to_salt,
     
     # Print the table
     print(tabulate(table_data, headers=headers, tablefmt='grid'))
+
 
 def get_cut_eff(events, all_cut_list = ALL_CUTS, 
                 n_bins=31, coord = 'cs1', plot=True,
@@ -337,6 +392,7 @@ def get_cut_eff(events, all_cut_list = ALL_CUTS,
         plt.title(title)
 
     return result_dict
+
 
 def compare_2d(events0, events1, bins, title, xlim, ylim, 
                label0, label1, xlabel, ylabel, 
@@ -453,6 +509,7 @@ def compare_bands(salt, simu, title,
                xlabel=coords[0]+units_dict[coords[0]],
                ylabel=coords[1]+units_dict[coords[1]],
                coords=coords)
+
 
 def show_area_bias(salt, simu, title, 
                    coord='s1_area', s1s2='S1', n_bins=16, ylim=(-5,20)):
