@@ -83,8 +83,8 @@ def load_peaks(runs, st_salt, st_simu):
 
         # Ugly hardcoding for FV cut
         peaks_salt_matched_to_simu_i, \
-            peaks_simu_matched_to_salt_i = saltax.match(truth_i[(truth_i['z']<-13)&(truth_i['z']>-145)&(truth_i['x']**2+truth_i['y']**2<64**2)], 
-                                                     match_i[(truth_i['z']<-13)&(truth_i['z']>-145)&(truth_i['x']**2+truth_i['y']**2<64**2)])    
+            peaks_simu_matched_to_salt_i = saltax.match_peaks(truth_i[(truth_i['z']<-13)&(truth_i['z']>-145)&(truth_i['x']**2+truth_i['y']**2<64**2)], 
+                                                              match_i[(truth_i['z']<-13)&(truth_i['z']>-145)&(truth_i['x']**2+truth_i['y']**2<64**2)])    
 
         if i==0:
             peaks_simu = peaks_simu_i
