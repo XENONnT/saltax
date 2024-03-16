@@ -179,7 +179,7 @@ def pair_peaks_to_matched_simu(matched_simu, peaks, safeguard=1e3):
         # If only one peak is found, then we consider matched
         else:
             # if found multiple peaks bc of safeguard, then we choose the one with the largest area
-            matched_to[i] = np.argmax(peaks[j_selected_peaks]['area'])
+            matched_to[i] = j_selected_peaks[np.argmax(peaks[j_selected_peaks]['area'])]
 
     return matched_to
 
