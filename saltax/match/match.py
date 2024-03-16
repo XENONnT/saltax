@@ -173,7 +173,7 @@ def pair_peaks_to_matched_simu(matched_simu, peaks, safeguard=1e3):
         j_selected_peaks = np.where((peaks['endtime']+safeguard>=p_simu['time'])&
                                     (p_simu['endtime']+safeguard>=peaks['time']))[0]
         # if found multiple peaks bc of safeguard, then we choose the one with the largest area
-        j_selected_peaks = j_selected_peaks[np.argmax(j_selected_peaks['area'])]
+        j_selected_peaks = np.argmax(peaks[j_selected_peaks]['area'])
         #assert len(j_selected_peaks) <= 1, "Multiple peaks found for one truth event!?"
         
         # If no peak is found, then we consider lost
