@@ -104,7 +104,6 @@ def load_events(runs, st_salt, st_simu):
     
     return events_simu, events_salt, truth, match, events_salt_matched_to_simu, events_simu_matched_to_salt
 
-
 def compare_templates(events_salt_matched_to_simu, events_simu_matched_to_salt, 
                       n_bins = 31, title='Ambience Interference in SR0 AmBe'):
     """
