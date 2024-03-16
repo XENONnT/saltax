@@ -172,16 +172,14 @@ def pair_peaks_to_matched_simu(matched_simu, peaks, safeguard=1e3):
         # Find the peaks whose S1 and S2 overlap with the truth's S1 and S2 time ranges
         j_selected_peaks = np.where((peaks['endtime']+safeguard>=p_simu['time'])&
                                     (p_simu['endtime']+safeguard>=peaks['time']))[0]
-        # if found multiple peaks bc of safeguard, then we choose the one with the largest area
-        j_selected_peaks = np.argmax(peaks[j_selected_peaks]['area'])
-        #assert len(j_selected_peaks) <= 1, "Multiple peaks found for one truth event!?"
         
         # If no peak is found, then we consider lost
         if len(j_selected_peaks) == 0:
             matched_to[i] = -99999
         # If only one peak is found, then we consider matched
-        elif len(j_selected_peaks) == 1:
-            matched_to[i] = j_selected_peaks[0]
+        else:
+            # if found multiple peaks bc of safeguard, then we choose the one with the largest area
+            matched_to[i] = np.argmax(peaks[j_selected_peaks]['area'])
 
     return matched_to
 
