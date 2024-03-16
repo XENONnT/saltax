@@ -5,6 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from tabulate import tabulate
 from itertools import cycle
+import saltax
 
 ALL_CUTS = np.array([
             'cut_daq_veto',
