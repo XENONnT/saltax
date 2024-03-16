@@ -60,31 +60,37 @@ AmBe_CUTS_EXCEPT_S2PatternS1Width = np.array([
             'cut_cs2_area_fraction_top',])
 
 
-def load_peaks(runs, st_salt, st_simu):
+def load_peaks(runs, st_salt, st_simu, s1s2=2):
     """
     Load peaks from the runs and do basic filtering suggeted by saltax.match
     :param runs: list of runs.
     :param st_salt: saltax context for salt mode
     :param st_simu: saltax context for simu mode
-    :return: peaks_simu: peak_basics+peak_positions from simulated dataset
-    :return: peaks_salt: peak_basics+peak_positions from sprinkled dataset
+    :param s1s2: 1 for S1, 2 for S2, default to 2
+    :return: peaks_simu: peak_basics+peak_positions+peak_ambience+peakshadow from simulated dataset
+    :return: peaks_salt: peak_basics+peak_positions+peak_ambience+peakshadow from sprinkled dataset
     :return: truth: truth information in simulation
     :return: match: pema match information
-    :return: peaks_salt_matched_to_simu: peak_basics+peak_positions from sprinkled matched to simulated
-    :return: peaks_simu_matched_to_salt: peak_basics+peak_positions from simulated matched to sprinkled
+    :return: peaks_salt_matched_to_simu: peak_basics+peak_positions+peak_ambience+peakshadow from sprinkled matched to simulated
+    :return: peaks_simu_matched_to_salt: peak_basics+peak_positions+peak_ambience+peakshadow from simulated matched to sprinkled
     """
     for i, run in enumerate(runs):
         print("Loading run %s"%(run))
 
-        peaks_simu_i = st_simu.get_array(run, ('peak_basics', 'peak_positions'), progress_bar=False)
-        peaks_salt_i = st_salt.get_array(run, ('peak_basics', 'peak_positions'), progress_bar=False)
+        peaks_simu_i = st_simu.get_array(run, ('peak_basics', 'peak_positions', 
+                                               'peak_shadow', 'peak_ambience'), 
+                                         progress_bar=False)
+        peaks_salt_i = st_salt.get_array(run, ('peak_basics', 'peak_positions', 
+                                               'peak_shadow', 'peak_ambience'), 
+                                         progress_bar=False)
         truth_i = st_simu.get_array(run, 'truth', progress_bar=False)
         match_i = st_simu.get_array(run, 'match_acceptance_extended', progress_bar=False)
 
         # Ugly hardcoding for FV cut
         peaks_salt_matched_to_simu_i, \
             peaks_simu_matched_to_salt_i = saltax.match_peaks(truth_i[(truth_i['z']<-13)&(truth_i['z']>-145)&(truth_i['x']**2+truth_i['y']**2<64**2)], 
-                                                              match_i[(truth_i['z']<-13)&(truth_i['z']>-145)&(truth_i['x']**2+truth_i['y']**2<64**2)])    
+                                                              match_i[(truth_i['z']<-13)&(truth_i['z']>-145)&(truth_i['x']**2+truth_i['y']**2<64**2)],
+                                                              peaks_simu_i, peaks_salt_i, s1s2)    
 
         if i==0:
             peaks_simu = peaks_simu_i
