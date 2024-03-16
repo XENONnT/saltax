@@ -131,6 +131,8 @@ if saltax_mode == 'salt':
 			except NotImplementedError as e:
 				print("The cut_basics for run %d is not implemented. "%runid)
 			gc.collect()
+		# Manually make pema plugin after
+		st.make(strrunid, 'match_acceptance_extended')
 
 		print("Used time:", datetime.now() - now)
 		now = datetime.now()
