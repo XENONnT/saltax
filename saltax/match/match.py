@@ -159,18 +159,21 @@ def pair_events_to_matched_simu(matched_simu, events):
     return matched_to
 
 
-def pair_peaks_to_matched_simu(matched_simu, peaks):
+def pair_peaks_to_matched_simu(matched_simu, peaks, safeguard=1e3):
     """
     Pair salted peaks to simulation peaks who have been matched to truth.
     :param matched_simu: simulation peaks already matched to truth
     :param peaks: peaks from saltax after reconstruction
+    :param safeguard: extension of time range to consider as matched, as a workaround for timing problem in wfsim s2
     :return: matched_to, the index of matched simulation peaks for each peak
     """
     matched_to = np.zeros(len(matched_simu), dtype=int)
     for i,p_simu in enumerate(tqdm(matched_simu)):
         # Find the peaks whose S1 and S2 overlap with the truth's S1 and S2 time ranges
-        j_selected_peaks = np.where((peaks['endtime']>=p_simu['time'])&
-                                    (p_simu['endtime']>=peaks['time']))[0]
+        j_selected_peaks = np.where((peaks['endtime']+safeguard>=p_simu['time'])&
+                                    (p_simu['endtime']+safeguard>=peaks['time']))[0]
+        # if found multiple peaks bc of safeguard, then we choose the one with the largest area
+        j_selected_peaks = j_selected_peaks[np.argmax(j_selected_peaks['area'])]
         #assert len(j_selected_peaks) <= 1, "Multiple peaks found for one truth event!?"
         
         # If no peak is found, then we consider lost
@@ -256,6 +259,10 @@ def match_peaks(truth, match, peaks_simu, peaks_salt, s1s2=2):
     :param type: 1 for S1, 2 for S2 to require 'found'
     :return: peaks_salt_matched_to_simu, peaks_simu_matched_to_salt: matched peaks with equal length
     """
+    # Quickly filter out rubbish to reduce computational burden
+    if s1s2 == 2:
+        peaks_salt = peaks_salt[peaks_salt['area']>5] # to throw away pileups
+
     ind_salt_matched_to_simu, \
         ind_simu_matched_to_truth, \
             _, _ = pair_salt_to_simu_peaks(truth, match, peaks_simu, peaks_salt, s1s2)
