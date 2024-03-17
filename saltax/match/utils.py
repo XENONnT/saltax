@@ -60,27 +60,27 @@ AmBe_CUTS_EXCEPT_S2PatternS1Width = np.array([
             'cut_cs2_area_fraction_top',])
 
 
-def load_peaks(runs, st_salt, st_simu):
+def load_peaks(runs, st_salt, st_simu, plugins=('peak_basics', 'peak_positions', 
+                                                'peak_shadow', 'peak_ambience',
+                                                'cut_se_peaks', 'cut_selike_peaks')):
     """
-    Load peaks from the runs and do basic filtering suggeted by saltax.match
+    Load peaks from the runs and do basic filtering suggeted by saltax.match_peaks
     :param runs: list of runs.
     :param st_salt: saltax context for salt mode
     :param st_simu: saltax context for simu mode
-    :return: peaks_simu: peak_basics+peak_positions+peak_ambience+peakshadow from simulated dataset
-    :return: peaks_salt: peak_basics+peak_positions+peak_ambience+peakshadow from sprinkled dataset
+    :return: peaks_simu: peaks related plugins from simulated dataset
+    :return: peaks_salt:  peaks related plugins from sprinkled dataset
     :return: truth: truth information in simulation
     :return: match: pema match information
-    :return: peaks_salt_matched_to_simu: peak_basics+peak_positions+peak_ambience+peakshadow from sprinkled matched to simulated
-    :return: peaks_simu_matched_to_salt: peak_basics+peak_positions+peak_ambience+peakshadow from simulated matched to sprinkled
+    :return: peaks_salt_matched_to_simu: peaks related plugins from sprinkled matched to simulated
+    :return: peaks_simu_matched_to_salt: peaks related plugins from simulated matched to sprinkled
     """
     for i, run in enumerate(runs):
         print("Loading run %s"%(run))
 
-        peaks_simu_i = st_simu.get_array(run, ('peak_basics', 'peak_positions', 
-                                               'peak_shadow', 'peak_ambience'), 
+        peaks_simu_i = st_simu.get_array(run, plugins, 
                                          progress_bar=False)
-        peaks_salt_i = st_salt.get_array(run, ('peak_basics', 'peak_positions', 
-                                               'peak_shadow', 'peak_ambience'), 
+        peaks_salt_i = st_salt.get_array(run, plugins, 
                                          progress_bar=False)
         truth_i = st_simu.get_array(run, 'truth', progress_bar=False)
         match_i = st_simu.get_array(run, 'match_acceptance_extended', progress_bar=False)
@@ -111,7 +111,7 @@ def load_peaks(runs, st_salt, st_simu):
     return peaks_simu, peaks_salt, truth, match, peaks_salt_matched_to_simu, peaks_simu_matched_to_salt
 
 
-def load_events(runs, st_salt, st_simu):
+def load_events(runs, st_salt, st_simu, plugins=('event_info', 'cuts_basic')):
     """
     Load events from the runs and do basic filtering suggeted by saltax.match_events
     :param runs: list of runs.
@@ -121,14 +121,14 @@ def load_events(runs, st_salt, st_simu):
     :return: events_salt: events from sprinkled dataset
     :return: truth: truth information in simulation
     :return: match: pema match information
-    :return: events_salt_matched_to_simu: events from sprinkled matched to simulated
-    :return: events_simu_matched_to_salt: events from simulated matched to sprinkled
+    :return: events_salt_matched_to_simu: events related plugins from sprinkled matched to simulated
+    :return: events_simu_matched_to_salt: events related plugins from simulated matched to sprinkled
     """
     for i, run in enumerate(runs):
         print("Loading run %s"%(run))
         
-        events_simu_i = st_simu.get_array(run, ('event_info', 'cuts_basic'), progress_bar=False)
-        events_salt_i = st_salt.get_array(run, ('event_info', 'cuts_basic'), progress_bar=False)
+        events_simu_i = st_simu.get_array(run, plugins, progress_bar=False)
+        events_salt_i = st_salt.get_array(run, plugins, progress_bar=False)
         truth_i = st_simu.get_array(run, 'truth', progress_bar=False)
         match_i = st_simu.get_array(run, 'match_acceptance_extended', progress_bar=False)
 
