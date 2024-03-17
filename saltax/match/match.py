@@ -255,6 +255,10 @@ def match_peaks(truth, match, peaks_simu, peaks_salt):
     :param type: 1 for S1, 2 for S2 to require 'found'
     :return: peaks_salt_matched_to_simu, peaks_simu_matched_to_salt: matched peaks with equal length
     """
+    # Remove bad simulation truth and then their paired simulated events
+    truth = truth[match['matched_to']>=0]
+    match = match[match['matched_to']>=0]
+
     ind_salt_matched_to_simu, \
         ind_simu_matched_to_truth = pair_salt_to_simu_peaks(truth, match, peaks_simu, peaks_salt)
 
