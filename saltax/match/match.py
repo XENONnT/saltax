@@ -206,24 +206,21 @@ def pair_salt_to_simu_events(truth, match, events_simu, events_salt):
     return ind_salt_matched_to_simu, ind_simu_matched_to_truth, truth_filtered, match_filtered
 
 
-def pair_salt_to_simu_peaks(truth, match, peaks_simu, peaks_salt, max_peak_num=1e5):
+def pair_salt_to_simu_peaks(truth, match, peaks_simu, peaks_salt):
     """
     Filter out bad simulation truth and then pair salted events to matched simulation events.
     :param truth: filtered truth
     :param match: match_acceptance_extended from pema
     :param peaks_simu: peaks from wfsim
     :param peaks_salt: peaks from saltax after reconstruction
-    :param type: 1 for S1, 2 for S2 to require 'found'
-    :param max_peak_num: maximum number of peaks to consider. Introduced to reduce overhead.
     :return: ind_salt_matched_to_simu, ind_simu_matched_to_truth
     """
-    truth = truth[:int(max_peak_num)]
-    match = match[:int(max_peak_num)]
-    truth_filtered, match_filtered = filter_out_not_found(truth, match)
-    ind_simu_matched_to_truth = match_filtered['matched_to']
+    ind_simu_matched_to_truth = match['matched_to']
     peaks_simu_matched_to_truth = peaks_simu[ind_simu_matched_to_truth]
 
-    _ind_simu_matched_to_truth, ind_salt_matched_to_simu = pair_peaks_to_matched_simu(peaks_simu_matched_to_truth, peaks_salt)
+    (_ind_simu_matched_to_truth, 
+     ind_salt_matched_to_simu) = pair_peaks_to_matched_simu(peaks_simu_matched_to_truth, 
+                                                            peaks_salt)
     ind_simu_matched_to_truth = ind_simu_matched_to_truth[_ind_simu_matched_to_truth]
 
     return ind_salt_matched_to_simu, ind_simu_matched_to_truth
