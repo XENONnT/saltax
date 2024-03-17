@@ -1,5 +1,6 @@
 import numpy as np
 from tqdm import tqdm
+import strax
 
 
 def filter_out_missing_s1_s2(truth, match):
@@ -159,29 +160,28 @@ def pair_events_to_matched_simu(matched_simu, events):
     return matched_to
 
 
-def pair_peaks_to_matched_simu(matched_simu, peaks, safeguard=1e3):
+def pair_peaks_to_matched_simu(matched_simu, peaks, safeguard=0):
     """
     Pair salted peaks to simulation peaks who have been matched to truth.
     :param matched_simu: simulation peaks already matched to truth
     :param peaks: peaks from saltax after reconstruction
     :param safeguard: extension of time range to consider as matched, as a workaround for timing problem in wfsim s2
-    :return: matched_to, the index of matched simulation peaks for each peak
+    :return: ind_simu_matched_to_salt: the index of matched simulation peaks for each salted peak
+    :return: ind_salt_matched_to_simu: the index of matched salted peaks for each simulation peak
     """
-    matched_to = np.zeros(len(matched_simu), dtype=int)
-    for i,p_simu in enumerate(tqdm(matched_simu)):
-        # Find the peaks whose S1 and S2 overlap with the truth's S1 and S2 time ranges
-        j_selected_peaks = np.where((peaks['endtime']+safeguard>=p_simu['time'])&
-                                    (p_simu['endtime']+safeguard>=peaks['time']))[0]
-        
-        # If no peak is found, then we consider lost
-        if len(j_selected_peaks) == 0:
-            matched_to[i] = -99999
-        # If only one peak is found, then we consider matched
-        else:
-            # if found multiple peaks bc of safeguard, then we choose the one with the largest area
-            matched_to[i] = j_selected_peaks[np.argmax(peaks[j_selected_peaks]['area'])]
+    windows = strax.touching_windows(peaks, 
+                                     matched_simu, 
+                                     window=safeguard)
+    windows_length = windows_peakswf[:,1] - windows_peakswf[:,0]
+    simu_matched_to_salt_mask = windows_length == 1
+    print("Filter out %s percent of simulation due to multiple or no matched sprinkled \
+           peaks"%(np.sum(~simu_matched_to_salt_mask)/len(matched_simu)*100))
 
-    return matched_to
+    matched_simu = matched_simu[simu_matched_to_salt_mask]
+    ind_simu_matched_to_salt = np.where(simu_matched_to_salt_mask)[0]
+    ind_salt_matched_to_simu = windows[simu_matched_to_salt_mask][:,0]
+
+    return ind_simu_matched_to_salt, ind_salt_matched_to_simu
 
 
 def pair_salt_to_simu_events(truth, match, events_simu, events_salt):
@@ -206,7 +206,7 @@ def pair_salt_to_simu_events(truth, match, events_simu, events_salt):
     return ind_salt_matched_to_simu, ind_simu_matched_to_truth, truth_filtered, match_filtered
 
 
-def pair_salt_to_simu_peaks(truth, match, peaks_simu, peaks_salt, s1s2=2, max_peak_num=1e4):
+def pair_salt_to_simu_peaks(truth, match, peaks_simu, peaks_salt, max_peak_num=1e5):
     """
     Filter out bad simulation truth and then pair salted events to matched simulation events.
     :param truth: filtered truth
@@ -215,18 +215,19 @@ def pair_salt_to_simu_peaks(truth, match, peaks_simu, peaks_salt, s1s2=2, max_pe
     :param peaks_salt: peaks from saltax after reconstruction
     :param type: 1 for S1, 2 for S2 to require 'found'
     :param max_peak_num: maximum number of peaks to consider. Introduced to reduce overhead.
-    :return: ind_salt_matched_to_simu, ind_simu_matched_to_truth, truth_filtered, match_filtered
+    :return: ind_salt_matched_to_simu, ind_simu_matched_to_truth
     """
     truth = truth[:int(max_peak_num)]
     match = match[:int(max_peak_num)]
-    peaks_salt = peaks_salt[peaks_salt['type']==s1s2]
-    truth_filtered, match_filtered = filter_out_not_found(truth, match, s1s2=s1s2)
+    truth_filtered, match_filtered = filter_out_not_found(truth, match)
     ind_simu_matched_to_truth = match_filtered['matched_to']
     peaks_simu_matched_to_truth = peaks_simu[ind_simu_matched_to_truth]
 
-    ind_salt_matched_to_simu = pair_peaks_to_matched_simu(peaks_simu_matched_to_truth, peaks_salt)
+    _ind_simu_matched_to_truth, ind_salt_matched_to_simu = pair_peaks_to_matched_simu(peaks_simu_matched_to_truth, peaks_salt)
+    ind_simu_matched_to_truth = ind_simu_matched_to_truth[_ind_simu_matched_to_truth]
 
-    return ind_salt_matched_to_simu, ind_simu_matched_to_truth, truth_filtered, match_filtered
+    return ind_salt_matched_to_simu, ind_simu_matched_to_truth
+
 
 def match_events(truth, match, events_simu, events_salt):
     """
@@ -247,7 +248,7 @@ def match_events(truth, match, events_simu, events_salt):
 
     return events_salt_matched_to_simu, events_simu_matched_to_salt
 
-def match_peaks(truth, match, peaks_simu, peaks_salt, s1s2=2):
+def match_peaks(truth, match, peaks_simu, peaks_salt):
     """
     Match salted peaks to simulation peaks.
     :param truth: truth from wfsim
@@ -257,13 +258,8 @@ def match_peaks(truth, match, peaks_simu, peaks_salt, s1s2=2):
     :param type: 1 for S1, 2 for S2 to require 'found'
     :return: peaks_salt_matched_to_simu, peaks_simu_matched_to_salt: matched peaks with equal length
     """
-    # Quickly filter out rubbish to reduce computational burden
-    if s1s2 == 2:
-        peaks_salt = peaks_salt[peaks_salt['area']>5] # to throw away pileups
-
     ind_salt_matched_to_simu, \
-        ind_simu_matched_to_truth, \
-            _, _ = pair_salt_to_simu_peaks(truth, match, peaks_simu, peaks_salt, s1s2)
+        ind_simu_matched_to_truth = pair_salt_to_simu_peaks(truth, match, peaks_simu, peaks_salt)
 
     peaks_simu_matched_to_truth = peaks_simu[ind_simu_matched_to_truth[ind_simu_matched_to_truth>=0]]
     peaks_salt_matched_to_simu = peaks_salt[ind_salt_matched_to_simu[ind_salt_matched_to_simu>=0]]
