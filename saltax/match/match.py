@@ -172,7 +172,7 @@ def pair_peaks_to_matched_simu(matched_simu, peaks, safeguard=0):
     windows = strax.touching_windows(peaks, 
                                      matched_simu, 
                                      window=safeguard)
-    windows_length = windows_peakswf[:,1] - windows_peakswf[:,0]
+    windows_length = windows[:,1] - windows[:,0]
     simu_matched_to_salt_mask = windows_length == 1
     print("Filter out %s percent of simulation due to multiple or no matched sprinkled \
            peaks"%(np.sum(~simu_matched_to_salt_mask)/len(matched_simu)*100))
