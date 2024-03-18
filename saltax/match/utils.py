@@ -80,9 +80,9 @@ def load_peaks(runs, st_salt, st_simu, plugins=('peak_basics', 'peak_positions',
         print("Loading run %s"%(run))
 
         peaks_simu_i = st_simu.get_array(run, plugins, 
-                                         progress_bar=False, save=plugins)
+                                         progress_bar=False)
         peaks_salt_i = st_salt.get_array(run, plugins, 
-                                         progress_bar=False, save=plugins)
+                                         progress_bar=False)
         truth_i = st_simu.get_array(run, 'truth', progress_bar=False)
         match_i = st_simu.get_array(run, 'match_acceptance_extended', progress_bar=False)
 
@@ -128,8 +128,8 @@ def load_events(runs, st_salt, st_simu, plugins=('event_info', 'cuts_basic')):
     for i, run in enumerate(runs):
         print("Loading run %s"%(run))
         
-        events_simu_i = st_simu.get_array(run, plugins, progress_bar=False, save=plugins)
-        events_salt_i = st_salt.get_array(run, plugins, progress_bar=False, save=plugins)
+        events_simu_i = st_simu.get_array(run, plugins, progress_bar=False)
+        events_salt_i = st_salt.get_array(run, plugins, progress_bar=False)
         truth_i = st_simu.get_array(run, 'truth', progress_bar=False)
         match_i = st_simu.get_array(run, 'match_acceptance_extended', progress_bar=False)
 
