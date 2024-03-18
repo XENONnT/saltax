@@ -198,7 +198,7 @@ def plot_event_wf_wo_data(ind, st_salt, st_simu, runid, matched_simu,
                           s2_ext_window_samples=100):
     """
     Plot waveforms for a single event, including full event waveform and zoomed-in S1 and S2 waveforms. 
-    This plot function will show info from salt, simu and data mode.
+    This plot function will show info from salt, simu but no data mode.
     :param ind: index of the event in the matched_simu dataframe
     :param st_salt: saltax context for salt mode
     :param st_simu: saltax context for simu mode
