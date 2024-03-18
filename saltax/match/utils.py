@@ -62,7 +62,6 @@ AmBe_CUTS_EXCEPT_S2PatternS1Width = np.array([
 
 def load_peaks(runs, st_salt, st_simu, plugins=('peak_basics', 'peak_positions', 
                                                 'peak_shadow', 'peak_ambience',
-                                                'peak_ambience', 'peak_shadow',
                                                 'cut_se_peaks')):
     """
     Load peaks from the runs and do basic filtering suggeted by saltax.match_peaks
