@@ -62,6 +62,7 @@ AmBe_CUTS_EXCEPT_S2PatternS1Width = np.array([
 
 def load_peaks(runs, st_salt, st_simu, plugins=('peak_basics', 'peak_positions', 
                                                 'peak_shadow', 'peak_ambience',
+                                                'peak_ambience', 'peak_shadow',
                                                 'cut_se_peaks', 'cut_selike_peaks')):
     """
     Load peaks from the runs and do basic filtering suggeted by saltax.match_peaks
@@ -79,9 +80,9 @@ def load_peaks(runs, st_salt, st_simu, plugins=('peak_basics', 'peak_positions',
         print("Loading run %s"%(run))
 
         peaks_simu_i = st_simu.get_array(run, plugins, 
-                                         progress_bar=False)
+                                         progress_bar=False, save=plugins)
         peaks_salt_i = st_salt.get_array(run, plugins, 
-                                         progress_bar=False)
+                                         progress_bar=False, save=plugins)
         truth_i = st_simu.get_array(run, 'truth', progress_bar=False)
         match_i = st_simu.get_array(run, 'match_acceptance_extended', progress_bar=False)
 
@@ -127,8 +128,8 @@ def load_events(runs, st_salt, st_simu, plugins=('event_info', 'cuts_basic')):
     for i, run in enumerate(runs):
         print("Loading run %s"%(run))
         
-        events_simu_i = st_simu.get_array(run, plugins, progress_bar=False)
-        events_salt_i = st_salt.get_array(run, plugins, progress_bar=False)
+        events_simu_i = st_simu.get_array(run, plugins, progress_bar=False, save=plugins)
+        events_salt_i = st_salt.get_array(run, plugins, progress_bar=False, save=plugins)
         truth_i = st_simu.get_array(run, 'truth', progress_bar=False)
         match_i = st_simu.get_array(run, 'match_acceptance_extended', progress_bar=False)
 
