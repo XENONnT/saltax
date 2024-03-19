@@ -28,7 +28,8 @@ storage_to_patch = config.get('job', 'storage_to_patch').split(',')
 delete_records = config.getboolean('job', 'delete_records')
 
 to_process_dtypes = ['peaklets', 'peaklet_classification', 'merged_s2s', 'peak_basics',
-					 'events', 'event_basics', 'event_info', 'event_pattern_fit',
+					 'events', 'peak_positions_mlp', 'peak_positions_gcn', 'peak_positions_cnn',
+					 'event_basics', 'event_info', 'event_pattern_fit',
 					 'event_shadow', 'event_ambience', 'event_n_channel','veto_intervals',
 					 'cuts_basic']
 if not skip_records:
