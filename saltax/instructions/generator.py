@@ -21,6 +21,8 @@ FIELD_MAP = straxen.InterpolatingMap(
     straxen.get_resource(DOWNLOADER.download_single(FIELD_FILE), fmt="json.gz"),
     method="RegularGridInterpolator",
 )
+SE_INSTRUCTIONS_DIR = "/project/lgrandi/yuanlq/salt/se_instructions/"
+AMBE_INSTRUCTIONS_FILE = "/project/lgrandi/yuanlq/salt/ambe_instructions/minghao_aptinput.csv"
 #BASE_DIR = "/project2/lgrandi/yuanlq/shared/saltax_instr/"
 BASE_DIR = os.path.abspath(__file__)[:-12] + '../../generated/'
 
@@ -212,7 +214,7 @@ def generator_se(runid,
     return instr
     
 def generator_se_bootstrapped(runid, 
-                              xyt_files_at='/project/lgrandi/yuanlq/salt/se_instructions/'):
+                              xyt_files_at=SE_INSTRUCTIONS_DIR):
     """
     Generate instructions for a run with single electron. We will use XYT information from
     bootstrapped data single electrons to make the simulation more realistic
@@ -259,6 +261,57 @@ def generator_se_bootstrapped(runid,
         instr["amp"][i] = 1
         instr["n_excitons"][i] = 0
     
+    return instr
+
+def generator_ambe(runid, 
+                   n_tot=None, rate=1e9/SALT_TIME_INTERVAL, time_mode="uniform",
+                   ambe_instructions_file=AMBE_INSTRUCTIONS_FILE):
+    """
+    Generate instructions for a run with AmBe source.
+    :param runid: run number in integer
+    :param n_tot: total number of events to generate, default: None i.e. generate events until end_time
+    :param rate: rate of events in Hz, default: 1e9/SALT_TIME_INTERVAL
+    :param time_mode: 'uniform' or 'realistic', default: 'uniform'
+    :param ambe_instructions_file: file containing ambe instructions, default: AMBE_INSTRUCTIONS_FILE
+    """
+    # determine time offsets to shift ambe instructions
+    start_time, end_time = get_run_start_end(runid)
+    times_offset = generate_times(start_time, end_time, size=n_tot, 
+                                  rate=rate, time_mode=time_mode)
+    n_tot = len(times_offset)
+
+    # bootstrap instructions
+    ambe_instructions = pd.read_csv(ambe_instructions_file)
+    n_avail_instructions = np.max(ambe_instructions.event_number)
+    ambe_event_numbers = np.random.choice(np.arange(n_avail_instructions), 
+                                          n_tot,
+                                          replace=True)
+
+    instr = np.zeros(0, dtype=wfsim.instruction_dtype)
+    # assign instructions
+    for i in range(n_tot):
+        # bootstrapped ambe instruction
+        selected_ambe = ambe_instructions[ambe_instructions['event_number'] 
+                                          == ambe_event_numbers[i]]
+        # instruction for i-th event
+        instr_i = np.zeros(len(selected_ambe), dtype=wfsim.instruction_dtype)
+        instr_i['time'] = times_offset[i] + selected_ambe['time']
+        instr_i['event_number'] = i+1
+        instr_i['type'] = selected_ambe['type']
+        instr_i['x'] = selected_ambe['x']
+        instr_i['y'] = selected_ambe['y']
+        instr_i['z'] = selected_ambe['z']
+        instr_i["recoil"] = selected_ambe['recoil']
+        instr_i["e_dep"] = selected_ambe['e_dep']
+        instr_i['amp'] = selected_ambe['amp']
+        instr_i['n_excitons'] = selected_ambe['n_excitons']
+
+        # concatenate instr
+        instr = np.concatenate((instr, instr_i))
+
+    # Filter out 0 amplitudes
+    instr = instr[instr["amp"] > 0]
+
     return instr
 
 def generator_flat(runid, en_range=(0.2, 15.0), recoil=8,
