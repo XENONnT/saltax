@@ -133,8 +133,6 @@ if saltax_mode == 'salt':
 			for d in st.storage:
 				st.storage.append(strax.DataDirectory(d, readonly=True))
 				
-		st.make(strrunid, 'raw_records_simu')
-		gc.collect()
 		for dt in to_process_dtypes:
 			print("Making %s. "%dt)
 
