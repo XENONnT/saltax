@@ -197,6 +197,39 @@ def generator_se(runid,
         instr["n_excitons"][i] = 0
         
     return instr
+    
+def generator_se_bootstrapped(runid, 
+                              xyt_files_at='/project/lgrandi/yuanlq/salt/se_instructions/'):
+    # load instructions
+    with open(xyt_files_at+"se_xs_dict.pkl", 'rb') as f:
+        xs = pickle.load(f)[runid]
+    with open(xyt_files_at+"se_ys_dict.pkl", 'rb') as f:
+        ys = pickle.load(f)[runid]
+    with open(xyt_files_at+"se_ts_dict.pkl", 'rb') as f:
+        ts = pickle.load(f)[runid]
+
+    # stay in runtime range
+    start_time, end_time = get_run_start_end(runid)
+    mask_in_run = ts[ts < (end_time - 1/20*1e9)]    # empirical patch to stay in run
+    mask_in_run = ts[ts > (start_time + 1/20*1e9)]  # empirical patch to stay in run
+    xs = xs[mask_in_run]
+    ys = ys[mask_in_run]
+    ts = ts[mask_in_run]
+
+    n_tot = len(ts)
+    instr["event_number"] = np.arange(1, n_tot + 1)
+    instr["type"][:] = 2
+    instr["time"][:] = times
+    instr["x"][:] = xs
+    instr["y"][:] = ys
+    instr["z"][:] = -0.00001 # Just to avoid drift time
+
+    # And generating quantas from nest
+    for i in range(0, n_tot):
+        instr["amp"][i] = 1
+        instr["n_excitons"][i] = 0
+    
+    return instr
 
 def generator_flat(runid, en_range=(0.2, 15.0), recoil=8,
                    n_tot=None, rate=1e9/SALT_TIME_INTERVAL, 
