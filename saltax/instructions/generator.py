@@ -49,10 +49,10 @@ def constrain_radius(xs, ys, r_max = R_RANGE[-1]-0.001):
     Push out of TPC radius instructions back into radius
     """
     rs = np.sqrt(xs**2 + ys**2)
-    xs_new = xs
-    ys_new = ys
-    xs_new[rs>r_max] = xs * r_max/rs
-    ys_new[rs>r_max] = ys * r_max/rs
+    xs_new = np.array(xs)
+    ys_new = np.array(ys)
+    xs_new[rs>r_max] = xs[rs>r_max] * r_max/rs[rs>r_max]
+    ys_new[rs>r_max] = ys[rs>r_max] * r_max/rs[rs>r_max]
 
     return xs_new, ys_new
 
