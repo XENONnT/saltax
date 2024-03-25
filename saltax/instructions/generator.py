@@ -228,7 +228,7 @@ def generator_se_bootstrapped(runid,
     instr = np.zeros(n_tot, dtype=wfsim.instruction_dtype)
     instr["event_number"] = np.arange(1, n_tot + 1)
     instr["type"][:] = 2
-    instr["time"][:] = times
+    instr["time"][:] = ts
     instr["x"][:] = xs
     instr["y"][:] = ys
     instr["z"][:] = -0.00001 # Just to avoid drift time
