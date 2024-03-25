@@ -111,10 +111,6 @@ if saltax_mode == 'salt':
 
 		print("Finished making all the computation for run %d in \
 			saltax mode %s. "%(runid, 'data'))
-
-		print("Finished making all the computation for run %d in \
-			saltax mode data. "%(runid))
-
 		print('====================')
 	else:
 		print("You specified process_data = False, so we will not process data.")
@@ -150,9 +146,6 @@ if saltax_mode == 'salt':
 
 		print("Finished making all the computation for run %d in \
 			saltax mode %s. "%(runid, 'simu'))
-
-		print("Finished making all the computation for run %d in \
-			saltax mode simu. "%(runid))
 		print('====================')
 	else:
 		print("You specified process_simu = False, so we will not process simu.")
