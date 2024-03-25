@@ -225,6 +225,7 @@ def generator_se_bootstrapped(runid,
     ts = ts[mask_in_run]
 
     n_tot = len(ts)
+    instr = np.zeros(n_tot, dtype=wfsim.instruction_dtype)
     instr["event_number"] = np.arange(1, n_tot + 1)
     instr["type"][:] = 2
     instr["time"][:] = times
