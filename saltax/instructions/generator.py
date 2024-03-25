@@ -273,6 +273,7 @@ def generator_ambe(runid,
     :param rate: rate of events in Hz, default: 1e9/SALT_TIME_INTERVAL
     :param time_mode: 'uniform' or 'realistic', default: 'uniform'
     :param ambe_instructions_file: file containing ambe instructions, default: AMBE_INSTRUCTIONS_FILE
+    :return: instructions in numpy array
     """
     # determine time offsets to shift ambe instructions
     start_time, end_time = get_run_start_end(runid)
