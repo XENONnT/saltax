@@ -44,7 +44,7 @@ def generate_vertex(r_range=R_RANGE, z_range=Z_RANGE, size=1):
 
     return x, y, z
 
-def constrain_radius(xs, ys, r_max = 63):
+def constrain_radius(xs, ys, r_max = 60):
     """
     Push out of TPC radius instructions back into radius
     """
