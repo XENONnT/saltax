@@ -218,8 +218,8 @@ def generator_se_bootstrapped(runid,
 
     # stay in runtime range
     start_time, end_time = get_run_start_end(runid)
-    mask_in_run = ts[ts < (end_time - 1/20*1e9)]    # empirical patch to stay in run
-    mask_in_run = ts[ts > (start_time + 1/20*1e9)]  # empirical patch to stay in run
+    mask_in_run = ts < (end_time - 1/20*1e9)   # empirical patch to stay in run
+    mask_in_run &= ts > (start_time + 1/20*1e9)  # empirical patch to stay in run
     xs = xs[mask_in_run]
     ys = ys[mask_in_run]
     ts = ts[mask_in_run]
