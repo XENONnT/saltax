@@ -237,10 +237,10 @@ def generator_se_bootstrapped(runid,
     ts = ts[mask_in_run]
 
     # clean up nan
-    mask_not_nan = np.isnan(xs) or np.isnan(ys) or np.isnan(ts)
-    xs = xs[mask_not_nan]
-    ys = ys[mask_not_nan]
-    ts = ts[mask_not_nan]
+    mask_is_nan = np.isnan(xs) + np.isnan(ys) + np.isnan(ts)
+    xs = xs[~mask_not_nan]
+    ys = ys[~mask_not_nan]
+    ts = ts[~mask_not_nan]
 
     # stay inside TPC radius
     xs, ys = constrain_radius(xs, ys)
