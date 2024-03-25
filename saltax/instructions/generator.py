@@ -8,6 +8,7 @@ from zoneinfo import ZoneInfo
 from utilix import xent_collection
 import datetime
 import os
+import pickle
 
 
 SALT_TIME_INTERVAL = 5e7 # in unit of ns. The number should be way bigger then full drift time
