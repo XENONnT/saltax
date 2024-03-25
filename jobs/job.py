@@ -27,11 +27,23 @@ skip_records = config.getboolean('job', 'skip_records')
 storage_to_patch = config.get('job', 'storage_to_patch').split(',')
 delete_records = config.getboolean('job', 'delete_records')
 
-to_process_dtypes = ['peaklets', 'peaklet_classification', 'merged_s2s', 'peak_basics',
-					 'events', 'peak_positions_mlp', 'peak_positions_gcn', 'peak_positions_cnn',
-					 'event_basics', 'event_info', 'event_pattern_fit',
-					 'event_shadow', 'event_ambience', 'event_n_channel','veto_intervals',
-					 'cuts_basic']
+# Determine whether to process events type plugins or just peak types
+to_process_dtypes_ev = ['peaklets', 'peaklet_classification', 'merged_s2s', 'peak_basics',
+						'events', 'peak_positions_mlp', 'peak_positions_gcn', 'peak_positions_cnn',
+						'event_basics', 'event_info', 'event_pattern_fit',
+						'event_shadow', 'event_ambience', 'event_n_channel','veto_intervals',
+						'cuts_basic']
+to_process_dtypes_se = ['peaklets', 'peaklet_classification', 'merged_s2s', 'peak_basics', 
+						'peak_positions_mlp']
+if "se" in generator_name:
+	to_process_dtypes = to_process_dtypes_se
+	print("We use a single electron generator, so we will process:")
+else:
+	to_process_dtypes = to_process_dtypes_ev
+	print("Not a single electron generator, so we will process:")
+print(to_process_dtypes)
+print('====================')
+
 if not skip_records:
 	to_process_dtypes = ['records'] + to_process_dtypes
 
