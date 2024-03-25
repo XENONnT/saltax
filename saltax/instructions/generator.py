@@ -44,7 +44,7 @@ def generate_vertex(r_range=R_RANGE, z_range=Z_RANGE, size=1):
 
     return x, y, z
 
-def constrain_radius(xs, ys, r_max = 60):
+def constrain_radius(xs, ys, r_max = R_RANGE[-1]):
     """
     Push out of TPC radius instructions back into radius
     """
@@ -52,7 +52,7 @@ def constrain_radius(xs, ys, r_max = 60):
     xs_new = r_max * np.cos(theta)
     ys_new = r_max * np.sin(theta)
 
-    return xs, ys
+    return xs_new, ys_new
 
 def generate_times(start_time, end_time, size=None, 
                    rate=1e9/SALT_TIME_INTERVAL, time_mode='uniform'):
