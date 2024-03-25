@@ -8,6 +8,7 @@ from zoneinfo import ZoneInfo
 from utilix import xent_collection
 import datetime
 import os
+import pickle
 
 
 SALT_TIME_INTERVAL = 5e7 # in unit of ns. The number should be way bigger then full drift time
@@ -42,6 +43,18 @@ def generate_vertex(r_range=R_RANGE, z_range=Z_RANGE, size=1):
     y = r * np.sin(phi)
 
     return x, y, z
+
+def constrain_radius(xs, ys, r_max = R_RANGE[-1]-0.001):
+    """
+    Push out of TPC radius instructions back into radius
+    """
+    rs = np.sqrt(xs**2 + ys**2)
+    xs_new = np.array(xs)
+    ys_new = np.array(ys)
+    xs_new[rs>r_max] = xs[rs>r_max] * r_max/rs[rs>r_max]
+    ys_new[rs>r_max] = ys[rs>r_max] * r_max/rs[rs>r_max]
+
+    return xs_new, ys_new
 
 def generate_times(start_time, end_time, size=None, 
                    rate=1e9/SALT_TIME_INTERVAL, time_mode='uniform'):
@@ -196,6 +209,56 @@ def generator_se(runid,
         instr["amp"][i] = 1
         instr["n_excitons"][i] = 0
         
+    return instr
+    
+def generator_se_bootstrapped(runid, 
+                              xyt_files_at='/project/lgrandi/yuanlq/salt/se_instructions/'):
+    """
+    Generate instructions for a run with single electron. We will use XYT information from
+    bootstrapped data single electrons to make the simulation more realistic
+    :param runid: run number in integer
+    :param xyt_files_at: directory to search for instructions of x,y,t information
+    """
+    # load instructions
+    runid_str = str(runid).zfill(6)
+    with open(xyt_files_at+"se_xs_dict.pkl", 'rb') as f:
+        xs = pickle.load(f)[runid_str]
+    with open(xyt_files_at+"se_ys_dict.pkl", 'rb') as f:
+        ys = pickle.load(f)[runid_str]
+    with open(xyt_files_at+"se_ts_dict.pkl", 'rb') as f:
+        ts = pickle.load(f)[runid_str]
+
+    # stay in runtime range
+    start_time, end_time = get_run_start_end(runid)
+    mask_in_run = ts < (end_time - 1/20*1e9)   # empirical patch to stay in run
+    mask_in_run &= ts > (start_time + 1/20*1e9)  # empirical patch to stay in run
+    xs = xs[mask_in_run]
+    ys = ys[mask_in_run]
+    ts = ts[mask_in_run]
+
+    # clean up nan
+    mask_is_nan = np.isnan(xs) + np.isnan(ys) + np.isnan(ts)
+    xs = xs[~mask_is_nan]
+    ys = ys[~mask_is_nan]
+    ts = ts[~mask_is_nan]
+
+    # stay inside TPC radius
+    xs, ys = constrain_radius(xs, ys)
+
+    n_tot = len(ts)
+    instr = np.zeros(n_tot, dtype=wfsim.instruction_dtype)
+    instr["event_number"] = np.arange(1, n_tot + 1)
+    instr["type"][:] = 2
+    instr["time"][:] = ts
+    instr["x"][:] = xs
+    instr["y"][:] = ys
+    instr["z"][:] = -0.00001 # Just to avoid drift time
+
+    # And generating quantas from nest
+    for i in range(0, n_tot):
+        instr["amp"][i] = 1
+        instr["n_excitons"][i] = 0
+    
     return instr
 
 def generator_flat(runid, en_range=(0.2, 15.0), recoil=8,
