@@ -44,6 +44,16 @@ def generate_vertex(r_range=R_RANGE, z_range=Z_RANGE, size=1):
 
     return x, y, z
 
+def constrain_radius(xs, ys, r_max = 63):
+    """
+    Push out of TPC radius instructions back into radius
+    """
+    theta = np.arctan(ys/(xs+0.0001)) # shifted xs to avoid inf
+    xs_new = r_max * np.cos(theta)
+    ys_new = r_max * np.sin(theta)
+
+    return xs, ys
+
 def generate_times(start_time, end_time, size=None, 
                    rate=1e9/SALT_TIME_INTERVAL, time_mode='uniform'):
     """
@@ -223,6 +233,9 @@ def generator_se_bootstrapped(runid,
     xs = xs[mask_in_run]
     ys = ys[mask_in_run]
     ts = ts[mask_in_run]
+
+    # stay inside TPC radius
+    xs, ys = constrain_radius(xs, ys)
 
     n_tot = len(ts)
     instr = np.zeros(n_tot, dtype=wfsim.instruction_dtype)
