@@ -200,13 +200,20 @@ def generator_se(runid,
     
 def generator_se_bootstrapped(runid, 
                               xyt_files_at='/project/lgrandi/yuanlq/salt/se_instructions/'):
+    """
+    Generate instructions for a run with single electron. We will use XYT information from
+    bootstrapped data single electrons to make the simulation more realistic
+    :param runid: run number in integer
+    :param xyt_files_at: directory to search for instructions of x,y,t information
+    """
     # load instructions
+    runid_str = str(runid).zfill(6)
     with open(xyt_files_at+"se_xs_dict.pkl", 'rb') as f:
-        xs = pickle.load(f)[runid]
+        xs = pickle.load(f)[runid_str]
     with open(xyt_files_at+"se_ys_dict.pkl", 'rb') as f:
-        ys = pickle.load(f)[runid]
+        ys = pickle.load(f)[runid_str]
     with open(xyt_files_at+"se_ts_dict.pkl", 'rb') as f:
-        ts = pickle.load(f)[runid]
+        ts = pickle.load(f)[runid_str]
 
     # stay in runtime range
     start_time, end_time = get_run_start_end(runid)
