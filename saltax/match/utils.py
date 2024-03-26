@@ -60,17 +60,15 @@ AmBe_CUTS_EXCEPT_S2PatternS1Width = np.array([
             'cut_cs2_area_fraction_top',])
 
 
-def load_peaks(runs, st_salt, st_simu, plugins=('peak_basics', 'peak_positions', 
-                                                'peak_shadow', 'peak_ambience',
-                                                'cut_se_peaks'), truth_fv_cut=True):
+def load_peaks(runs, st_salt, st_simu, 
+               plugins=('peak_basics', 'peak_positions_mlp', 'peak_shadow', 'peak_ambience'), 
+               truth_fv_cut=True):
     """
     Load peaks from the runs and do basic filtering suggeted by saltax.match_peaks
     :param runs: list of runs.
     :param st_salt: saltax context for salt mode
     :param st_simu: saltax context for simu mode
-    :param plugins: plugins to be loaded, default to ('peak_basics', 'peak_positions', 
-                                                'peak_shadow', 'peak_ambience',
-                                                'cut_se_peaks')
+    :param plugins: plugins to be loaded, default to ('peak_basics', 'peak_positions_mlp', 'peak_shadow', 'peak_ambience')
     :param truth_fv_cut: whether to apply truth FV cut, default to True
     :return: peaks_simu: peaks related plugins from simulated dataset
     :return: peaks_salt:  peaks related plugins from sprinkled dataset
