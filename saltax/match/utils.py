@@ -117,6 +117,73 @@ def load_peaks(runs, st_salt, st_simu,
     return peaks_simu, peaks_salt, truth, match, peaks_salt_matched_to_simu, peaks_simu_matched_to_salt
 
 
+def load_events(runs, st_salt, st_simu, plugins=('event_info', 'cuts_basic')):
+    """
+    Load events from the runs and do basic filtering suggeted by saltax.match_events
+    :param runs: list of runs.
+    :param st_salt: saltax context for salt mode
+    :param st_simu: saltax context for simu mode
+    :return: events_simu: events from simulated dataset, filtered out those who miss S1
+    :return: events_salt: events from sprinkled dataset
+    :return inds_dict: dictionary of indices of events from sprinkled or filtered simulated dataset, 
+                       regarding matching events or s1 or s2
+    """
+    # Initialize the dictionary to store the indices
+    inds_dict = {
+        "ind_salt_event_found": np.array([], dtype=np.int32),
+        "ind_salt_s1_found": np.array([], dtype=np.int32),
+        "ind_salt_s2_found": np.array([], dtype=np.int32),
+        "ind_simu_event_found": np.array([], dtype=np.int32),
+        "ind_simu_s1_found": np.array([], dtype=np.int32),
+        "ind_simu_s2_found": np.array([], dtype=np.int32)
+    }
+
+    for i, run in enumerate(runs):
+        print("Loading run %s"%(run))
+        
+        # Load plugins for both salt and simu
+        events_simu_i = st_simu.get_array(run, plugins, progress_bar=False)
+        events_salt_i = st_salt.get_array(run, plugins, progress_bar=False)
+
+        # Get matching result
+        (
+            events_simu_filtered_i,
+            ind_salt_event_found_i, ind_simu_event_found_i, ind_simu_event_lost_i, ind_simu_event_split_i,
+            ind_salt_s1_found_i, ind_simu_s1_found_i,
+            ind_salt_s2_found_i, ind_simu_s2_found_i
+        ) = saltax.match_events(events_simu_i, events_salt_i)
+
+        # Load the indices into the dictionary
+        inds_dict["ind_salt_event_found"] = np.concatenate(
+            (inds_dict["ind_salt_event_found"], ind_salt_event_found_i)
+        )
+        inds_dict["ind_salt_s1_found"] = np.concatenate(
+            (inds_dict["ind_salt_s1_found"], ind_salt_s1_found_i)
+        )
+        inds_dict["ind_salt_s2_found"] = np.concatenate(
+            (inds_dict["ind_salt_s2_found"], ind_salt_s2_found_i)
+        )
+        inds_dict["ind_simu_event_found"] = np.concatenate(
+            (inds_dict["ind_simu_event_found"], ind_simu_event_found_i)
+        )
+        inds_dict["ind_simu_s1_found"] = np.concatenate(
+            (inds_dict["ind_simu_s1_found"], ind_simu_s1_found_i)
+        )
+        inds_dict["ind_simu_s2_found"] = np.concatenate(
+            (inds_dict["ind_simu_s2_found"], ind_simu_s2_found_i)
+        )
+
+        # Concatenate the events
+        if i==0:
+            events_simu = events_simu_filtered_i
+            events_salt = events_salt_i
+        else:
+            events_simu = np.concatenate((events_simu, events_simu_filtered_i))
+            events_salt = np.concatenate((events_salt, events_salt_i))
+    
+    return events_simu, events_salt, inds_dict
+
+
 def load_events_deprecated(runs, st_salt, st_simu, plugins=('event_info', 'cuts_basic')):
     """
     Load events from the runs and do basic filtering suggeted by saltax.match_events
