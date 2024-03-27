@@ -181,9 +181,10 @@ def _pair_salt_to_simu_events(truth, match, events_simu, events_salt):
     
     return ind_salt_matched_to_simu, ind_simu_matched_to_truth, truth_filtered, match_filtered
 
-def _match_events(truth, match, events_simu, events_salt):
+def match_events_deprecated(truth, match, events_simu, events_salt):
     """
-    Match salted events to simulation events.
+    Match salted events to simulation events. This function has been deprecated because it cannot track
+    event building efficiency in a proper way.
     :param truth: truth from wfsim
     :param match: match_acceptance_extended from pema
     :param events_simu: event_info from wfsim
