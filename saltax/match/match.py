@@ -251,7 +251,7 @@ def match_events(events_simu, events_salt):
 
     # Step 4 & 5.
     # Assumed s1 times has been sorted! It should be a safe assumption because their events are sorted.
-    s1_touching_windows = strax._touching_windows(
+    s1_touching_windows = strax.processing.general._touching_windows(
         events_salt["s1_time"],
         events_salt["s1_endtime"],
         events_simu_filtered["s1_time"],
@@ -264,7 +264,7 @@ def match_events(events_simu, events_salt):
 
     # Step 6 & 7.
     # Assumed s2 times has been sorted! It should be a safe assumption because their events are sorted.
-    s2_touching_windows = strax._touching_windows(
+    s2_touching_windows = strax.processing.general._touching_windows(
         events_salt["s2_time"],
         events_salt["s2_endtime"],
         events_simu_filtered["s2_time"],
