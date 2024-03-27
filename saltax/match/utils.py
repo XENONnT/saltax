@@ -117,7 +117,7 @@ def load_peaks(runs, st_salt, st_simu,
     return peaks_simu, peaks_salt, truth, match, peaks_salt_matched_to_simu, peaks_simu_matched_to_salt
 
 
-def load_events(runs, st_salt, st_simu, plugins=('event_info', 'cuts_basic')):
+def load_events_deprecated(runs, st_salt, st_simu, plugins=('event_info', 'cuts_basic')):
     """
     Load events from the runs and do basic filtering suggeted by saltax.match_events
     :param runs: list of runs.
