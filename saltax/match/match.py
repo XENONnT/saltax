@@ -3,7 +3,7 @@ from tqdm import tqdm
 import strax
 
 
-def filter_out_missing_s1_s2(truth, match):
+def _filter_out_missing_s1_s2(truth, match):
     """
     Filter out simulated events that have no S1 or S2 or both
     :param truth: truth from wfsim
@@ -34,7 +34,7 @@ def filter_out_missing_s1_s2(truth, match):
     return truth[~bad_mask], match[~bad_mask]
 
 
-def filter_out_multiple_s1_s2(truth, match):
+def _filter_out_multiple_s1_s2(truth, match):
     """
     Filter out simulated events that have multiple S1 or S2 reconstructed from wfsim.
     :param truth: truth from wfsim
@@ -58,7 +58,7 @@ def filter_out_multiple_s1_s2(truth, match):
     return truth[~bad_mask], match[~bad_mask]
 
 
-def filter_out_not_found(truth, match, s1s2=1):
+def _filter_out_not_found(truth, match, s1s2=1):
     """
     Filter out simulated events whose S1 are not found by pema.
     :param truth: truth from wfsim
@@ -88,7 +88,7 @@ def filter_out_not_found(truth, match, s1s2=1):
     return truth[~bad_mask], match[~bad_mask]
 
 
-def pair_events_to_filtered_truth(truth, events):
+def _pair_events_to_filtered_truth(truth, events):
     """
     Pair events to filtered truth.
     :param truth: filtered truth
@@ -130,7 +130,7 @@ def pair_events_to_filtered_truth(truth, events):
     return matched_to
 
 
-def pair_events_to_matched_simu(matched_simu, events):
+def _pair_events_to_matched_simu(matched_simu, events):
     """
     Pair salted events to matched simulation events.
     :param matched_simu: simulation events already matched to truth
@@ -160,31 +160,7 @@ def pair_events_to_matched_simu(matched_simu, events):
     return matched_to
 
 
-def pair_peaks_to_matched_simu(matched_simu, peaks, safeguard=0):
-    """
-    Pair salted peaks to simulation peaks who have been matched to truth.
-    :param matched_simu: simulation peaks already matched to truth
-    :param peaks: peaks from saltax after reconstruction
-    :param safeguard: extension of time range to consider as matched, as a workaround for timing problem in wfsim s2
-    :return: ind_simu_matched_to_salt: the index of matched simulation peaks for each salted peak
-    :return: ind_salt_matched_to_simu: the index of matched salted peaks for each simulation peak
-    """
-    windows = strax.touching_windows(peaks, 
-                                     matched_simu, 
-                                     window=safeguard)
-    windows_length = windows[:,1] - windows[:,0]
-    simu_matched_to_salt_mask = windows_length == 1
-    print("Filter out %s percent of simulation due to multiple or no matched sprinkled \
-           peaks"%(np.sum(~simu_matched_to_salt_mask)/len(matched_simu)*100))
-
-    matched_simu = matched_simu[simu_matched_to_salt_mask]
-    ind_simu_matched_to_salt = np.where(simu_matched_to_salt_mask)[0]
-    ind_salt_matched_to_simu = windows[simu_matched_to_salt_mask][:,0]
-
-    return ind_simu_matched_to_salt, ind_salt_matched_to_simu
-
-
-def pair_salt_to_simu_events(truth, match, events_simu, events_salt):
+def _pair_salt_to_simu_events(truth, match, events_simu, events_salt):
     """
     Filter out bad simulation truth and then pair salted events to matched simulation events.
     :param truth: filtered truth
@@ -193,40 +169,19 @@ def pair_salt_to_simu_events(truth, match, events_simu, events_salt):
     :param events_salt: events from saltax after reconstruction
     :return: ind_salt_matched_to_simu, ind_simu_matched_to_truth, truth_filtered, match_filtered
     """
-    truth_filtered, match_filtered = filter_out_missing_s1_s2(truth, match)
-    truth_filtered, match_filtered = filter_out_multiple_s1_s2(truth_filtered, match_filtered)
-    truth_filtered, match_filtered = filter_out_not_found(truth_filtered, match_filtered) 
+    truth_filtered, match_filtered = _filter_out_missing_s1_s2(truth, match)
+    truth_filtered, match_filtered = _filter_out_multiple_s1_s2(truth_filtered, match_filtered)
+    truth_filtered, match_filtered = _filter_out_not_found(truth_filtered, match_filtered) 
 
-    ind_simu_matched_to_truth = pair_events_to_filtered_truth(truth_filtered, events_simu)
+    ind_simu_matched_to_truth = _pair_events_to_filtered_truth(truth_filtered, events_simu)
     events_simu_matched_to_truth = events_simu[ind_simu_matched_to_truth[ind_simu_matched_to_truth>=0]]
 
-    ind_salt_matched_to_simu = pair_events_to_matched_simu(events_simu_matched_to_truth, 
+    ind_salt_matched_to_simu = _pair_events_to_matched_simu(events_simu_matched_to_truth, 
                                                            events_salt)
     
     return ind_salt_matched_to_simu, ind_simu_matched_to_truth, truth_filtered, match_filtered
 
-
-def pair_salt_to_simu_peaks(truth, match, peaks_simu, peaks_salt):
-    """
-    Filter out bad simulation truth and then pair salted events to matched simulation events.
-    :param truth: filtered truth
-    :param match: match_acceptance_extended from pema
-    :param peaks_simu: peaks from wfsim
-    :param peaks_salt: peaks from saltax after reconstruction
-    :return: ind_salt_matched_to_simu, ind_simu_matched_to_truth
-    """
-    ind_simu_matched_to_truth = match['matched_to']
-    peaks_simu_matched_to_truth = peaks_simu[ind_simu_matched_to_truth]
-
-    (_ind_simu_matched_to_truth, 
-     ind_salt_matched_to_simu) = pair_peaks_to_matched_simu(peaks_simu_matched_to_truth, 
-                                                            peaks_salt)
-    ind_simu_matched_to_truth = ind_simu_matched_to_truth[_ind_simu_matched_to_truth]
-
-    return ind_salt_matched_to_simu, ind_simu_matched_to_truth
-
-
-def match_events(truth, match, events_simu, events_salt):
+def _match_events(truth, match, events_simu, events_salt):
     """
     Match salted events to simulation events.
     :param truth: truth from wfsim
@@ -237,13 +192,14 @@ def match_events(truth, match, events_simu, events_salt):
     """
     ind_salt_matched_to_simu, \
         ind_simu_matched_to_truth, \
-            _, _ = pair_salt_to_simu_events(truth, match, events_simu, events_salt)
+            _, _ = _pair_salt_to_simu_events(truth, match, events_simu, events_salt)
 
     events_simu_matched_to_truth = events_simu[ind_simu_matched_to_truth[ind_simu_matched_to_truth>=0]]
     events_salt_matched_to_simu = events_salt[ind_salt_matched_to_simu[ind_salt_matched_to_simu>=0]]
     events_simu_matched_to_salt = events_simu_matched_to_truth[ind_salt_matched_to_simu>=0]
 
     return events_salt_matched_to_simu, events_simu_matched_to_salt
+
 
 def match_peaks(truth, match, peaks_simu, peaks_salt):
     """
@@ -267,3 +223,47 @@ def match_peaks(truth, match, peaks_simu, peaks_salt):
     peaks_simu_matched_to_salt = peaks_simu_matched_to_truth[ind_salt_matched_to_simu>=0]
 
     return peaks_salt_matched_to_simu, peaks_simu_matched_to_salt
+
+
+def pair_salt_to_simu_peaks(truth, match, peaks_simu, peaks_salt):
+    """
+    Filter out bad simulation truth and then pair salted events to matched simulation events.
+    :param truth: filtered truth
+    :param match: match_acceptance_extended from pema
+    :param peaks_simu: peaks from wfsim
+    :param peaks_salt: peaks from saltax after reconstruction
+    :return: ind_salt_matched_to_simu, ind_simu_matched_to_truth
+    """
+    ind_simu_matched_to_truth = match['matched_to']
+    peaks_simu_matched_to_truth = peaks_simu[ind_simu_matched_to_truth]
+
+    (_ind_simu_matched_to_truth, 
+     ind_salt_matched_to_simu) = pair_peaks_to_matched_simu(peaks_simu_matched_to_truth, 
+                                                            peaks_salt)
+    ind_simu_matched_to_truth = ind_simu_matched_to_truth[_ind_simu_matched_to_truth]
+
+    return ind_salt_matched_to_simu, ind_simu_matched_to_truth
+
+
+def pair_peaks_to_matched_simu(matched_simu, peaks, safeguard=0):
+    """
+    Pair salted peaks to simulation peaks who have been matched to truth.
+    :param matched_simu: simulation peaks already matched to truth
+    :param peaks: peaks from saltax after reconstruction
+    :param safeguard: extension of time range to consider as matched, as a workaround for timing problem in wfsim s2
+    :return: ind_simu_matched_to_salt: the index of matched simulation peaks for each salted peak
+    :return: ind_salt_matched_to_simu: the index of matched salted peaks for each simulation peak
+    """
+    windows = strax.touching_windows(peaks, 
+                                     matched_simu, 
+                                     window=safeguard)
+    windows_length = windows[:,1] - windows[:,0]
+    simu_matched_to_salt_mask = windows_length == 1
+    print("Filter out %s percent of simulation due to multiple or no matched sprinkled \
+           peaks"%(np.sum(~simu_matched_to_salt_mask)/len(matched_simu)*100))
+
+    matched_simu = matched_simu[simu_matched_to_salt_mask]
+    ind_simu_matched_to_salt = np.where(simu_matched_to_salt_mask)[0]
+    ind_salt_matched_to_simu = windows[simu_matched_to_salt_mask][:,0]
+
+    return ind_simu_matched_to_salt, ind_salt_matched_to_simu
