@@ -215,8 +215,8 @@ class SPeaklets(strax.Plugin):
 
         # Remove hits in zero-gain channels
         # they should not affect the clustering!
-        # NB: we tried to shift hit channel here, but will lead to significant troubles because of overlapping
-        # hit timing between the simu and data channels in many cases
+        # NB: it's attempting to shift hit channel here, but will lead to significant troubles when summing waveforms,
+        # because the 988-channel number is still requred when reading records_i data.
         hits = hits[self.to_pe[hits['channel']] != 0]
 
         hits = strax.sort_by_time(hits)
@@ -245,9 +245,6 @@ class SPeaklets(strax.Plugin):
         # which is asserted inside strax.find_peaks.
         is_lone_hit = strax.fully_contained_in(hits, peaklets) == -1
         lone_hits = hits[is_lone_hit]
-
-        # FIXME: surgery here; shifted lone_hits' channel
-        lone_hits['channel'] = lone_hits['channel'] - SCHANNEL_STARTS_AT
 
         # Update the area of lone_hits to the integral in ADCcounts x samples
         strax.integrate_lone_hits(
