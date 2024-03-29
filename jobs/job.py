@@ -64,12 +64,12 @@ if len(storage_to_patch) and storage_to_patch[0] != "":
 	for d in storage_to_patch:
 		st.storage.append(strax.DataDirectory(d, readonly=True))
 
-st.make(strrunid, 'raw_records_simu')
+st.make(strrunid, 'raw_records_simu', progress_bar=True)
 gc.collect()
 for dt in to_process_dtypes:
 	print("Making %s. "%dt)
 	try:
-		st.make(strrunid, dt, save=(dt))
+		st.make(strrunid, dt, save=(dt), progress_bar=True)
 		print("Done with %s. "%dt)
 	except NotImplementedError as e:
 		print("The cut_basics for run %d is not implemented. "%runid)
@@ -100,7 +100,7 @@ if saltax_mode == 'salt':
 		for dt in to_process_dtypes:
 			print("Making %s. "%dt)
 			try:
-				st.make(strrunid, dt, save=(dt))
+				st.make(strrunid, dt, save=(dt), progress_bar=True)
 				print("Done with %s. "%dt)
 			except NotImplementedError as e:
 				print("The cut_basics for run %d is not implemented. "%runid)
@@ -133,13 +133,13 @@ if saltax_mode == 'salt':
 			print("Making %s. "%dt)
 
 			try:
-				st.make(strrunid, dt, save=(dt))
+				st.make(strrunid, dt, save=(dt), progress_bar=True)
 				print("Done with %s. "%dt)
 			except NotImplementedError as e:
 				print("The cut_basics for run %d is not implemented. "%runid)
 			gc.collect()
 		# Manually make pema plugin after
-		st.make(strrunid, 'match_acceptance_extended')
+		st.make(strrunid, 'match_acceptance_extended', progress_bar=True)
 
 		print("Used time:", datetime.now() - now)
 		now = datetime.now()
