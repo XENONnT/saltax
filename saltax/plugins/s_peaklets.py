@@ -198,7 +198,7 @@ class SPeaklets(strax.Plugin):
         setattr(strax, "sum_waveform", sum_waveform_salted)
         
     def compute(self, records, start, end):
-        # FIXME: This is screwing up the record_i in data or simu mode!
+        # FIXME: This is going to make the same lone hit having different record_i, between in salt mode and others
         # FIXME: surgery here; channel specification related
         # Based on saltax_mode, determine what channels to involve
         if self.config['saltax_mode'] == 'salt':
