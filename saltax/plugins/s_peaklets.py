@@ -307,6 +307,7 @@ class SPeaklets(strax.Plugin):
             n_top_channels=n_top_pmts_if_digitize_top
         )
 
+        # FIXME: Saturation correction in salt mode is nonsense
         # Saturation correction using non-saturated channels
         # similar method used in pax
         # see https://github.com/XENON1T/pax/pull/712
