@@ -378,6 +378,9 @@ class SPeaklets(strax.Plugin):
             raise ValueError(
                 f'Found n_hits less than tight_coincidence')
 
+        # FIXME: surgery here; shifted lone_hits' channel
+        lone_hits['channel'] = lone_hits['channel'] - SCHANNEL_STARTS_AT
+
         return dict(peaklets=peaklets,
                     lone_hits=lone_hits)
 
