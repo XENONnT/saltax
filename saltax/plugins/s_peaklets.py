@@ -246,6 +246,9 @@ class SPeaklets(strax.Plugin):
         is_lone_hit = strax.fully_contained_in(hits, peaklets) == -1
         lone_hits = hits[is_lone_hit]
 
+        # FIXME: surgery here; shifted lone_hits' channel
+        lone_hits['channel'] = lone_hits['channel'] - SCHANNEL_STARTS_AT
+
         # Update the area of lone_hits to the integral in ADCcounts x samples
         strax.integrate_lone_hits(
             lone_hits, records, peaklets,
