@@ -45,7 +45,7 @@ class SPeaklets(strax.Plugin):
     parallel = 'process'
     compressor = 'zstd'
 
-    __version__ = '0.0.3'
+    __version__ = '0.0.4'
 
     peaklet_gap_threshold = straxen.URLConfig(
         default=700, infer_type=False,
@@ -198,6 +198,8 @@ class SPeaklets(strax.Plugin):
         setattr(strax, "sum_waveform", sum_waveform_salted)
         
     def compute(self, records, start, end):
+        # FIXME: This is going to make the same lone hit having different record_i, between in salt mode and others
+        # FIXME: surgery here; channel specification related
         # Based on saltax_mode, determine what channels to involve
         if self.config['saltax_mode'] == 'salt':
             records = records[(records['channel']>=SCHANNEL_STARTS_AT)|
@@ -215,6 +217,8 @@ class SPeaklets(strax.Plugin):
 
         # Remove hits in zero-gain channels
         # they should not affect the clustering!
+        # NB: it's attempting to shift hit channel here, but will lead to significant troubles when summing waveforms,
+        # because the 988-channel number is still requred when reading records_i data.
         hits = hits[self.to_pe[hits['channel']] != 0]
 
         hits = strax.sort_by_time(hits)
@@ -303,6 +307,7 @@ class SPeaklets(strax.Plugin):
             n_top_channels=n_top_pmts_if_digitize_top
         )
 
+        # FIXME: Saturation correction in salt mode is nonsense
         # Saturation correction using non-saturated channels
         # similar method used in pax
         # see https://github.com/XENON1T/pax/pull/712
@@ -375,6 +380,9 @@ class SPeaklets(strax.Plugin):
         if not np.all(peaklets['n_hits'] >= peaklets['tight_coincidence']):
             raise ValueError(
                 f'Found n_hits less than tight_coincidence')
+
+        # FIXME: surgery here; shifted lone_hits' channel
+        lone_hits['channel'] = lone_hits['channel'] - SCHANNEL_STARTS_AT
 
         return dict(peaklets=peaklets,
                     lone_hits=lone_hits)
@@ -687,6 +695,7 @@ def find_peaks(hits, adc_to_pe,
         peak_endtime = max(peak_endtime, t1)
         hit_area_pe = hit['area'] * adc_to_pe[hit['channel']]
         
+        # FIXME: surgery here; top/bot array related
         # Manually shift channels for area_per_channel
         if hit['channel']>=SCHANNEL_STARTS_AT:
             area_per_channel[hit['channel']-SCHANNEL_STARTS_AT] += hit_area_pe
