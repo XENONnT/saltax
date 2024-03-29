@@ -215,6 +215,8 @@ class SPeaklets(strax.Plugin):
 
         # Remove hits in zero-gain channels
         # they should not affect the clustering!
+        # NB: we tried to shift hit channel here, but will lead to significant troubles because of overlapping
+        # hit timing between the simu and data channels in many cases
         hits = hits[self.to_pe[hits['channel']] != 0]
 
         hits = strax.sort_by_time(hits)
