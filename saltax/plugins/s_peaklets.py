@@ -689,6 +689,7 @@ def find_peaks(hits, adc_to_pe,
         peak_endtime = max(peak_endtime, t1)
         hit_area_pe = hit['area'] * adc_to_pe[hit['channel']]
         
+        # FIXME: surgery here; top/bot array related
         # Manually shift channels for area_per_channel
         if hit['channel']>=SCHANNEL_STARTS_AT:
             area_per_channel[hit['channel']-SCHANNEL_STARTS_AT] += hit_area_pe
