@@ -287,8 +287,8 @@ def generator_ambe(runid,
                                           n_tot,
                                           replace=True)
 
-    instr = np.zeros(0, dtype=wfsim.instruction_dtype)
     # assign instructions
+    instr = np.zeros(0, dtype=wfsim.instruction_dtype)
     for i in tqdm(range(n_tot)):
         # bootstrapped ambe instruction
         selected_ambe = ambe_instructions[ambe_instructions['event_number'] 
