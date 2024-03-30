@@ -9,6 +9,7 @@ from utilix import xent_collection
 import datetime
 import os
 import pickle
+from tqdm import tqdm
 
 
 SALT_TIME_INTERVAL = 1e7 # in unit of ns. The number should be way bigger then full drift time
@@ -290,7 +291,7 @@ def generator_ambe(runid,
 
     instr = np.zeros(0, dtype=wfsim.instruction_dtype)
     # assign instructions
-    for i in range(n_tot):
+    for i in tqdm(range(n_tot)):
         # bootstrapped ambe instruction
         selected_ambe = ambe_instructions[ambe_instructions['event_number'] 
                                           == ambe_event_numbers[i]]
