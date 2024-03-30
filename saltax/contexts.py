@@ -94,7 +94,7 @@ def xenonnt_salted(runid=None,
     :return: strax context
     """
     # Get salt generator
-    generator_func = get_generator(generator_name, args)
+    generator_func = get_generator(generator_name, *args)
 
     # Specify simulation instructions
     instr_file_name = saltax.instr_file_name(runid=runid, recoil=recoil, 
