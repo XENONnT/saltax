@@ -108,7 +108,7 @@ def xenonnt_salted(runid=None,
         except:
             print(f"Instruction file {instr_file_name} not found. Generating instructions...")
             instr = generator_func(runid=runid)
-            instr.to_csv(instr_file_name, index=False)
+            pd.DataFrame(instr).to_csv(instr_file_name, index=False)
             print(f"Instructions saved to {instr_file_name}")
 
     # Based on cutax.xenonnt_sim_base()
