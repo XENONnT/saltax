@@ -4,6 +4,8 @@ import cutax
 import strax
 from immutabledict import immutabledict
 import pema
+import pandas as pd
+
 
 # straxen XENONnT options/configuration
 XNT_COMMON_OPTS = straxen.contexts.xnt_common_opts.copy()
@@ -69,7 +71,8 @@ def xenonnt_salted(runid,
                    cmt_run_id="026000",
                    generator_name='flat',
                    recoil=7,
-                   simu_mode='all',                  
+                   simu_mode='all',        
+                   *args,          
                    **kwargs):
     """
     Return a strax context for XENONnT data analysis with saltax.
@@ -85,17 +88,25 @@ def xenonnt_salted(runid,
     :param generator_name: (for simulation) Instruction mode to use, defaults to 'flat'
     :param recoil: (for simulation) NEST recoil type, defaults to 7 (beta ER)
     :param simu_mode: 's1', 's2', or 'all'. Defaults to 'all'
+    :param args: Extra arguments to pass to the generator function, like rate
     :param kwargs: Extra options to pass to strax.Context
     :return: strax context
     """
     # Get salt generator
-    generator_func = get_generator(generator_name)
+    generator_func = get_generator(generator_name, args)
 
     # Generate instructions
-    instr = generator_func(runid=runid)
-    instr_file_name = saltax.instr_file_name(runid=runid, instr=instr, recoil=recoil, 
+    instr_file_name = saltax.instr_file_name(runid=runid, recoil=recoil, 
                                              generator_name=generator_name, 
                                              mode=simu_mode)
+    try:
+        instr = pd.read_csv(instr_file_name)
+        print("Loaded instructions from file", instr_file_name)
+    except:
+        print(f"Instruction file {instr_file_name} not found. Generating instructions...")
+        instr = generator_func(runid=runid)
+        instr.to_csv(instr_file_name, index=False)
+        print(f"Instructions saved to {instr_file_name}")
 
     # Based on cutax.xenonnt_sim_base()
     fax_conf='fax_config_nt_{:s}.json'.format(faxconf_version)
