@@ -12,7 +12,7 @@ import pickle
 from tqdm import tqdm
 
 
-SALT_TIME_INTERVAL = 1e7 # in unit of ns. The number should be way bigger then full drift time
+SALT_TIME_INTERVAL = 2e7 # in unit of ns. The number should be way bigger then full drift time
 Z_RANGE = (-148.15, 0) # in unit of cm
 R_RANGE = (0, 66.4) # in unit of cm
 DOWNLOADER = straxen.MongoDownloader()
