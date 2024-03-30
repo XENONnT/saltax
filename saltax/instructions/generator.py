@@ -172,7 +172,7 @@ def instr_file_name(runid, recoil, generator_name, mode, rate=1e9/SALT_TIME_INTE
 def generator_se(runid, 
                  n_tot=None, rate=1e9/SALT_TIME_INTERVAL, 
                  r_range=R_RANGE, z_range=Z_RANGE, 
-                 time_mode="uniform", *args):
+                 time_mode="uniform"):
     """
     Generate instructions for a run with single electron.
     :param runid: run number in integer
