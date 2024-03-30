@@ -76,9 +76,8 @@ def xenonnt_salted(runid=None,
                    **kwargs):
     """
     Return a strax context for XENONnT data analysis with saltax.
-    :param runid: run number in integer. Must exist in RunDB, defaults to None as data-loading only. 
-        Note that it doesn't matter when you are loading computed run, but only matter when 
-        you use the context to compute new runs.
+    :param runid: run number in integer. Must exist in RunDB if you use this context to 
+        compute raw_records_simu, or use None for data-loading only.
     :param saltax_mode: 'data', 'simu', or 'salt'.
     :param output_folder: Directory where data will be stored, defaults to ./strax_data
     :param xedocs_version: XENONnT documentation version to use, defaults to DEFAULT_XEDOCS_VERSION
@@ -216,7 +215,8 @@ def sxenonnt(runid=None,
              **kwargs):
     """
     United strax context for XENONnT data, simulation, or salted data.
-    :param runid: run number in integer. Must exist in RunDB.
+    :param runid: run number in integer. Must exist in RunDB if you use this context to 
+        compute raw_records_simu, or use None for data-loading only.
     :param saltax_mode: 'data', 'simu', or 'salt'
     :param output_folder: Output folder for strax data, default './strax_data'
     :param xedocs_version: xedocs version to use, default is synced with cutax latest
@@ -232,6 +232,9 @@ def sxenonnt(runid=None,
     :return: strax context
     """
     assert saltax_mode in SALTAX_MODES, "saltax_mode must be one of %s"%(SALTAX_MODES)
+    if runid is None:
+        print("Since you specified runid=None, this context will not be able to compute raw_records_simu.")
+        print("Welcome to data-loading only mode!")
 
     return xenonnt_salted(
         runid=runid,
