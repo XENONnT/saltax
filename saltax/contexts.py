@@ -60,7 +60,7 @@ def get_generator(generator_name):
     generator_func = eval('saltax.generator_'+generator_name)
     return generator_func
 
-def xenonnt_salted(runid, 
+def xenonnt_salted(runid=51906, 
                    saltax_mode='salt',
                    output_folder='./strax_data',
                    xedocs_version=DEFAULT_XEDOCS_VERSION,
@@ -76,7 +76,9 @@ def xenonnt_salted(runid,
                    **kwargs):
     """
     Return a strax context for XENONnT data analysis with saltax.
-    :param runid: run number in integer. Must exist in RunDB.
+    :param runid: run number in integer. Must exist in RunDB, defaults to 51906 as a place holder. 
+        Note that it doesn't matter when you are loading computed run, but only matter when 
+        you use the context to compute new runs.
     :param saltax_mode: 'data', 'simu', or 'salt'.
     :param output_folder: Directory where data will be stored, defaults to ./strax_data
     :param xedocs_version: XENONnT documentation version to use, defaults to DEFAULT_XEDOCS_VERSION
