@@ -235,6 +235,8 @@ def sxenonnt(runid=None,
     if runid is None:
         print("Since you specified runid=None, this context will not be able to compute raw_records_simu.")
         print("Welcome to data-loading only mode!")
+    else:
+        print("Welcome to computation mode which only works for run %s!"%(runid))
 
     return xenonnt_salted(
         runid=runid,
