@@ -145,29 +145,34 @@ def get_run_start_end(runid):
     
     return unix_time_start_ns, unix_time_end_ns
 
-def instr_file_name(runid, recoil, generator_name, mode, rate=1e9/SALT_TIME_INTERVAL,
+def instr_file_name(recoil, generator_name, mode, runid=None,
+                    rate=1e9/SALT_TIME_INTERVAL,
                     base_dir=BASE_DIR):
     """
     Generate the instruction file name based on the runid, recoil, generator_name, mode, and rate.
-    :param runid: run number in integer
-    :param instr: instructions in numpy array
     :param recoil: NEST recoil type
     :param generator_name: name of the generator
     :param mode: 's1', 's2', or 'all'
+    :param runid: run number in integer, default: None, which means we are loading data and instruction 
+        doesn't matter (strax lineage unaffected)
     :param rate: rate of events in Hz
     :param base_dir: base directory to save the instruction file, default: BASE_DIR
     :return: instruction file name
     """
+    if runid is None:
+        return "Data-loading only, no instruction file needed."
+    
     # FIXME: this will shoot errors if we are on OSG rather than midway
-    if base_dir[-1] != '/':
-        base_dir += '/'
+    else:
+        if base_dir[-1] != '/':
+            base_dir += '/'
 
-    rate = int(rate)
-    runid = str(runid).zfill(6)
-    filename = BASE_DIR + runid + "-" + str(recoil) + "-" + \
-        generator_name + "-" + mode + "-" + str(rate) + ".csv"
+        rate = int(rate)
+        runid = str(runid).zfill(6)
+        filename = BASE_DIR + runid + "-" + str(recoil) + "-" + \
+            generator_name + "-" + mode + "-" + str(rate) + ".csv"
 
-    return filename
+        return filename
 
 def generator_se(runid, 
                  n_tot=None, rate=1e9/SALT_TIME_INTERVAL, 

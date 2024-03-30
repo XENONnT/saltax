@@ -60,7 +60,7 @@ def get_generator(generator_name):
     generator_func = eval('saltax.generator_'+generator_name)
     return generator_func
 
-def xenonnt_salted(runid=51906, 
+def xenonnt_salted(runid=None, 
                    saltax_mode='salt',
                    output_folder='./strax_data',
                    xedocs_version=DEFAULT_XEDOCS_VERSION,
@@ -76,7 +76,7 @@ def xenonnt_salted(runid=51906,
                    **kwargs):
     """
     Return a strax context for XENONnT data analysis with saltax.
-    :param runid: run number in integer. Must exist in RunDB, defaults to 51906 as a place holder. 
+    :param runid: run number in integer. Must exist in RunDB, defaults to None as data-loading only. 
         Note that it doesn't matter when you are loading computed run, but only matter when 
         you use the context to compute new runs.
     :param saltax_mode: 'data', 'simu', or 'salt'.
@@ -97,18 +97,20 @@ def xenonnt_salted(runid=51906,
     # Get salt generator
     generator_func = get_generator(generator_name, args)
 
-    # Generate instructions
+    # Specify simulation instructions
     instr_file_name = saltax.instr_file_name(runid=runid, recoil=recoil, 
                                              generator_name=generator_name, 
                                              mode=simu_mode)
-    try:
-        instr = pd.read_csv(instr_file_name)
-        print("Loaded instructions from file", instr_file_name)
-    except:
-        print(f"Instruction file {instr_file_name} not found. Generating instructions...")
-        instr = generator_func(runid=runid)
-        instr.to_csv(instr_file_name, index=False)
-        print(f"Instructions saved to {instr_file_name}")
+    # If runid is not None, then we need to either load instruction or generate it
+    if runid is not None:
+        try:
+            instr = pd.read_csv(instr_file_name)
+            print("Loaded instructions from file", instr_file_name)
+        except:
+            print(f"Instruction file {instr_file_name} not found. Generating instructions...")
+            instr = generator_func(runid=runid)
+            instr.to_csv(instr_file_name, index=False)
+            print(f"Instructions saved to {instr_file_name}")
 
     # Based on cutax.xenonnt_sim_base()
     fax_conf='fax_config_nt_{:s}.json'.format(faxconf_version)
@@ -191,7 +193,7 @@ def xenonnt_salted(runid=51906,
             st.config[option] = ('cmt_run_id', cmt_run_id, *value)
 
     # Load instructions
-    st.set_config(dict(fax_file=instr_file_name))
+    st.set_config(dict(fax_file=instr_file_name)) # doesn't matter for lineage
     st.set_config(dict(saltax_mode=saltax_mode))
 
     # Register pema plugins
