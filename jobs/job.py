@@ -21,6 +21,11 @@ faxconf_version = config.get('job', 'faxconf_version')
 generator_name = config.get('job', 'generator_name')
 recoil = config.getint('job', 'recoil')
 mode = config.get('job', 'mode')
+_rate = config.get('job', 'rate', fallback=None)
+if _rate is not None and _rate.strip():  # Check if rate_value is not just whitespace
+    rate = float(_rate)
+else:
+    rate = None
 process_data = config.getboolean('job', 'process_data')
 process_simu = config.getboolean('job', 'process_simu')
 skip_records = config.getboolean('job', 'skip_records')
