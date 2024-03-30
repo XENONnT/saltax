@@ -145,10 +145,10 @@ def get_run_start_end(runid):
     
     return unix_time_start_ns, unix_time_end_ns
 
-def instr_file_name(runid, instr, recoil, generator_name, mode, rate=1e9/SALT_TIME_INTERVAL,
+def instr_file_name(runid, recoil, generator_name, mode, rate=1e9/SALT_TIME_INTERVAL,
                     base_dir=BASE_DIR):
     """
-    Generate the instruction file name and then save the csv instructions.
+    Generate the instruction file name based on the runid, recoil, generator_name, mode, and rate.
     :param runid: run number in integer
     :param instr: instructions in numpy array
     :param recoil: NEST recoil type
@@ -166,14 +166,6 @@ def instr_file_name(runid, instr, recoil, generator_name, mode, rate=1e9/SALT_TI
     runid = str(runid).zfill(6)
     filename = BASE_DIR + runid + "-" + str(recoil) + "-" + \
         generator_name + "-" + mode + "-" + str(rate) + ".csv"
-    
-    # if the file already exists, we don't want to overwrite it
-    if not os.path.exists(filename):
-        pd.DataFrame(instr).to_csv(filename, index=False)
-    else:
-        print("Instruction file already exists at: %s" % (filename))
-        
-    print("Instruction file at: %s" % (filename))
 
     return filename
 
