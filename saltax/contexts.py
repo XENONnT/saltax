@@ -4,6 +4,8 @@ import cutax
 import strax
 from immutabledict import immutabledict
 import pema
+import pandas as pd
+
 
 # straxen XENONnT options/configuration
 XNT_COMMON_OPTS = straxen.contexts.xnt_common_opts.copy()
@@ -58,7 +60,7 @@ def get_generator(generator_name):
     generator_func = eval('saltax.generator_'+generator_name)
     return generator_func
 
-def xenonnt_salted(runid, 
+def xenonnt_salted(runid=None, 
                    saltax_mode='salt',
                    output_folder='./strax_data',
                    xedocs_version=DEFAULT_XEDOCS_VERSION,
@@ -69,11 +71,13 @@ def xenonnt_salted(runid,
                    cmt_run_id="026000",
                    generator_name='flat',
                    recoil=7,
-                   simu_mode='all',                  
+                   simu_mode='all',        
+                   *args,          
                    **kwargs):
     """
     Return a strax context for XENONnT data analysis with saltax.
-    :param runid: run number in integer. Must exist in RunDB.
+    :param runid: run number in integer. Must exist in RunDB if you use this context to 
+        compute raw_records_simu, or use None for data-loading only.
     :param saltax_mode: 'data', 'simu', or 'salt'.
     :param output_folder: Directory where data will be stored, defaults to ./strax_data
     :param xedocs_version: XENONnT documentation version to use, defaults to DEFAULT_XEDOCS_VERSION
@@ -85,17 +89,27 @@ def xenonnt_salted(runid,
     :param generator_name: (for simulation) Instruction mode to use, defaults to 'flat'
     :param recoil: (for simulation) NEST recoil type, defaults to 7 (beta ER)
     :param simu_mode: 's1', 's2', or 'all'. Defaults to 'all'
+    :param args: Extra arguments to pass to the generator function, like rate
     :param kwargs: Extra options to pass to strax.Context
     :return: strax context
     """
     # Get salt generator
-    generator_func = get_generator(generator_name)
+    generator_func = get_generator(generator_name, args)
 
-    # Generate instructions
-    instr = generator_func(runid=runid)
-    instr_file_name = saltax.instr_file_name(runid=runid, instr=instr, recoil=recoil, 
+    # Specify simulation instructions
+    instr_file_name = saltax.instr_file_name(runid=runid, recoil=recoil, 
                                              generator_name=generator_name, 
                                              mode=simu_mode)
+    # If runid is not None, then we need to either load instruction or generate it
+    if runid is not None:
+        try:
+            instr = pd.read_csv(instr_file_name)
+            print("Loaded instructions from file", instr_file_name)
+        except:
+            print(f"Instruction file {instr_file_name} not found. Generating instructions...")
+            instr = generator_func(runid=runid)
+            instr.to_csv(instr_file_name, index=False)
+            print(f"Instructions saved to {instr_file_name}")
 
     # Based on cutax.xenonnt_sim_base()
     fax_conf='fax_config_nt_{:s}.json'.format(faxconf_version)
@@ -178,7 +192,7 @@ def xenonnt_salted(runid,
             st.config[option] = ('cmt_run_id', cmt_run_id, *value)
 
     # Load instructions
-    st.set_config(dict(fax_file=instr_file_name))
+    st.set_config(dict(fax_file=instr_file_name)) # doesn't matter for lineage
     st.set_config(dict(saltax_mode=saltax_mode))
 
     # Register pema plugins
@@ -201,7 +215,8 @@ def sxenonnt(runid=None,
              **kwargs):
     """
     United strax context for XENONnT data, simulation, or salted data.
-    :param runid: run number in integer. Must exist in RunDB.
+    :param runid: run number in integer. Must exist in RunDB if you use this context to 
+        compute raw_records_simu, or use None for data-loading only.
     :param saltax_mode: 'data', 'simu', or 'salt'
     :param output_folder: Output folder for strax data, default './strax_data'
     :param xedocs_version: xedocs version to use, default is synced with cutax latest
@@ -217,6 +232,11 @@ def sxenonnt(runid=None,
     :return: strax context
     """
     assert saltax_mode in SALTAX_MODES, "saltax_mode must be one of %s"%(SALTAX_MODES)
+    if runid is None:
+        print("Since you specified runid=None, this context will not be able to compute raw_records_simu.")
+        print("Welcome to data-loading only mode!")
+    else:
+        print("Welcome to computation mode which only works for run %s!"%(runid))
 
     return xenonnt_salted(
         runid=runid,

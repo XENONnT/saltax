@@ -9,9 +9,10 @@ from utilix import xent_collection
 import datetime
 import os
 import pickle
+from tqdm import tqdm
 
 
-SALT_TIME_INTERVAL = 5e7 # in unit of ns. The number should be way bigger then full drift time
+SALT_TIME_INTERVAL = 1e7 # in unit of ns. The number should be way bigger then full drift time
 Z_RANGE = (-148.15, 0) # in unit of cm
 R_RANGE = (0, 66.4) # in unit of cm
 DOWNLOADER = straxen.MongoDownloader()
@@ -144,42 +145,39 @@ def get_run_start_end(runid):
     
     return unix_time_start_ns, unix_time_end_ns
 
-def instr_file_name(runid, instr, recoil, generator_name, mode, rate=1e9/SALT_TIME_INTERVAL,
+def instr_file_name(recoil, generator_name, mode, runid=None,
+                    rate=1e9/SALT_TIME_INTERVAL,
                     base_dir=BASE_DIR):
     """
-    Generate the instruction file name and then save the csv instructions.
-    :param runid: run number in integer
-    :param instr: instructions in numpy array
+    Generate the instruction file name based on the runid, recoil, generator_name, mode, and rate.
     :param recoil: NEST recoil type
     :param generator_name: name of the generator
     :param mode: 's1', 's2', or 'all'
+    :param runid: run number in integer, default: None, which means we are loading data and instruction 
+        doesn't matter (strax lineage unaffected)
     :param rate: rate of events in Hz
     :param base_dir: base directory to save the instruction file, default: BASE_DIR
     :return: instruction file name
     """
-    # FIXME: this will shoot errors if we are on OSG rather than midway
-    if base_dir[-1] != '/':
-        base_dir += '/'
-
-    rate = int(rate)
-    runid = str(runid).zfill(6)
-    filename = BASE_DIR + runid + "-" + str(recoil) + "-" + \
-        generator_name + "-" + mode + "-" + str(rate) + ".csv"
+    if runid is None:
+        return "Data-loading only, no instruction file needed."
     
-    # if the file already exists, we don't want to overwrite it
-    if not os.path.exists(filename):
-        pd.DataFrame(instr).to_csv(filename, index=False)
+    # FIXME: this will shoot errors if we are on OSG rather than midway
     else:
-        print("Instruction file already exists at: %s" % (filename))
-        
-    print("Instruction file at: %s" % (filename))
+        if base_dir[-1] != '/':
+            base_dir += '/'
 
-    return filename
+        rate = int(rate)
+        runid = str(runid).zfill(6)
+        filename = BASE_DIR + runid + "-" + str(recoil) + "-" + \
+            generator_name + "-" + mode + "-" + str(rate) + ".csv"
+
+        return filename
 
 def generator_se(runid, 
                  n_tot=None, rate=1e9/SALT_TIME_INTERVAL, 
                  r_range=R_RANGE, z_range=Z_RANGE, 
-                 time_mode="uniform", *args):
+                 time_mode="uniform"):
     """
     Generate instructions for a run with single electron.
     :param runid: run number in integer
@@ -290,7 +288,7 @@ def generator_ambe(runid,
 
     instr = np.zeros(0, dtype=wfsim.instruction_dtype)
     # assign instructions
-    for i in range(n_tot):
+    for i in tqdm(range(n_tot)):
         # bootstrapped ambe instruction
         selected_ambe = ambe_instructions[ambe_instructions['event_number'] 
                                           == ambe_event_numbers[i]]
