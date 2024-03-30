@@ -21,6 +21,11 @@ faxconf_version = config.get('job', 'faxconf_version')
 generator_name = config.get('job', 'generator_name')
 recoil = config.getint('job', 'recoil')
 mode = config.get('job', 'mode')
+_rate = config.get('job', 'rate', fallback=None)
+if _rate is not None and _rate.strip():  # Check if rate_value is not just whitespace
+    rate = float(_rate)
+else:
+    rate = None
 process_data = config.getboolean('job', 'process_data')
 process_simu = config.getboolean('job', 'process_simu')
 skip_records = config.getboolean('job', 'skip_records')
@@ -53,13 +58,23 @@ now = datetime.now()
 print('====================')
 print("Finished importing and config loading, now start to load context.")
 print("Now starting %s context for run %d"%(saltax_mode, runid))
-st = saltax.contexts.sxenonnt(runid = runid,
-                              saltax_mode = saltax_mode,
-                              output_folder = output_folder,
-                              faxconf_version = faxconf_version,
-                              generator_name = generator_name,
-                              recoil = recoil,
-                              mode = mode)
+if rate is None:
+	st = saltax.contexts.sxenonnt(runid = runid,
+								saltax_mode = saltax_mode,
+								output_folder = output_folder,
+								faxconf_version = faxconf_version,
+								generator_name = generator_name,
+								recoil = recoil,
+								mode = mode)
+else:
+	st = saltax.contexts.sxenonnt(runid = runid,
+								saltax_mode = saltax_mode,
+								output_folder = output_folder,
+								faxconf_version = faxconf_version,
+								generator_name = generator_name,
+								recoil = recoil,
+								mode = mode,
+								rate = rate)
 if len(storage_to_patch) and storage_to_patch[0] != "":
 	for d in storage_to_patch:
 		st.storage.append(strax.DataDirectory(d, readonly=True))
@@ -87,12 +102,21 @@ if saltax_mode == 'salt':
 		print("Since you specified saltax_mode = salt, \
           	   we will also compute simulation-only and data-only.")
 		print("Now starting data-only context for run %d"%(runid))
-		st = saltax.contexts.sxenonnt(runid = runid, saltax_mode = 'data', 
-									  output_folder = output_folder, 
-									  faxconf_version = faxconf_version, 
-									  generator_name = generator_name,
-									  recoil = recoil,
-									  mode = mode)
+		if rate is None:
+			st = saltax.contexts.sxenonnt(runid = runid, saltax_mode = 'data', 
+										output_folder = output_folder, 
+										faxconf_version = faxconf_version, 
+										generator_name = generator_name,
+										recoil = recoil,
+										mode = mode)
+		else:
+			st = saltax.contexts.sxenonnt(runid = runid, saltax_mode = 'data', 
+										output_folder = output_folder, 
+										faxconf_version = faxconf_version, 
+										generator_name = generator_name,
+										recoil = recoil,
+										mode = mode,
+										rate = rate)
 		if len(storage_to_patch) and storage_to_patch[0] != "":
 			for d in storage_to_patch:
 				st.storage.append(strax.DataDirectory(d, readonly=True))
@@ -118,13 +142,23 @@ if saltax_mode == 'salt':
 	if process_simu:
 		print('====================')
 		print("Now starting simu-only context for run %d"%(runid))
-		st = saltax.contexts.sxenonnt(runid = runid,
-									saltax_mode = 'simu',
-									output_folder = output_folder,
-									faxconf_version = faxconf_version,
-									generator_name = generator_name,
-									recoil = recoil,
-									mode = mode)
+		if rate is None:
+			st = saltax.contexts.sxenonnt(runid = runid,
+										saltax_mode = 'simu',
+										output_folder = output_folder,
+										faxconf_version = faxconf_version,
+										generator_name = generator_name,
+										recoil = recoil,
+										mode = mode)
+		else:
+			st = saltax.contexts.sxenonnt(runid = runid,
+										saltax_mode = 'simu',
+										output_folder = output_folder,
+										faxconf_version = faxconf_version,
+										generator_name = generator_name,
+										recoil = recoil,
+										mode = mode,
+										rate = rate)
 		if len(storage_to_patch) and storage_to_patch[0] != "":
 			for d in st.storage:
 				st.storage.append(strax.DataDirectory(d, readonly=True))
