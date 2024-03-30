@@ -283,8 +283,7 @@ def generator_ambe(runid,
 
     # bootstrap instructions
     ambe_instructions = pd.read_csv(ambe_instructions_file)
-    n_avail_instructions = np.max(ambe_instructions.event_number)
-    ambe_event_numbers = np.random.choice(np.arange(n_avail_instructions), 
+    ambe_event_numbers = np.random.choice(np.unique(ambe_instructions.event_number), 
                                           n_tot,
                                           replace=True)
 
