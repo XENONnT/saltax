@@ -381,10 +381,13 @@ class SPeaklets(strax.Plugin):
             raise ValueError(
                 f'Found n_hits less than tight_coincidence')
 
-        # FIXME: surgery here; shifted lone_hits' channel
-        lone_hits['channel'] = lone_hits['channel'] - SCHANNEL_STARTS_AT
+        # FIXME: surgery here; shifted lone_hits' channel for those which were salted
+        mask_salted_lone_hits = lone_hits['channel'] >= SCHANNEL_STARTS_AT
+        lone_hits[mask_salted_lone_hits]['channel'] = (
+            lone_hits[mask_salted_lone_hits]['channel'] - SCHANNEL_STARTS_AT
+        )
         # Sanity check on channels non-negative
-        assert np.all(lone_hits['channel'] >= 0), "Negative channel in lone_hits"
+        assert np.all(lone_hits['channel'] >= 0), "Negative channel number in lone_hits"
         # Sanity check that no lone_hits are in peaklets
         is_still_lone_hit = strax.fully_contained_in(lone_hits, peaklets) == -1
         assert np.all(is_still_lone_hit), "Some lone_hits are in peaklets!?"
