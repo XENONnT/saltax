@@ -385,6 +385,9 @@ class SPeaklets(strax.Plugin):
         lone_hits['channel'] = lone_hits['channel'] - SCHANNEL_STARTS_AT
         # Sanity check on channels non-negative
         assert np.all(lone_hits['channel'] >= 0), "Negative channel in lone_hits"
+        # Sanity check that no lone_hits are in peaklets
+        is_still_lone_hit = strax.fully_contained_in(lone_hits, peaklets) == -1
+        assert np.all(is_still_lone_hit), "Some lone_hits are in peaklets!?"
 
         return dict(peaklets=peaklets,
                     lone_hits=lone_hits)
