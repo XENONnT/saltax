@@ -12,7 +12,7 @@ import pickle
 from tqdm import tqdm
 
 
-SALT_TIME_INTERVAL = 1e7 # in unit of ns. The number should be way bigger then full drift time
+SALT_TIME_INTERVAL = 2e7 # in unit of ns. The number should be way bigger then full drift time
 Z_RANGE = (-148.15, 0) # in unit of cm
 R_RANGE = (0, 66.4) # in unit of cm
 DOWNLOADER = straxen.MongoDownloader()
@@ -283,13 +283,12 @@ def generator_ambe(runid,
 
     # bootstrap instructions
     ambe_instructions = pd.read_csv(ambe_instructions_file)
-    n_avail_instructions = np.max(ambe_instructions.event_number)
-    ambe_event_numbers = np.random.choice(np.arange(n_avail_instructions), 
+    ambe_event_numbers = np.random.choice(np.unique(ambe_instructions.event_number), 
                                           n_tot,
                                           replace=True)
 
-    instr = np.zeros(0, dtype=wfsim.instruction_dtype)
     # assign instructions
+    instr = np.zeros(0, dtype=wfsim.instruction_dtype)
     for i in tqdm(range(n_tot)):
         # bootstrapped ambe instruction
         selected_ambe = ambe_instructions[ambe_instructions['event_number'] 
