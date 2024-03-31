@@ -383,6 +383,8 @@ class SPeaklets(strax.Plugin):
 
         # FIXME: surgery here; shifted lone_hits' channel
         lone_hits['channel'] = lone_hits['channel'] - SCHANNEL_STARTS_AT
+        # Sanity check on channels non-negative
+        assert np.all(lone_hits['channel'] >= 0), "Negative channel in lone_hits"
 
         return dict(peaklets=peaklets,
                     lone_hits=lone_hits)
