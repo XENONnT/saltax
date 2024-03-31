@@ -383,9 +383,7 @@ class SPeaklets(strax.Plugin):
 
         # FIXME: surgery here; shifted lone_hits' channel for those which were salted
         mask_salted_lone_hits = lone_hits['channel'] >= SCHANNEL_STARTS_AT
-        lone_hits[mask_salted_lone_hits]['channel'] = (
-            lone_hits[mask_salted_lone_hits]['channel'] - SCHANNEL_STARTS_AT
-        )
+        lone_hits[mask_salted_lone_hits]['channel'] -= SCHANNEL_STARTS_AT
         # Sanity check on channels non-negative
         assert np.all(lone_hits['channel'] >= 0), "Negative channel number in lone_hits"
         # Sanity check that no lone_hits are in peaklets
