@@ -1,7 +1,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-def plot_event_wf_w_data(ind, st_salt, st_simu, st_data, runid, matched_simu, 
+def plot_event_wf_w_data(ind, st_salt, st_simu, st_data, runid, events_simu, 
+                         events_salt=None,
                          event_ext_window_ns=2.4e6, 
                          s1_ext_window_samples=25, 
                          s2_ext_window_samples=100,
@@ -9,26 +10,31 @@ def plot_event_wf_w_data(ind, st_salt, st_simu, st_data, runid, matched_simu,
     """
     Plot waveforms for a single event, including full event waveform and zoomed-in S1 and S2 waveforms. 
     This plot function will show info from salt, simu and data mode.
-    :param ind: index of the event in the matched_simu dataframe
+    :param ind: index of the event in the events_simu dataframe
     :param st_salt: saltax context for salt mode
     :param st_simu: saltax context for simu mode
     :param st_data: saltax context for data mode
     :param runid: runid of the event, example: '066666'
-    :param matched_simu: simu event_info already matched to truth. (Not necessarily matched to data!)
+    :param events_simu: simu event_info. 
+    :param events_salt: salt event_info matched to events_simu, default None and will not be used.
     :param event_ext_window_ns: time window in ns to plot around the event, default 2.4e6 ns = 2.4 ms
     :param s1_ext_window_samples: time window in samples to plot around S1, default 25 samples
     :param s2_ext_window_samples: time window in samples to plot around S2, default 100 samples
     :param ylim: y-axis limits for the waveforms, default (0,5) PE/10ns
     """
+    if events_salt is not None:
+        assert len(events_salt) == len(events_simu), "events_salt and events_simu should have the same length, \
+            since they are expected to 1-1 matched"
+
     print("Loading peaks and lone_hits for run %s event %s"%(runid, ind))
 
     # Get time ranges in indices for events, S1 and S2
-    extended_simu_event_timerange_ns = (matched_simu['s1_time'][ind]-event_ext_window_ns, 
-                                        matched_simu['s2_endtime'][ind]+event_ext_window_ns)
-    matched_simu_s1_timerange_i = (int((matched_simu['s1_time'][ind] - extended_simu_event_timerange_ns[0])/10), 
-                                   int((matched_simu['s1_endtime'][ind]-extended_simu_event_timerange_ns[0])/10))
-    matched_simu_s2_timerange_i = (int((matched_simu['s2_time'][ind] - extended_simu_event_timerange_ns[0])/10), 
-                                   int((matched_simu['s2_endtime'][ind]-extended_simu_event_timerange_ns[0])/10))
+    extended_simu_event_timerange_ns = (events_simu['s1_time'][ind]-event_ext_window_ns, 
+                                        events_simu['s2_endtime'][ind]+event_ext_window_ns)
+    matched_simu_s1_timerange_i = (int((events_simu['s1_time'][ind] - extended_simu_event_timerange_ns[0])/10), 
+                                   int((events_simu['s1_endtime'][ind]-extended_simu_event_timerange_ns[0])/10))
+    matched_simu_s2_timerange_i = (int((events_simu['s2_time'][ind] - extended_simu_event_timerange_ns[0])/10), 
+                                   int((events_simu['s2_endtime'][ind]-extended_simu_event_timerange_ns[0])/10))
     
 
     # Get peaks and lone hits for the event
@@ -128,9 +134,9 @@ def plot_event_wf_w_data(ind, st_salt, st_simu, st_data, runid, matched_simu,
     ax1.axvspan(matched_simu_s1_timerange_i[0],matched_simu_s1_timerange_i[1], color='tab:blue', alpha=0.3, label='Simulated S1 Range')
     ax1.axvspan(matched_simu_s2_timerange_i[0],matched_simu_s2_timerange_i[1], color='tab:red', alpha=0.3, label='Simulated S2 Range')
     ax1.legend()
-    ax1.set_title("Run %s Event %s: Simu CS1=%sPE, Simu CS2=%sPE"%(runid, ind, 
-                                                        int(10*matched_simu['cs1'][ind])/10, 
-                                                        int(10*matched_simu['cs2'][ind])/10))
+    ax1.set_title("Run %s Event %s: Simu S1=%sPE, Simu S2=%sPE"%(runid, ind, 
+                                                        int(10*events_simu['s1_area'][ind])/10, 
+                                                        int(10*events_simu['s2_area'][ind])/10))
     ax1.set_ylim(ylim)
     
     ax2.plot(wf_data, label='Data', color='k', alpha=0.5)
@@ -200,7 +206,8 @@ def plot_event_wf_w_data(ind, st_salt, st_simu, st_data, runid, matched_simu,
     fig.show()
 
 
-def plot_event_wf_wo_data(ind, st_salt, st_simu, runid, matched_simu, 
+def plot_event_wf_wo_data(ind, st_salt, st_simu, runid, events_simu, 
+                          events_salt=None,
                           event_ext_window_ns=2.4e6, 
                           s1_ext_window_samples=25, 
                           s2_ext_window_samples=100,
@@ -208,25 +215,30 @@ def plot_event_wf_wo_data(ind, st_salt, st_simu, runid, matched_simu,
     """
     Plot waveforms for a single event, including full event waveform and zoomed-in S1 and S2 waveforms. 
     This plot function will show info from salt, simu but no data mode.
-    :param ind: index of the event in the matched_simu dataframe
+    :param ind: index of the event in the events_simu dataframe
     :param st_salt: saltax context for salt mode
     :param st_simu: saltax context for simu mode
     :param runid: runid of the event, example: '066666'
-    :param matched_simu: simu event_info already matched to truth. (Not necessarily matched to data!)
+    :param events_simu: simu event_info
+    :param events_salt: salt event_info matched to events_simu, default None and will not be used.
     :param event_ext_window_ns: time window in ns to plot around the event, default 2.4e6 ns = 2.4 ms
     :param s1_ext_window_samples: time window in samples to plot around S1, default 25 samples
     :param s2_ext_window_samples: time window in samples to plot around S2, default 100 samples
     :param ylim: y-axis limits for the waveforms, default (0,5) PE/10ns
     """
+    if events_salt is not None:
+        assert len(events_salt) == len(events_simu), "events_salt and events_simu should have the same length, \
+            since they are expected to 1-1 matched"
+
     print("Loading peaks and lone_hits for run %s event %s"%(runid, ind))
 
     # Get time ranges in indices for events, S1 and S2
-    extended_simu_event_timerange_ns = (matched_simu['s1_time'][ind]-event_ext_window_ns, 
-                                        matched_simu['s2_endtime'][ind]+event_ext_window_ns)
-    matched_simu_s1_timerange_i = (int((matched_simu['s1_time'][ind] - extended_simu_event_timerange_ns[0])/10), 
-                                   int((matched_simu['s1_endtime'][ind]-extended_simu_event_timerange_ns[0])/10))
-    matched_simu_s2_timerange_i = (int((matched_simu['s2_time'][ind] - extended_simu_event_timerange_ns[0])/10), 
-                                   int((matched_simu['s2_endtime'][ind]-extended_simu_event_timerange_ns[0])/10))
+    extended_simu_event_timerange_ns = (events_simu['s1_time'][ind]-event_ext_window_ns, 
+                                        events_simu['s2_endtime'][ind]+event_ext_window_ns)
+    matched_simu_s1_timerange_i = (int((events_simu['s1_time'][ind] - extended_simu_event_timerange_ns[0])/10), 
+                                   int((events_simu['s1_endtime'][ind]-extended_simu_event_timerange_ns[0])/10))
+    matched_simu_s2_timerange_i = (int((events_simu['s2_time'][ind] - extended_simu_event_timerange_ns[0])/10), 
+                                   int((events_simu['s2_endtime'][ind]-extended_simu_event_timerange_ns[0])/10))
     
 
     # Get peaks and lone hits for the event
@@ -305,9 +317,9 @@ def plot_event_wf_wo_data(ind, st_salt, st_simu, runid, matched_simu,
     ax1.axvspan(matched_simu_s1_timerange_i[0],matched_simu_s1_timerange_i[1], color='tab:blue', alpha=0.3, label='Simulated S1 Range')
     ax1.axvspan(matched_simu_s2_timerange_i[0],matched_simu_s2_timerange_i[1], color='tab:red', alpha=0.3, label='Simulated S2 Range')
     ax1.legend()
-    ax1.set_title("Run %s Event %s: Simu CS1=%sPE, Simu CS2=%sPE"%(runid, ind, 
-                                                        int(10*matched_simu['cs1'][ind])/10, 
-                                                        int(10*matched_simu['cs2'][ind])/10))
+    ax1.set_title("Run %s Event %s: Simu S1=%sPE, Simu S2=%sPE"%(runid, ind, 
+                                                        int(10*events_simu['s1_area'][ind])/10, 
+                                                        int(10*events_simu['s2_area'][ind])/10))
     ax1.set_ylim(ylim)
     
     ax2.plot(wf_salt_s1, label='Sprinkled S1', color='b')
