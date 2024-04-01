@@ -106,7 +106,7 @@ def match_peaks(truth, match, peaks_simu, peaks_salt):
     match = match[match['matched_to']>=0]
 
     ind_salt_matched_to_simu, \
-        ind_simu_matched_to_truth = pair_salt_to_simu_peaks(truth, match, peaks_simu, peaks_salt)
+        ind_simu_matched_to_truth = pair_salt_to_simu_peaks(match, peaks_simu, peaks_salt)
 
     peaks_simu_matched_to_truth = peaks_simu[ind_simu_matched_to_truth[ind_simu_matched_to_truth>=0]]
     peaks_salt_matched_to_simu = peaks_salt[ind_salt_matched_to_simu[ind_salt_matched_to_simu>=0]]
@@ -115,10 +115,9 @@ def match_peaks(truth, match, peaks_simu, peaks_salt):
     return peaks_salt_matched_to_simu, peaks_simu_matched_to_salt
 
 
-def pair_salt_to_simu_peaks(truth, match, peaks_simu, peaks_salt):
+def pair_salt_to_simu_peaks(match, peaks_simu, peaks_salt):
     """
     Filter out bad simulation truth and then pair salted events to matched simulation events.
-    :param truth: filtered truth
     :param match: match_acceptance_extended from pema
     :param peaks_simu: peaks from wfsim
     :param peaks_salt: peaks from saltax after reconstruction
