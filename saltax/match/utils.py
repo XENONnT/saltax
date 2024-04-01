@@ -1,11 +1,11 @@
 import numpy as np
 from tqdm import tqdm
-import gc 
 import numpy as np
 import matplotlib.pyplot as plt
 from tabulate import tabulate
 from itertools import cycle
 import saltax
+from scipy.stats import binomtest
 
 ALL_CUTS = np.array([
             'cut_daq_veto',
