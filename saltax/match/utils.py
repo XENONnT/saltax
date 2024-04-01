@@ -125,7 +125,7 @@ def load_peaks(runs, st_salt, st_simu,
     return peaks_simu, peaks_salt, truth, match, peaks_salt_matched_to_simu, peaks_simu_matched_to_salt
 
 
-def load_events(runs, st_salt, st_simu, plugins=('event_info', 'cuts_basic')):
+def load_events(runs, st_salt, st_simu, plugins=('event_info', 'cuts_basic'), *args):
     """
     Load events from the runs and do basic filtering suggeted by saltax.match_events
     :param runs: list of runs.
@@ -190,53 +190,6 @@ def load_events(runs, st_salt, st_simu, plugins=('event_info', 'cuts_basic')):
             events_salt = np.concatenate((events_salt, events_salt_i))
     
     return events_simu, events_salt, inds_dict
-
-
-def load_events_deprecated(runs, st_salt, st_simu, plugins=('event_info', 'cuts_basic')):
-    """
-    Load events from the runs and do basic filtering suggeted by saltax.match_events
-    :param runs: list of runs.
-    :param st_salt: saltax context for salt mode
-    :param st_simu: saltax context for simu mode
-    :return: events_simu: events from simulated dataset
-    :return: events_salt: events from sprinkled dataset
-    :return: truth: truth information in simulation
-    :return: match: pema match information
-    :return: events_salt_matched_to_simu: events related plugins from sprinkled matched to simulated
-    :return: events_simu_matched_to_salt: events related plugins from simulated matched to sprinkled
-    """
-    for i, run in enumerate(runs):
-        print("Loading run %s"%(run))
-        
-        events_simu_i = st_simu.get_array(run, plugins, progress_bar=False)
-        events_salt_i = st_salt.get_array(run, plugins, progress_bar=False)
-        truth_i = st_simu.get_array(run, 'truth', progress_bar=False)
-        match_i = st_simu.get_array(run, 'match_acceptance_extended', progress_bar=False)
-
-        # TODO: Ugly hardcoding for FV cut, need to be fixed
-        events_salt_matched_to_simu_i, \
-            events_simu_matched_to_salt_i = saltax.match_events(truth_i[(truth_i['z']<-13)&(truth_i['z']>-145)&(truth_i['x']**2+truth_i['y']**2<64**2)], 
-                                                                match_i[(truth_i['z']<-13)&(truth_i['z']>-145)&(truth_i['x']**2+truth_i['y']**2<64**2)],
-                                                                events_simu_i[(events_simu_i['z']<-13)&(events_simu_i['z']>-145)&(events_simu_i['r']<64)], 
-                                                                events_salt_i[(events_salt_i['z']<-13)&(events_salt_i['z']>-145)])    
-        if i==0:
-            events_simu = events_simu_i
-            events_salt = events_salt_i
-            truth = truth_i
-            match = match_i
-            events_salt_matched_to_simu = events_salt_matched_to_simu_i
-            events_simu_matched_to_salt = events_simu_matched_to_salt_i
-        else:
-            events_simu = np.concatenate((events_simu,events_simu_i))
-            events_salt = np.concatenate((events_salt,events_salt_i))
-            truth = np.concatenate((truth,truth_i))
-            match = np.concatenate((match,match_i))
-            events_salt_matched_to_simu = np.concatenate((events_salt_matched_to_simu,
-                                                          events_salt_matched_to_simu_i))
-            events_simu_matched_to_salt = np.concatenate((events_simu_matched_to_salt,
-                                                          events_simu_matched_to_salt_i))
-    
-    return events_simu, events_salt, truth, match, events_salt_matched_to_simu, events_simu_matched_to_salt
 
 
 def compare_templates(events_salt_matched_to_simu, events_simu_matched_to_salt, 
