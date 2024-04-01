@@ -444,12 +444,13 @@ def get_cut_eff(events, all_cut_list = ALL_CUTS,
     result_dict = {}
     for cut in all_cut_list:
         result_dict[cut] = np.zeros(n_bins-1)
+        result_dict[cut+'_upper'] = np.zeros(n_bins-1)
+        result_dict[cut+'_lower'] = np.zeros(n_bins-1)
     result_dict['all_cuts'] = np.zeros(n_bins-1)
     result_dict['all_cuts_upper'] = np.zeros(n_bins-1)
     result_dict['all_cuts_lower'] = np.zeros(n_bins-1)
     result_dict[coord] = np.zeros(n_bins-1)
-    result_dict[coord+'_upper'] = np.zeros(n_bins-1)
-    result_dict[coord+'_lower'] = np.zeros(n_bins-1)
+
     for i in range(n_bins-1):
         mid_coord = (bins[i] + bins[i+1]) / 2
         result_dict[coord][i] = mid_coord
