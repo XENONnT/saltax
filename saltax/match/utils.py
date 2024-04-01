@@ -684,6 +684,7 @@ def show_eff1d(events_simu, events_simu_matched_to_salt, mask_salt_cut,
         "e_ces": "Simulated CES [keV]",
         "s1_area": "Simulated S1 Area [PE]",
         "s2_area": "Simulated S2 Area [PE]",
+        "z": "Z [cm]"
     }
 
     # Histogram
