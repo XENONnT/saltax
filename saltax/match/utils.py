@@ -412,7 +412,8 @@ def get_cut_eff(events, all_cut_list = ALL_CUTS,
                 indv_cut_type='n_minus_1', title='N-1 Cut Acceptance Measured in SR1 AmBe',
                 bbox_to_anchor=(0.5, 1.50)):
     """
-    Get the acceptance of each cut as a function of a coordinate.
+    Get the acceptance with corresponding Clopper-Pearson uncertainty of each cut, 
+    as a function of a coordinate.
     :param events: events
     :param all_cut_list: list of all cuts
     :param n_bins: number of bins for the coordinate
