@@ -203,7 +203,8 @@ def match_events_deprecated(truth, match, events_simu, events_salt):
     return events_salt_matched_to_simu, events_simu_matched_to_salt
 
 
-def match_events(events_simu, events_salt):
+def match_events(events_simu, events_salt,
+                 event_window_fuzz=0, s1_window_fuzz=100, s2_window_fuzz=0):
     """
     Match salted events to simulation events based on event or S1-S2 timing, without checking 
     simulation truth. 
@@ -226,6 +227,10 @@ def match_events(events_simu, events_salt):
            ind_simu_s2_found. Those events_simu_filtered[ind_simu_s2_found] are called events_simu_s2_found.
     :param events_simu: event_info from wfsim
     :param events_salt: event_info from saltax
+    :param event_window_fuzz: extended time range to consider as matched for events, default 0 ns
+    :param s1_window_fuzz: extended time range to consider as matched for S1, default 100 ns. Reference 
+                           https://xe1t-wiki.lngs.infn.it/doku.php?id=xenon:xenonnt_sr1:ambe_selection
+    :param s2_window_fuzz: extended time range to consider as matched for S2, default 0 ns
     :return: events_simu_filtered, 
              ind_salt_event_found, ind_simu_event_found, ind_simu_event_lost, ind_simu_event_split,
              ind_salt_s1_found, ind_simu_s1_found, 
