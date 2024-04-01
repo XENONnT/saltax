@@ -119,7 +119,7 @@ def plot_event_wf_w_data(ind, st_salt, st_simu, st_data, runid, matched_simu,
     # Plot full event waveform
     print("Plotting waveforms for the whole event...")
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(15, 8), dpi=150)
-    ax1.plot(wf_data, label='Data', color='k', alpha=0.2)
+    ax1.plot(wf_data, label='Data', color='k', alpha=0.5)
     ax1.plot(wf_simu_s1, label='Simulated S1', color='tab:blue')
     ax1.plot(wf_simu_s2, label='Simulated S2', color='tab:orange')
     ax1.plot(wf_simu_others, label='Simulated Others', color='tab:green')
@@ -130,7 +130,7 @@ def plot_event_wf_w_data(ind, st_salt, st_simu, st_data, runid, matched_simu,
                                                         int(10*matched_simu['cs1'][ind])/10, 
                                                         int(10*matched_simu['cs2'][ind])/10))
     
-    ax2.plot(wf_data, label='Data', color='k', alpha=0.2)
+    ax2.plot(wf_data, label='Data', color='k', alpha=0.5)
     ax2.plot(wf_salt_s1, label='Sprinkled S1', color='b')
     ax2.plot(wf_salt_s2, label='Sprinkled S2', color='r')
     ax2.plot(wf_salt_others, label='Sprinkled Others', color='g')
@@ -146,7 +146,7 @@ def plot_event_wf_w_data(ind, st_salt, st_simu, st_data, runid, matched_simu,
     # Zoom into S1 and S2 waveforms
     print("Zooming into S1 and S2 respectively...")
     fig, axs = plt.subplots(2, 2, figsize=(15, 8), dpi=150)
-    axs[0,0].plot(wf_data, label='Data', color='k', alpha=0.2)
+    axs[0,0].plot(wf_data, label='Data', color='k', alpha=0.5)
     axs[0,0].plot(wf_simu_s1, label='Simulated S1', color='tab:blue')
     axs[0,0].plot(wf_simu_s2, label='Simulated S2', color='tab:orange')
     axs[0,0].plot(wf_simu_others, label='Simulated Others', color='tab:green')
@@ -157,7 +157,7 @@ def plot_event_wf_w_data(ind, st_salt, st_simu, st_data, runid, matched_simu,
     axs[0,0].set_ylabel("Amplitude [PE/10ns]")
     axs[0,0].legend()
     
-    axs[0,1].plot(wf_data, label='Data', color='k', alpha=0.2)
+    axs[0,1].plot(wf_data, label='Data', color='k', alpha=0.5)
     axs[0,1].plot(wf_simu_s1, label='Simulated S1', color='tab:blue')
     axs[0,1].plot(wf_simu_s2, label='Simulated S2', color='tab:orange')
     axs[0,1].plot(wf_simu_others, label='Simulated Others', color='tab:green')
@@ -167,7 +167,7 @@ def plot_event_wf_w_data(ind, st_salt, st_simu, st_data, runid, matched_simu,
                       matched_simu_s2_timerange_i[1]+s2_ext_window_samples)
     axs[0,1].legend()
     
-    axs[1,0].plot(wf_data, label='Data', color='k', alpha=0.2)
+    axs[1,0].plot(wf_data, label='Data', color='k', alpha=0.5)
     axs[1,0].plot(wf_salt_s1, label='Sprinkled S1', color='b')
     axs[1,0].plot(wf_salt_s2, label='Sprinkled S2', color='r')
     axs[1,0].plot(wf_salt_others, label='Sprinkled Others', color='g')
@@ -179,7 +179,7 @@ def plot_event_wf_w_data(ind, st_salt, st_simu, st_data, runid, matched_simu,
     axs[1,0].set_ylabel("Amplitude [PE/10ns]")
     axs[1,0].legend()
     
-    axs[1,1].plot(wf_data, label='Data', color='k', alpha=0.2)
+    axs[1,1].plot(wf_data, label='Data', color='k', alpha=0.5)
     axs[1,1].plot(wf_salt_s1, label='Sprinkled S1', color='b')
     axs[1,1].plot(wf_salt_s2, label='Sprinkled S2', color='r')
     axs[1,1].plot(wf_salt_others, label='Sprinkled Others', color='g')
