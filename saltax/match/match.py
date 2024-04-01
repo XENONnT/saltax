@@ -91,10 +91,9 @@ def match_events(events_simu, events_salt,
     )
 
 
-def match_peaks(truth, match, peaks_simu, peaks_salt):
+def match_peaks(match, peaks_simu, peaks_salt):
     """
     Match salted peaks to simulation peaks.
-    :param truth: truth from wfsim
     :param match: match_acceptance_extended from pema
     :param peaks_simu: peaks from wfsim
     :param peaks_salt: peaks from saltax
@@ -102,7 +101,6 @@ def match_peaks(truth, match, peaks_simu, peaks_salt):
     :return: peaks_salt_matched_to_simu, peaks_simu_matched_to_salt: matched peaks with equal length
     """
     # Remove bad simulation truth and then their paired simulated events
-    truth = truth[match['matched_to']>=0]
     match = match[match['matched_to']>=0]
 
     ind_salt_matched_to_simu, \
