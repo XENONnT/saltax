@@ -160,7 +160,7 @@ if saltax_mode == 'salt':
 										mode = mode,
 										rate = rate)
 		if len(storage_to_patch) and storage_to_patch[0] != "":
-			for d in st.storage:
+			for d in storage_to_patch:
 				st.storage.append(strax.DataDirectory(d, readonly=True))
 				
 		for dt in to_process_dtypes:
