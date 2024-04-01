@@ -26,6 +26,11 @@ ALL_CUTS = np.array([
             'cut_cs2_area_fraction_top',
             'cut_shadow',
             'cut_ambience',])
+ALL_CUTS_MINIMAL = np.array([
+            'cut_daq_veto', 
+            'cut_interaction_exists', 
+            'cut_main_is_valid_triggering_peak', 
+            'cut_run_boundaries',])
 ALL_CUTS_EXCEPT_S2PatternS1Width = np.array([
             'cut_daq_veto',
             'cut_interaction_exists',
@@ -659,5 +664,95 @@ def show_area_bias(salt, simu, title,
     plt.xlim(bins[0], bins[-1])
     plt.legend()
     plt.ylim(ylim)
+    plt.title(title)
+    plt.show()
+
+
+def show_eff1d(events_simu, events_simu_matched_to_salt, mask_salt_cut, 
+               coord="e_ces", bins=np.linspace(0,12,25), 
+               title="Matching Acceptance and Cut Acceptance"):
+    """
+    Show the acceptance of matching and cuts in 1D coordinates.
+    :param events_simu: events from the simulated dataset
+    :param events_simu_matched_to_salt: events from the simulated dataset matched to sprinkled
+    :param mask_salt_cut: mask of the sprinkled dataset with cuts
+    :param coord: coordinate to be compared, default to 'e_ces', can choose from ['e_ces', 's1_area', 's2_area']
+    :param bins: bins for the coordinate, default to np.linspace(0,12,25)
+    :param title: title of the plot, default to "Matching Acceptance and Cut Acceptance"
+    """
+    xlabel_dict = {
+        "e_ces": "Simulated CES [keV]",
+        "s1_area": "Simulated S1 Area [PE]",
+        "s2_area": "Simulated S2 Area [PE]",
+    }
+
+    # Histogram
+    plt.figure(dpi=150)
+    plt.hist(
+        events_simu[coord], bins=bins,
+        label='Simulation before matching&cuts'
+    )
+    plt.hist(
+        events_simu_matched_to_salt[coord], 
+        bins=bins,
+        label='Simulation after matching'
+    )
+    plt.hist(
+        events_simu_matched_to_salt[mask_salt_cut][coord], 
+        bins=bins,
+        color='tab:red',
+        label='Simulation after matching&cuts'
+    )
+    plt.yscale('log')
+    plt.xlabel(xlabel_dict[coord])
+    plt.legend()
+    plt.ylabel('Counts')
+    plt.title(title)
+    plt.show()
+
+    # Efficiency curves with Clopper-Pearson uncertainty estimation
+    plt.figure(dpi=150)
+    counts_events_simu, bins = np.histogram(
+        events_simu[coord], bins=bins
+    )
+    counts_events_simu_matched_to_salt, bins = np.histogram(
+        events_simu_matched_to_salt[coord], bins=bins
+    )
+    counts_events_simu_matched_to_salt_after_cuts, bins = np.histogram(
+        events_simu_matched_to_salt[mask_salt_cut][coord], bins=bins
+    )
+    coords = (bins[1:] + bins[:-1])/2
+    
+    # Get Clopper-Pearson uncertainty
+    matching_u = []
+    matching_l = []
+    cuts_u = []
+    cuts_l = []
+    for i in range(len(coords)):
+        matching_interval = binomtest(counts_events_simu_matched_to_salt[i], 
+                                      counts_events_simu[i]).proportion_ci()
+        matching_l.append(matching_interval.low)
+        matching_u.append(matching_interval.high)
+        cuts_interval = binomtest(counts_events_simu_matched_to_salt_after_cuts[i], 
+                                  counts_events_simu_matched_to_salt[i]).proportion_ci()
+        cuts_l.append(cuts_interval.low)
+        cuts_u.append(cuts_interval.high)
+    matching_u = np.array(matching_u)
+    matching_l = np.array(matching_l)
+    cuts_u = np.array(cuts_u)
+    cuts_l = np.array(cuts_l)
+    
+    plt.plot(coords, 
+             counts_events_simu_matched_to_salt/counts_events_simu,
+            label='Matching', color="tab:blue")
+    plt.fill_between(coords, matching_l, matching_u, alpha=0.5, color="tab:blue")
+    plt.plot(coords, 
+             counts_events_simu_matched_to_salt_after_cuts/counts_events_simu_matched_to_salt,
+             label='Cut (Already Matched)', color="tab:orange")
+    plt.fill_between(coords, cuts_l, cuts_u, alpha=0.5, color="tab:orange")
+    
+    plt.xlabel(xlabel_dict[coord])
+    plt.legend()
+    plt.ylabel("Acceptance")
     plt.title(title)
     plt.show()
