@@ -444,7 +444,11 @@ def get_cut_eff(events, all_cut_list = ALL_CUTS,
     for cut in all_cut_list:
         result_dict[cut] = np.zeros(n_bins-1)
     result_dict['all_cuts'] = np.zeros(n_bins-1)
+    result_dict['all_cuts_upper'] = np.zeros(n_bins-1)
+    result_dict['all_cuts_lower'] = np.zeros(n_bins-1)
     result_dict[coord] = np.zeros(n_bins-1)
+    result_dict[coord+'_upper'] = np.zeros(n_bins-1)
+    result_dict[coord+'_lower'] = np.zeros(n_bins-1)
     for i in range(n_bins-1):
         mid_coord = (bins[i] + bins[i+1]) / 2
         result_dict[coord][i] = mid_coord
@@ -453,20 +457,32 @@ def get_cut_eff(events, all_cut_list = ALL_CUTS,
                                  (events[coord]< bins[i+1])]
         selected_events_all_cut = selected_events[apply_cut_lists(selected_events, 
                                                                   all_cut_list)]
+        interval = binomtest(len(selected_events_all_cut),len(selected_events)).proportion_ci()
         result_dict['all_cuts'][i] = len(selected_events_all_cut)/len(selected_events)
+        result_dict['all_cuts_upper'][i] = interval.high
+        result_dict['all_cuts_lower'][i] = interval.low
         for cut_oi in all_cut_list:
             selected_events_cut_oi = selected_events[apply_single_cut(selected_events,
                                                                        cut_oi)]
+            # Efficiency curves with Clopper-Pearson uncertainty estimation
+            interval = binomtest(len(selected_events_cut_oi), 
+                                 len(selected_events)).proportion_ci()
             result_dict[cut_oi][i] = len(selected_events_cut_oi)/len(selected_events)
+            result_dict[cut_oi+'_upper'][i] = interval.high
+            result_dict[cut_oi+'_lower'][i] = interval.low
         
     if plot:
         colors = plt.cm.rainbow(np.linspace(0, 1, len(all_cut_list) + 1))  # +1 for the 'Combined' line
         color_cycle = cycle(colors)
         plt.figure(dpi=150)
         plt.plot(result_dict[coord], result_dict['all_cuts'], color='k', label='Combined')
+        plt.fill_between(result_dict[coord], result_dict['all_cuts_lower'], result_dict['all_cuts_upper'], 
+                         color='k', alpha=0.3)
         for cut_oi in all_cut_list:
             plt.plot(result_dict[coord], result_dict[cut_oi], 
                      color=next(color_cycle), label=cut_oi)
+            plt.fill_between(result_dict[coord], result_dict[cut_oi+'_lower'], result_dict[cut_oi+'_upper'], 
+                             color=next(color_cycle), alpha=0.3)
         plt.xlabel(coord+coord_units[coord])
         plt.ylabel('Measured Acceptance')
         plt.grid()
