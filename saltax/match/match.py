@@ -242,7 +242,8 @@ def match_events(events_simu, events_salt,
 
     # Step 2 & 3.
     # Find indices of events_salt whose time range overlaps with events_simu_filtered
-    event_touching_windows = strax.touching_windows(events_salt, events_simu_filtered)
+    event_touching_windows = strax.touching_windows(events_salt, events_simu_filtered, 
+                                                    window=event_window_fuzz)
     event_windows_length = event_touching_windows[:,1] - event_touching_windows[:,0]
     # If windows_length is not 1, the sprinkled event is either split or not found
     mask_simu_event_found = event_windows_length == 1
@@ -261,6 +262,7 @@ def match_events(events_simu, events_salt,
         events_salt["s1_endtime"],
         events_simu_filtered["s1_time"],
         events_simu_filtered["s1_endtime"],
+        window=s1_window_fuzz
     )
     s1_windows_length = s1_touching_windows[:,1] - s1_touching_windows[:,0]
     mask_simu_s1_found = s1_windows_length == 1
@@ -274,6 +276,7 @@ def match_events(events_simu, events_salt,
         events_salt["s2_endtime"],
         events_simu_filtered["s2_time"],
         events_simu_filtered["s2_endtime"],
+        window=s2_window_fuzz
     )
     s2_windows_length = s2_touching_windows[:,1] - s2_touching_windows[:,0]
     mask_simu_s2_found = s2_windows_length == 1
