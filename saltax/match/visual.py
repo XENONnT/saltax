@@ -135,11 +135,11 @@ def plot_event_wf_w_data(ind, st_salt, st_simu, st_data, runid, events_simu,
     ax1.plot(wf_simu_s1, label='Simulated S1', color='tab:blue')
     ax1.plot(wf_simu_s2, label='Simulated S2', color='tab:red')
     ax1.plot(wf_simu_others, label='Simulated Others', color='tab:green')
-    ax1.axvspan(matched_simu_s1_timerange_i[0],matched_simu_s1_timerange_i[1], color='tab:blue', alpha=0.3, label='Simulated S1 Range')
-    ax1.axvspan(matched_simu_s2_timerange_i[0],matched_simu_s2_timerange_i[1], color='tab:red', alpha=0.3, label='Simulated S2 Range')
+    ax1.axvspan(matched_simu_s1_timerange_i[0],matched_simu_s1_timerange_i[1], color='tab:blue', alpha=0.2, label='Simulated S1 Range')
+    ax1.axvspan(matched_simu_s2_timerange_i[0],matched_simu_s2_timerange_i[1], color='tab:red', alpha=0.2, label='Simulated S2 Range')
     if events_salt is not None:
-        ax1.axvspan(matched_salt_s1_timerange_i[0],matched_salt_s1_timerange_i[1], color='b', alpha=0.3, label='Sprinkled S1 Range')
-        ax1.axvspan(matched_salt_s2_timerange_i[0],matched_salt_s2_timerange_i[1], color='r', alpha=0.3, label='Sprinkled S2 Range')
+        ax1.axvspan(matched_salt_s1_timerange_i[0],matched_salt_s1_timerange_i[1], color='b', alpha=0.2, label='Sprinkled S1 Range')
+        ax1.axvspan(matched_salt_s2_timerange_i[0],matched_salt_s2_timerange_i[1], color='r', alpha=0.2, label='Sprinkled S2 Range')
     ax1.legend()
     ax1.set_title("Run %s Event %s: Simu/Sprk S1=%s/%sPE, Simu/Sprk S2=%s/%sPE"%(runid, ind, 
                                                         int(10*events_simu['s1_area'][ind])/10, 
@@ -152,11 +152,11 @@ def plot_event_wf_w_data(ind, st_salt, st_simu, st_data, runid, events_simu,
     ax2.plot(wf_salt_s1, label='Sprinkled S1', color='b')
     ax2.plot(wf_salt_s2, label='Sprinkled S2', color='r')
     ax2.plot(wf_salt_others, label='Sprinkled Others', color='g')
-    ax2.axvspan(matched_simu_s1_timerange_i[0],matched_simu_s1_timerange_i[1], color='tab:blue', alpha=0.3, label='Simulated S1 Range')
-    ax2.axvspan(matched_simu_s2_timerange_i[0],matched_simu_s2_timerange_i[1], color='tab:red', alpha=0.3, label='Simulated S2 Range')
+    ax2.axvspan(matched_simu_s1_timerange_i[0],matched_simu_s1_timerange_i[1], color='tab:blue', alpha=0.2, label='Simulated S1 Range')
+    ax2.axvspan(matched_simu_s2_timerange_i[0],matched_simu_s2_timerange_i[1], color='tab:red', alpha=0.2, label='Simulated S2 Range')
     if events_salt is not None:
-        ax2.axvspan(matched_salt_s1_timerange_i[0],matched_salt_s1_timerange_i[1], color='b', alpha=0.3, label='Sprinkled S1 Range')
-        ax2.axvspan(matched_salt_s2_timerange_i[0],matched_salt_s2_timerange_i[1], color='r', alpha=0.3, label='Sprinkled S2 Range')
+        ax2.axvspan(matched_salt_s1_timerange_i[0],matched_salt_s1_timerange_i[1], color='b', alpha=0.2, label='Sprinkled S1 Range')
+        ax2.axvspan(matched_salt_s2_timerange_i[0],matched_salt_s2_timerange_i[1], color='r', alpha=0.2, label='Sprinkled S2 Range')
     ax2.legend()
     ax2.set_ylim(ylim)
     
@@ -172,11 +172,11 @@ def plot_event_wf_w_data(ind, st_salt, st_simu, st_data, runid, events_simu,
     axs[0,0].plot(wf_simu_s1, label='Simulated S1', color='tab:blue')
     axs[0,0].plot(wf_simu_s2, label='Simulated S2', color='tab:red')
     axs[0,0].plot(wf_simu_others, label='Simulated Others', color='tab:green')
-    axs[0,0].axvspan(matched_simu_s1_timerange_i[0],matched_simu_s1_timerange_i[1], color='tab:blue', alpha=0.3, label='Simulated S1 Range')
-    axs[0,0].axvspan(matched_simu_s2_timerange_i[0],matched_simu_s2_timerange_i[1], color='tab:red', alpha=0.3, label='Simulated S2 Range')
+    axs[0,0].axvspan(matched_simu_s1_timerange_i[0],matched_simu_s1_timerange_i[1], color='tab:blue', alpha=0.2, label='Simulated S1 Range')
+    axs[0,0].axvspan(matched_simu_s2_timerange_i[0],matched_simu_s2_timerange_i[1], color='tab:red', alpha=0.2, label='Simulated S2 Range')
     if events_salt is not None:
-        axs[0,0].axvspan(matched_salt_s1_timerange_i[0],matched_salt_s1_timerange_i[1], color='b', alpha=0.3, label='Sprinkled S1 Range')
-        axs[0,0].axvspan(matched_salt_s2_timerange_i[0],matched_salt_s2_timerange_i[1], color='r', alpha=0.3, label='Sprinkled S2 Range')
+        axs[0,0].axvspan(matched_salt_s1_timerange_i[0],matched_salt_s1_timerange_i[1], color='b', alpha=0.2, label='Sprinkled S1 Range')
+        axs[0,0].axvspan(matched_salt_s2_timerange_i[0],matched_salt_s2_timerange_i[1], color='r', alpha=0.2, label='Sprinkled S2 Range')
     axs[0,0].set_xlim(matched_simu_s1_timerange_i[0]-s1_ext_window_samples, 
                       matched_simu_s1_timerange_i[1]+s1_ext_window_samples)
     axs[0,0].set_ylabel("Amplitude [PE/10ns]")
@@ -187,11 +187,11 @@ def plot_event_wf_w_data(ind, st_salt, st_simu, st_data, runid, events_simu,
     axs[0,1].plot(wf_simu_s1, label='Simulated S1', color='tab:blue')
     axs[0,1].plot(wf_simu_s2, label='Simulated S2', color='tab:red')
     axs[0,1].plot(wf_simu_others, label='Simulated Others', color='tab:green')
-    axs[0,1].axvspan(matched_simu_s1_timerange_i[0],matched_simu_s1_timerange_i[1], color='tab:blue', alpha=0.3, label='Simulated S1 Range')
-    axs[0,1].axvspan(matched_simu_s2_timerange_i[0],matched_simu_s2_timerange_i[1], color='tab:red', alpha=0.3, label='Simulated S2 Range')
+    axs[0,1].axvspan(matched_simu_s1_timerange_i[0],matched_simu_s1_timerange_i[1], color='tab:blue', alpha=0.2, label='Simulated S1 Range')
+    axs[0,1].axvspan(matched_simu_s2_timerange_i[0],matched_simu_s2_timerange_i[1], color='tab:red', alpha=0.2, label='Simulated S2 Range')
     if events_salt is not None:
-        axs[0,1].axvspan(matched_salt_s1_timerange_i[0],matched_salt_s1_timerange_i[1], color='b', alpha=0.3, label='Sprinkled S1 Range')
-        axs[0,1].axvspan(matched_salt_s2_timerange_i[0],matched_salt_s2_timerange_i[1], color='r', alpha=0.3, label='Sprinkled S2 Range')
+        axs[0,1].axvspan(matched_salt_s1_timerange_i[0],matched_salt_s1_timerange_i[1], color='b', alpha=0.2, label='Sprinkled S1 Range')
+        axs[0,1].axvspan(matched_salt_s2_timerange_i[0],matched_salt_s2_timerange_i[1], color='r', alpha=0.2, label='Sprinkled S2 Range')
     axs[0,1].set_xlim(matched_simu_s2_timerange_i[0]-s2_ext_window_samples, 
                       matched_simu_s2_timerange_i[1]+s2_ext_window_samples)
     axs[0,1].legend()
@@ -201,11 +201,11 @@ def plot_event_wf_w_data(ind, st_salt, st_simu, st_data, runid, events_simu,
     axs[1,0].plot(wf_salt_s1, label='Sprinkled S1', color='b')
     axs[1,0].plot(wf_salt_s2, label='Sprinkled S2', color='r')
     axs[1,0].plot(wf_salt_others, label='Sprinkled Others', color='g')
-    axs[1,0].axvspan(matched_simu_s1_timerange_i[0],matched_simu_s1_timerange_i[1], color='tab:blue', alpha=0.3, label='Simulated S1 Range')
-    axs[1,0].axvspan(matched_simu_s2_timerange_i[0],matched_simu_s2_timerange_i[1], color='tab:red', alpha=0.3, label='Simulated S2 Range')
+    axs[1,0].axvspan(matched_simu_s1_timerange_i[0],matched_simu_s1_timerange_i[1], color='tab:blue', alpha=0.2, label='Simulated S1 Range')
+    axs[1,0].axvspan(matched_simu_s2_timerange_i[0],matched_simu_s2_timerange_i[1], color='tab:red', alpha=0.2, label='Simulated S2 Range')
     if events_salt is not None:
-        axs[1,0].axvspan(matched_salt_s1_timerange_i[0],matched_salt_s1_timerange_i[1], color='b', alpha=0.3, label='Sprinkled S1 Range')
-        axs[1,0].axvspan(matched_salt_s2_timerange_i[0],matched_salt_s2_timerange_i[1], color='r', alpha=0.3, label='Sprinkled S2 Range')
+        axs[1,0].axvspan(matched_salt_s1_timerange_i[0],matched_salt_s1_timerange_i[1], color='b', alpha=0.2, label='Sprinkled S1 Range')
+        axs[1,0].axvspan(matched_salt_s2_timerange_i[0],matched_salt_s2_timerange_i[1], color='r', alpha=0.2, label='Sprinkled S2 Range')
     axs[1,0].set_xlim(matched_simu_s1_timerange_i[0]-s1_ext_window_samples, 
                       matched_simu_s1_timerange_i[1]+s1_ext_window_samples)
     axs[1,0].set_xlabel("Time [10ns]")
@@ -217,11 +217,11 @@ def plot_event_wf_w_data(ind, st_salt, st_simu, st_data, runid, events_simu,
     axs[1,1].plot(wf_salt_s1, label='Sprinkled S1', color='b')
     axs[1,1].plot(wf_salt_s2, label='Sprinkled S2', color='r')
     axs[1,1].plot(wf_salt_others, label='Sprinkled Others', color='g')
-    axs[1,1].axvspan(matched_simu_s1_timerange_i[0],matched_simu_s1_timerange_i[1], color='tab:blue', alpha=0.3, label='Simulated S1 Range')
-    axs[1,1].axvspan(matched_simu_s2_timerange_i[0],matched_simu_s2_timerange_i[1], color='tab:red', alpha=0.3, label='Simulated S2 Range')
+    axs[1,1].axvspan(matched_simu_s1_timerange_i[0],matched_simu_s1_timerange_i[1], color='tab:blue', alpha=0.2, label='Simulated S1 Range')
+    axs[1,1].axvspan(matched_simu_s2_timerange_i[0],matched_simu_s2_timerange_i[1], color='tab:red', alpha=0.2, label='Simulated S2 Range')
     if events_salt is not None:
-        axs[1,1].axvspan(matched_salt_s1_timerange_i[0],matched_salt_s1_timerange_i[1], color='b', alpha=0.3, label='Sprinkled S1 Range')
-        axs[1,1].axvspan(matched_salt_s2_timerange_i[0],matched_salt_s2_timerange_i[1], color='r', alpha=0.3, label='Sprinkled S2 Range')
+        axs[1,1].axvspan(matched_salt_s1_timerange_i[0],matched_salt_s1_timerange_i[1], color='b', alpha=0.2, label='Sprinkled S1 Range')
+        axs[1,1].axvspan(matched_salt_s2_timerange_i[0],matched_salt_s2_timerange_i[1], color='r', alpha=0.2, label='Sprinkled S2 Range')
     axs[1,1].set_xlim(matched_simu_s2_timerange_i[0]-s2_ext_window_samples, 
                       matched_simu_s2_timerange_i[1]+s2_ext_window_samples)
     axs[1,1].set_xlabel("Time [10ns]")
@@ -342,11 +342,11 @@ def plot_event_wf_wo_data(ind, st_salt, st_simu, runid, events_simu,
     ax1.plot(wf_simu_s1, label='Simulated S1', color='tab:blue')
     ax1.plot(wf_simu_s2, label='Simulated S2', color='tab:red')
     ax1.plot(wf_simu_others, label='Simulated Others', color='tab:green')
-    ax1.axvspan(matched_simu_s1_timerange_i[0],matched_simu_s1_timerange_i[1], color='tab:blue', alpha=0.3, label='Simulated S1 Range')
-    ax1.axvspan(matched_simu_s2_timerange_i[0],matched_simu_s2_timerange_i[1], color='tab:red', alpha=0.3, label='Simulated S2 Range')
+    ax1.axvspan(matched_simu_s1_timerange_i[0],matched_simu_s1_timerange_i[1], color='tab:blue', alpha=0.2, label='Simulated S1 Range')
+    ax1.axvspan(matched_simu_s2_timerange_i[0],matched_simu_s2_timerange_i[1], color='tab:red', alpha=0.2, label='Simulated S2 Range')
     if events_salt is not None:
-        ax1.axvspan(matched_salt_s1_timerange_i[0],matched_salt_s1_timerange_i[1], color='b', alpha=0.3, label='Sprinkled S1 Range')
-        ax1.axvspan(matched_salt_s2_timerange_i[0],matched_salt_s2_timerange_i[1], color='r', alpha=0.3, label='Sprinkled S2 Range')
+        ax1.axvspan(matched_salt_s1_timerange_i[0],matched_salt_s1_timerange_i[1], color='b', alpha=0.2, label='Sprinkled S1 Range')
+        ax1.axvspan(matched_salt_s2_timerange_i[0],matched_salt_s2_timerange_i[1], color='r', alpha=0.2, label='Sprinkled S2 Range')
     ax1.legend()
     ax1.set_title("Run %s Event %s: Simu/Sprk S1=%s/%sPE, Simu/Sprk S2=%s/%sPE"%(runid, ind, 
                                                         int(10*events_simu['s1_area'][ind])/10, 
@@ -358,11 +358,11 @@ def plot_event_wf_wo_data(ind, st_salt, st_simu, runid, events_simu,
     ax2.plot(wf_salt_s1, label='Sprinkled S1', color='b')
     ax2.plot(wf_salt_s2, label='Sprinkled S2', color='r')
     ax2.plot(wf_salt_others, label='Sprinkled Others', color='g')
-    ax2.axvspan(matched_simu_s1_timerange_i[0],matched_simu_s1_timerange_i[1], color='tab:blue', alpha=0.3, label='Simulated S1 Range')
-    ax2.axvspan(matched_simu_s2_timerange_i[0],matched_simu_s2_timerange_i[1], color='tab:red', alpha=0.3, label='Simulated S2 Range')
+    ax2.axvspan(matched_simu_s1_timerange_i[0],matched_simu_s1_timerange_i[1], color='tab:blue', alpha=0.2, label='Simulated S1 Range')
+    ax2.axvspan(matched_simu_s2_timerange_i[0],matched_simu_s2_timerange_i[1], color='tab:red', alpha=0.2, label='Simulated S2 Range')
     if events_salt is not None:
-        ax2.axvspan(matched_salt_s1_timerange_i[0],matched_salt_s1_timerange_i[1], color='b', alpha=0.3, label='Sprinkled S1 Range')
-        ax2.axvspan(matched_salt_s2_timerange_i[0],matched_salt_s2_timerange_i[1], color='r', alpha=0.3, label='Sprinkled S2 Range')    
+        ax2.axvspan(matched_salt_s1_timerange_i[0],matched_salt_s1_timerange_i[1], color='b', alpha=0.2, label='Sprinkled S1 Range')
+        ax2.axvspan(matched_salt_s2_timerange_i[0],matched_salt_s2_timerange_i[1], color='r', alpha=0.2, label='Sprinkled S2 Range')    
     ax2.legend()
     ax2.set_ylim(ylim)
     
@@ -377,11 +377,11 @@ def plot_event_wf_wo_data(ind, st_salt, st_simu, runid, events_simu,
     axs[0,0].plot(wf_simu_s1, label='Simulated S1', color='tab:blue')
     axs[0,0].plot(wf_simu_s2, label='Simulated S2', color='tab:red')
     axs[0,0].plot(wf_simu_others, label='Simulated Others', color='tab:green')
-    axs[0,0].axvspan(matched_simu_s1_timerange_i[0],matched_simu_s1_timerange_i[1], color='tab:blue', alpha=0.3, label='Simulated S1 Range')
-    axs[0,0].axvspan(matched_simu_s2_timerange_i[0],matched_simu_s2_timerange_i[1], color='tab:red', alpha=0.3, label='Simulated S2 Range')
+    axs[0,0].axvspan(matched_simu_s1_timerange_i[0],matched_simu_s1_timerange_i[1], color='tab:blue', alpha=0.2, label='Simulated S1 Range')
+    axs[0,0].axvspan(matched_simu_s2_timerange_i[0],matched_simu_s2_timerange_i[1], color='tab:red', alpha=0.2, label='Simulated S2 Range')
     if events_salt is not None:
-        axs[0,0].axvspan(matched_salt_s1_timerange_i[0],matched_salt_s1_timerange_i[1], color='b', alpha=0.3, label='Sprinkled S1 Range')
-        axs[0,0].axvspan(matched_salt_s2_timerange_i[0],matched_salt_s2_timerange_i[1], color='r', alpha=0.3, label='Sprinkled S2 Range')
+        axs[0,0].axvspan(matched_salt_s1_timerange_i[0],matched_salt_s1_timerange_i[1], color='b', alpha=0.2, label='Sprinkled S1 Range')
+        axs[0,0].axvspan(matched_salt_s2_timerange_i[0],matched_salt_s2_timerange_i[1], color='r', alpha=0.2, label='Sprinkled S2 Range')
     axs[0,0].set_xlim(matched_simu_s1_timerange_i[0]-s1_ext_window_samples, 
                       matched_simu_s1_timerange_i[1]+s1_ext_window_samples)
     axs[0,0].set_ylabel("Amplitude [PE/10ns]")
@@ -391,11 +391,11 @@ def plot_event_wf_wo_data(ind, st_salt, st_simu, runid, events_simu,
     axs[0,1].plot(wf_simu_s1, label='Simulated S1', color='tab:blue')
     axs[0,1].plot(wf_simu_s2, label='Simulated S2', color='tab:red')
     axs[0,1].plot(wf_simu_others, label='Simulated Others', color='tab:green')
-    axs[0,1].axvspan(matched_simu_s1_timerange_i[0],matched_simu_s1_timerange_i[1], color='tab:blue', alpha=0.3, label='Simulated S1 Range')
-    axs[0,1].axvspan(matched_simu_s2_timerange_i[0],matched_simu_s2_timerange_i[1], color='tab:red', alpha=0.3, label='Simulated S2 Range')
+    axs[0,1].axvspan(matched_simu_s1_timerange_i[0],matched_simu_s1_timerange_i[1], color='tab:blue', alpha=0.2, label='Simulated S1 Range')
+    axs[0,1].axvspan(matched_simu_s2_timerange_i[0],matched_simu_s2_timerange_i[1], color='tab:red', alpha=0.2, label='Simulated S2 Range')
     if events_salt is not None:
-        axs[0,1].axvspan(matched_salt_s1_timerange_i[0],matched_salt_s1_timerange_i[1], color='b', alpha=0.3, label='Sprinkled S1 Range')
-        axs[0,1].axvspan(matched_salt_s2_timerange_i[0],matched_salt_s2_timerange_i[1], color='r', alpha=0.3, label='Sprinkled S2 Range')
+        axs[0,1].axvspan(matched_salt_s1_timerange_i[0],matched_salt_s1_timerange_i[1], color='b', alpha=0.2, label='Sprinkled S1 Range')
+        axs[0,1].axvspan(matched_salt_s2_timerange_i[0],matched_salt_s2_timerange_i[1], color='r', alpha=0.2, label='Sprinkled S2 Range')
     axs[0,1].set_xlim(matched_simu_s2_timerange_i[0]-s2_ext_window_samples, 
                       matched_simu_s2_timerange_i[1]+s2_ext_window_samples)
     axs[0,1].legend()
@@ -404,11 +404,11 @@ def plot_event_wf_wo_data(ind, st_salt, st_simu, runid, events_simu,
     axs[1,0].plot(wf_salt_s1, label='Sprinkled S1', color='b')
     axs[1,0].plot(wf_salt_s2, label='Sprinkled S2', color='r')
     axs[1,0].plot(wf_salt_others, label='Sprinkled Others', color='g')
-    axs[1,0].axvspan(matched_simu_s1_timerange_i[0],matched_simu_s1_timerange_i[1], color='tab:blue', alpha=0.3, label='Simulated S1 Range')
-    axs[1,0].axvspan(matched_simu_s2_timerange_i[0],matched_simu_s2_timerange_i[1], color='tab:red', alpha=0.3, label='Simulated S2 Range')
+    axs[1,0].axvspan(matched_simu_s1_timerange_i[0],matched_simu_s1_timerange_i[1], color='tab:blue', alpha=0.2, label='Simulated S1 Range')
+    axs[1,0].axvspan(matched_simu_s2_timerange_i[0],matched_simu_s2_timerange_i[1], color='tab:red', alpha=0.2, label='Simulated S2 Range')
     if events_salt is not None:
-        axs[1,0].axvspan(matched_salt_s1_timerange_i[0],matched_salt_s1_timerange_i[1], color='b', alpha=0.3, label='Sprinkled S1 Range')
-        axs[1,0].axvspan(matched_salt_s2_timerange_i[0],matched_salt_s2_timerange_i[1], color='r', alpha=0.3, label='Sprinkled S2 Range')
+        axs[1,0].axvspan(matched_salt_s1_timerange_i[0],matched_salt_s1_timerange_i[1], color='b', alpha=0.2, label='Sprinkled S1 Range')
+        axs[1,0].axvspan(matched_salt_s2_timerange_i[0],matched_salt_s2_timerange_i[1], color='r', alpha=0.2, label='Sprinkled S2 Range')
     axs[1,0].set_xlim(matched_simu_s1_timerange_i[0]-s1_ext_window_samples, 
                       matched_simu_s1_timerange_i[1]+s1_ext_window_samples)
     axs[1,0].set_xlabel("Time [10ns]")
@@ -419,11 +419,11 @@ def plot_event_wf_wo_data(ind, st_salt, st_simu, runid, events_simu,
     axs[1,1].plot(wf_salt_s1, label='Sprinkled S1', color='b')
     axs[1,1].plot(wf_salt_s2, label='Sprinkled S2', color='r')
     axs[1,1].plot(wf_salt_others, label='Sprinkled Others', color='g')
-    axs[1,1].axvspan(matched_simu_s1_timerange_i[0],matched_simu_s1_timerange_i[1], color='tab:blue', alpha=0.3, label='Simulated S1 Range')
-    axs[1,1].axvspan(matched_simu_s2_timerange_i[0],matched_simu_s2_timerange_i[1], color='tab:red', alpha=0.3, label='Simulated S2 Range')
+    axs[1,1].axvspan(matched_simu_s1_timerange_i[0],matched_simu_s1_timerange_i[1], color='tab:blue', alpha=0.2, label='Simulated S1 Range')
+    axs[1,1].axvspan(matched_simu_s2_timerange_i[0],matched_simu_s2_timerange_i[1], color='tab:red', alpha=0.2, label='Simulated S2 Range')
     if events_salt is not None:
-        axs[1,1].axvspan(matched_salt_s1_timerange_i[0],matched_salt_s1_timerange_i[1], color='b', alpha=0.3, label='Sprinkled S1 Range')
-        axs[1,1].axvspan(matched_salt_s2_timerange_i[0],matched_salt_s2_timerange_i[1], color='r', alpha=0.3, label='Sprinkled S2 Range')
+        axs[1,1].axvspan(matched_salt_s1_timerange_i[0],matched_salt_s1_timerange_i[1], color='b', alpha=0.2, label='Sprinkled S1 Range')
+        axs[1,1].axvspan(matched_salt_s2_timerange_i[0],matched_salt_s2_timerange_i[1], color='r', alpha=0.2, label='Sprinkled S2 Range')
     axs[1,1].set_xlim(matched_simu_s2_timerange_i[0]-s2_ext_window_samples, 
                       matched_simu_s2_timerange_i[1]+s2_ext_window_samples)
     axs[1,1].set_xlabel("Time [10ns]")
