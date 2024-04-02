@@ -148,6 +148,8 @@ def load_events(runs, st_salt, st_simu, plugins=('event_info', 'cuts_basic'), *a
         "ind_simu_s2_found": np.array([], dtype=np.int32)
     }
 
+    len_simu_so_far = 0
+    len_salt_so_far = 0
     for i, run in enumerate(runs):
         print("Loading run %s"%(run))
         
@@ -165,22 +167,22 @@ def load_events(runs, st_salt, st_simu, plugins=('event_info', 'cuts_basic'), *a
 
         # Load the indices into the dictionary
         inds_dict["ind_salt_event_found"] = np.concatenate(
-            (inds_dict["ind_salt_event_found"], ind_salt_event_found_i)
+            (inds_dict["ind_salt_event_found"], ind_salt_event_found_i+len_salt_so_far)
         )
         inds_dict["ind_salt_s1_found"] = np.concatenate(
-            (inds_dict["ind_salt_s1_found"], ind_salt_s1_found_i)
+            (inds_dict["ind_salt_s1_found"], ind_salt_s1_found_i+len_salt_so_far)
         )
         inds_dict["ind_salt_s2_found"] = np.concatenate(
-            (inds_dict["ind_salt_s2_found"], ind_salt_s2_found_i)
+            (inds_dict["ind_salt_s2_found"], ind_salt_s2_found_i+len_salt_so_far)
         )
         inds_dict["ind_simu_event_found"] = np.concatenate(
-            (inds_dict["ind_simu_event_found"], ind_simu_event_found_i)
+            (inds_dict["ind_simu_event_found"], ind_simu_event_found_i+len_simu_so_far)
         )
         inds_dict["ind_simu_s1_found"] = np.concatenate(
-            (inds_dict["ind_simu_s1_found"], ind_simu_s1_found_i)
+            (inds_dict["ind_simu_s1_found"], ind_simu_s1_found_i+len_simu_so_far)
         )
         inds_dict["ind_simu_s2_found"] = np.concatenate(
-            (inds_dict["ind_simu_s2_found"], ind_simu_s2_found_i)
+            (inds_dict["ind_simu_s2_found"], ind_simu_s2_found_i+len_simu_so_far)
         )
 
         # Concatenate the events
@@ -190,6 +192,10 @@ def load_events(runs, st_salt, st_simu, plugins=('event_info', 'cuts_basic'), *a
         else:
             events_simu = np.concatenate((events_simu, events_simu_filtered_i))
             events_salt = np.concatenate((events_salt, events_salt_i))
+        
+        # Update the length of the events
+        len_simu_so_far += len(events_simu_i)
+        len_salt_so_far += len(events_salt_i)
     
     return events_simu, events_salt, inds_dict
 
