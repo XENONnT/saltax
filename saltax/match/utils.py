@@ -1,11 +1,11 @@
 import numpy as np
 from tqdm import tqdm
-import gc 
 import numpy as np
 import matplotlib.pyplot as plt
 from tabulate import tabulate
 from itertools import cycle
 import saltax
+from scipy.stats import binomtest
 
 ALL_CUTS = np.array([
             'cut_daq_veto',
@@ -26,6 +26,11 @@ ALL_CUTS = np.array([
             'cut_cs2_area_fraction_top',
             'cut_shadow',
             'cut_ambience',])
+ALL_CUTS_MINIMAL = np.array([
+            'cut_daq_veto', 
+            'cut_interaction_exists', 
+            'cut_main_is_valid_triggering_peak', 
+            'cut_run_boundaries',])
 ALL_CUTS_EXCEPT_S2PatternS1Width = np.array([
             'cut_daq_veto',
             'cut_interaction_exists',
@@ -90,12 +95,15 @@ def load_peaks(runs, st_salt, st_simu,
         # TODO: Ugly hardcoding for FV cut, need to be fixed
         if truth_fv_cut:
             peaks_salt_matched_to_simu_i, \
-                peaks_simu_matched_to_salt_i = saltax.match_peaks(truth_i[(truth_i['z']<-13)&(truth_i['z']>-145)&(truth_i['x']**2+truth_i['y']**2<64**2)], 
-                                                                match_i[(truth_i['z']<-13)&(truth_i['z']>-145)&(truth_i['x']**2+truth_i['y']**2<64**2)],
-                                                                peaks_simu_i, peaks_salt_i)    
+                peaks_simu_matched_to_salt_i = saltax.match_peaks(
+                    match_i[(truth_i['z']<-13)&(truth_i['z']>-145)&(truth_i['x']**2+truth_i['y']**2<64**2)],
+                    peaks_simu_i, peaks_salt_i
+                )    
         else:
             peaks_salt_matched_to_simu_i, \
-                peaks_simu_matched_to_salt_i = saltax.match_peaks(truth_i, match_i, peaks_simu_i, peaks_salt_i)
+                peaks_simu_matched_to_salt_i = saltax.match_peaks(
+                    match_i, peaks_simu_i, peaks_salt_i
+                )
 
         if i==0:
             peaks_simu = peaks_simu_i
@@ -117,12 +125,14 @@ def load_peaks(runs, st_salt, st_simu,
     return peaks_simu, peaks_salt, truth, match, peaks_salt_matched_to_simu, peaks_simu_matched_to_salt
 
 
-def load_events(runs, st_salt, st_simu, plugins=('event_info', 'cuts_basic')):
+def load_events(runs, st_salt, st_simu, plugins=('event_info', 'cuts_basic'), *args):
     """
     Load events from the runs and do basic filtering suggeted by saltax.match_events
     :param runs: list of runs.
     :param st_salt: saltax context for salt mode
     :param st_simu: saltax context for simu mode
+    :param plugins: plugins to be loaded, default to ('event_info', 'cuts_basic')
+    :param args: arguments for saltax.match_events, i.e. event_window_fuzz, s1_window_fuzz, s2_window_fuzz
     :return: events_simu: events from simulated dataset, filtered out those who miss S1
     :return: events_salt: events from sprinkled dataset
     :return inds_dict: dictionary of indices of events from sprinkled or filtered simulated dataset, 
@@ -138,6 +148,8 @@ def load_events(runs, st_salt, st_simu, plugins=('event_info', 'cuts_basic')):
         "ind_simu_s2_found": np.array([], dtype=np.int32)
     }
 
+    len_simu_so_far = 0
+    len_salt_so_far = 0
     for i, run in enumerate(runs):
         print("Loading run %s"%(run))
         
@@ -151,26 +163,26 @@ def load_events(runs, st_salt, st_simu, plugins=('event_info', 'cuts_basic')):
             ind_salt_event_found_i, ind_simu_event_found_i, ind_simu_event_lost_i, ind_simu_event_split_i,
             ind_salt_s1_found_i, ind_simu_s1_found_i,
             ind_salt_s2_found_i, ind_simu_s2_found_i
-        ) = saltax.match_events(events_simu_i, events_salt_i)
+        ) = saltax.match_events(events_simu_i, events_salt_i, *args)
 
         # Load the indices into the dictionary
         inds_dict["ind_salt_event_found"] = np.concatenate(
-            (inds_dict["ind_salt_event_found"], ind_salt_event_found_i)
+            (inds_dict["ind_salt_event_found"], ind_salt_event_found_i+len_salt_so_far)
         )
         inds_dict["ind_salt_s1_found"] = np.concatenate(
-            (inds_dict["ind_salt_s1_found"], ind_salt_s1_found_i)
+            (inds_dict["ind_salt_s1_found"], ind_salt_s1_found_i+len_salt_so_far)
         )
         inds_dict["ind_salt_s2_found"] = np.concatenate(
-            (inds_dict["ind_salt_s2_found"], ind_salt_s2_found_i)
+            (inds_dict["ind_salt_s2_found"], ind_salt_s2_found_i+len_salt_so_far)
         )
         inds_dict["ind_simu_event_found"] = np.concatenate(
-            (inds_dict["ind_simu_event_found"], ind_simu_event_found_i)
+            (inds_dict["ind_simu_event_found"], ind_simu_event_found_i+len_simu_so_far)
         )
         inds_dict["ind_simu_s1_found"] = np.concatenate(
-            (inds_dict["ind_simu_s1_found"], ind_simu_s1_found_i)
+            (inds_dict["ind_simu_s1_found"], ind_simu_s1_found_i+len_simu_so_far)
         )
         inds_dict["ind_simu_s2_found"] = np.concatenate(
-            (inds_dict["ind_simu_s2_found"], ind_simu_s2_found_i)
+            (inds_dict["ind_simu_s2_found"], ind_simu_s2_found_i+len_simu_so_far)
         )
 
         # Concatenate the events
@@ -180,55 +192,12 @@ def load_events(runs, st_salt, st_simu, plugins=('event_info', 'cuts_basic')):
         else:
             events_simu = np.concatenate((events_simu, events_simu_filtered_i))
             events_salt = np.concatenate((events_salt, events_salt_i))
+        
+        # Update the length of the events
+        len_simu_so_far += len(events_simu_filtered_i)
+        len_salt_so_far += len(events_salt_i)
     
     return events_simu, events_salt, inds_dict
-
-
-def load_events_deprecated(runs, st_salt, st_simu, plugins=('event_info', 'cuts_basic')):
-    """
-    Load events from the runs and do basic filtering suggeted by saltax.match_events
-    :param runs: list of runs.
-    :param st_salt: saltax context for salt mode
-    :param st_simu: saltax context for simu mode
-    :return: events_simu: events from simulated dataset
-    :return: events_salt: events from sprinkled dataset
-    :return: truth: truth information in simulation
-    :return: match: pema match information
-    :return: events_salt_matched_to_simu: events related plugins from sprinkled matched to simulated
-    :return: events_simu_matched_to_salt: events related plugins from simulated matched to sprinkled
-    """
-    for i, run in enumerate(runs):
-        print("Loading run %s"%(run))
-        
-        events_simu_i = st_simu.get_array(run, plugins, progress_bar=False)
-        events_salt_i = st_salt.get_array(run, plugins, progress_bar=False)
-        truth_i = st_simu.get_array(run, 'truth', progress_bar=False)
-        match_i = st_simu.get_array(run, 'match_acceptance_extended', progress_bar=False)
-
-        # TODO: Ugly hardcoding for FV cut, need to be fixed
-        events_salt_matched_to_simu_i, \
-            events_simu_matched_to_salt_i = saltax.match_events(truth_i[(truth_i['z']<-13)&(truth_i['z']>-145)&(truth_i['x']**2+truth_i['y']**2<64**2)], 
-                                                                match_i[(truth_i['z']<-13)&(truth_i['z']>-145)&(truth_i['x']**2+truth_i['y']**2<64**2)],
-                                                                events_simu_i[(events_simu_i['z']<-13)&(events_simu_i['z']>-145)&(events_simu_i['r']<64)], 
-                                                                events_salt_i[(events_salt_i['z']<-13)&(events_salt_i['z']>-145)])    
-        if i==0:
-            events_simu = events_simu_i
-            events_salt = events_salt_i
-            truth = truth_i
-            match = match_i
-            events_salt_matched_to_simu = events_salt_matched_to_simu_i
-            events_simu_matched_to_salt = events_simu_matched_to_salt_i
-        else:
-            events_simu = np.concatenate((events_simu,events_simu_i))
-            events_salt = np.concatenate((events_salt,events_salt_i))
-            truth = np.concatenate((truth,truth_i))
-            match = np.concatenate((match,match_i))
-            events_salt_matched_to_simu = np.concatenate((events_salt_matched_to_simu,
-                                                          events_salt_matched_to_simu_i))
-            events_simu_matched_to_salt = np.concatenate((events_simu_matched_to_salt,
-                                                          events_simu_matched_to_salt_i))
-    
-    return events_simu, events_salt, truth, match, events_salt_matched_to_simu, events_simu_matched_to_salt
 
 
 def compare_templates(events_salt_matched_to_simu, events_simu_matched_to_salt, 
@@ -407,7 +376,8 @@ def get_cut_eff(events, all_cut_list = ALL_CUTS,
                 indv_cut_type='n_minus_1', title='N-1 Cut Acceptance Measured in SR1 AmBe',
                 bbox_to_anchor=(0.5, 1.50)):
     """
-    Get the acceptance of each cut as a function of a coordinate.
+    Get the acceptance with corresponding Clopper-Pearson uncertainty of each cut, 
+    as a function of a coordinate.
     :param events: events
     :param all_cut_list: list of all cuts
     :param n_bins: number of bins for the coordinate
@@ -438,8 +408,13 @@ def get_cut_eff(events, all_cut_list = ALL_CUTS,
     result_dict = {}
     for cut in all_cut_list:
         result_dict[cut] = np.zeros(n_bins-1)
+        result_dict[cut+'_upper'] = np.zeros(n_bins-1)
+        result_dict[cut+'_lower'] = np.zeros(n_bins-1)
     result_dict['all_cuts'] = np.zeros(n_bins-1)
+    result_dict['all_cuts_upper'] = np.zeros(n_bins-1)
+    result_dict['all_cuts_lower'] = np.zeros(n_bins-1)
     result_dict[coord] = np.zeros(n_bins-1)
+
     for i in range(n_bins-1):
         mid_coord = (bins[i] + bins[i+1]) / 2
         result_dict[coord][i] = mid_coord
@@ -448,20 +423,32 @@ def get_cut_eff(events, all_cut_list = ALL_CUTS,
                                  (events[coord]< bins[i+1])]
         selected_events_all_cut = selected_events[apply_cut_lists(selected_events, 
                                                                   all_cut_list)]
+        interval = binomtest(len(selected_events_all_cut),len(selected_events)).proportion_ci()
         result_dict['all_cuts'][i] = len(selected_events_all_cut)/len(selected_events)
+        result_dict['all_cuts_upper'][i] = interval.high
+        result_dict['all_cuts_lower'][i] = interval.low
         for cut_oi in all_cut_list:
             selected_events_cut_oi = selected_events[apply_single_cut(selected_events,
                                                                        cut_oi)]
+            # Efficiency curves with Clopper-Pearson uncertainty estimation
+            interval = binomtest(len(selected_events_cut_oi), 
+                                 len(selected_events)).proportion_ci()
             result_dict[cut_oi][i] = len(selected_events_cut_oi)/len(selected_events)
+            result_dict[cut_oi+'_upper'][i] = interval.high
+            result_dict[cut_oi+'_lower'][i] = interval.low
         
     if plot:
         colors = plt.cm.rainbow(np.linspace(0, 1, len(all_cut_list) + 1))  # +1 for the 'Combined' line
         color_cycle = cycle(colors)
         plt.figure(dpi=150)
         plt.plot(result_dict[coord], result_dict['all_cuts'], color='k', label='Combined')
+        plt.fill_between(result_dict[coord], result_dict['all_cuts_lower'], result_dict['all_cuts_upper'], 
+                         color='k', alpha=0.3)
         for cut_oi in all_cut_list:
             plt.plot(result_dict[coord], result_dict[cut_oi], 
                      color=next(color_cycle), label=cut_oi)
+            plt.fill_between(result_dict[coord], result_dict[cut_oi+'_lower'], result_dict[cut_oi+'_upper'], 
+                             color=next(color_cycle), alpha=0.3)
         plt.xlabel(coord+coord_units[coord])
         plt.ylabel('Measured Acceptance')
         plt.grid()
@@ -659,5 +646,96 @@ def show_area_bias(salt, simu, title,
     plt.xlim(bins[0], bins[-1])
     plt.legend()
     plt.ylim(ylim)
+    plt.title(title)
+    plt.show()
+
+
+def show_eff1d(events_simu, events_simu_matched_to_salt, mask_salt_cut, 
+               coord="e_ces", bins=np.linspace(0,12,25), 
+               title="Matching Acceptance and Cut Acceptance"):
+    """
+    Show the acceptance of matching and cuts in 1D coordinates.
+    :param events_simu: events from the simulated dataset
+    :param events_simu_matched_to_salt: events from the simulated dataset matched to sprinkled
+    :param mask_salt_cut: mask of the sprinkled dataset with cuts
+    :param coord: coordinate to be compared, default to 'e_ces', can choose from ['e_ces', 's1_area', 's2_area']
+    :param bins: bins for the coordinate, default to np.linspace(0,12,25)
+    :param title: title of the plot, default to "Matching Acceptance and Cut Acceptance"
+    """
+    xlabel_dict = {
+        "e_ces": "Simulated CES [keV]",
+        "s1_area": "Simulated S1 Area [PE]",
+        "s2_area": "Simulated S2 Area [PE]",
+        "z": "Z [cm]"
+    }
+
+    # Histogram
+    plt.figure(dpi=150)
+    plt.hist(
+        events_simu[coord], bins=bins,
+        label='Simulation before matching&cuts'
+    )
+    plt.hist(
+        events_simu_matched_to_salt[coord], 
+        bins=bins,
+        label='Simulation after matching'
+    )
+    plt.hist(
+        events_simu_matched_to_salt[mask_salt_cut][coord], 
+        bins=bins,
+        color='tab:red',
+        label='Simulation after matching&cuts'
+    )
+    plt.yscale('log')
+    plt.xlabel(xlabel_dict[coord])
+    plt.legend()
+    plt.ylabel('Counts')
+    plt.title(title)
+    plt.show()
+
+    # Efficiency curves with Clopper-Pearson uncertainty estimation
+    plt.figure(dpi=150)
+    counts_events_simu, bins = np.histogram(
+        events_simu[coord], bins=bins
+    )
+    counts_events_simu_matched_to_salt, bins = np.histogram(
+        events_simu_matched_to_salt[coord], bins=bins
+    )
+    counts_events_simu_matched_to_salt_after_cuts, bins = np.histogram(
+        events_simu_matched_to_salt[mask_salt_cut][coord], bins=bins
+    )
+    coords = (bins[1:] + bins[:-1])/2
+    
+    # Get Clopper-Pearson uncertainty
+    matching_u = []
+    matching_l = []
+    cuts_u = []
+    cuts_l = []
+    for i in range(len(coords)):
+        matching_interval = binomtest(counts_events_simu_matched_to_salt[i], 
+                                      counts_events_simu[i]).proportion_ci()
+        matching_l.append(matching_interval.low)
+        matching_u.append(matching_interval.high)
+        cuts_interval = binomtest(counts_events_simu_matched_to_salt_after_cuts[i], 
+                                  counts_events_simu_matched_to_salt[i]).proportion_ci()
+        cuts_l.append(cuts_interval.low)
+        cuts_u.append(cuts_interval.high)
+    matching_u = np.array(matching_u)
+    matching_l = np.array(matching_l)
+    cuts_u = np.array(cuts_u)
+    cuts_l = np.array(cuts_l)
+    
+    plt.plot(coords, 
+             counts_events_simu_matched_to_salt/counts_events_simu,
+            label='Matching', color="tab:blue")
+    plt.fill_between(coords, matching_l, matching_u, alpha=0.5, color="tab:blue")
+    plt.plot(coords, 
+             counts_events_simu_matched_to_salt_after_cuts/counts_events_simu_matched_to_salt,
+             label='Cut (Already Matched)', color="tab:orange")
+    plt.fill_between(coords, cuts_l, cuts_u, alpha=0.5, color="tab:orange")
+    
+    plt.xlabel(xlabel_dict[coord])
+    plt.legend()
+    plt.ylabel("Acceptance")
     plt.title(title)
     plt.show()
