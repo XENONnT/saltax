@@ -141,9 +141,11 @@ def plot_event_wf_w_data(ind, st_salt, st_simu, st_data, runid, events_simu,
         ax1.axvspan(matched_salt_s1_timerange_i[0],matched_salt_s1_timerange_i[1], color='b', alpha=0.3, label='Sprinkled S1 Range')
         ax1.axvspan(matched_salt_s2_timerange_i[0],matched_salt_s2_timerange_i[1], color='r', alpha=0.3, label='Sprinkled S2 Range')
     ax1.legend()
-    ax1.set_title("Run %s Event %s: Simu S1=%sPE, Simu S2=%sPE"%(runid, ind, 
+    ax1.set_title("Run %s Event %s: Simu/Sprk S1=%s/%sPE, Simu/Sprk S2=%s/%sPE"%(runid, ind, 
                                                         int(10*events_simu['s1_area'][ind])/10, 
-                                                        int(10*events_simu['s2_area'][ind])/10))
+                                                        int(10*events_salt['s1_area'][ind])/10,
+                                                        int(10*events_simu['s2_area'][ind])/10,
+                                                        int(10*events_salt['s2_area'][ind])/10))
     ax1.set_ylim(ylim)
     
     ax2.plot(wf_data, label='Data', color='k', alpha=0.5)
@@ -346,9 +348,11 @@ def plot_event_wf_wo_data(ind, st_salt, st_simu, runid, events_simu,
         ax1.axvspan(matched_salt_s1_timerange_i[0],matched_salt_s1_timerange_i[1], color='b', alpha=0.3, label='Sprinkled S1 Range')
         ax1.axvspan(matched_salt_s2_timerange_i[0],matched_salt_s2_timerange_i[1], color='r', alpha=0.3, label='Sprinkled S2 Range')
     ax1.legend()
-    ax1.set_title("Run %s Event %s: Simu S1=%sPE, Simu S2=%sPE"%(runid, ind, 
+    ax1.set_title("Run %s Event %s: Simu/Sprk S1=%s/%sPE, Simu/Sprk S2=%s/%sPE"%(runid, ind, 
                                                         int(10*events_simu['s1_area'][ind])/10, 
-                                                        int(10*events_simu['s2_area'][ind])/10))
+                                                        int(10*events_salt['s1_area'][ind])/10,
+                                                        int(10*events_simu['s2_area'][ind])/10,
+                                                        int(10*events_salt['s2_area'][ind])/10))
     ax1.set_ylim(ylim)
     
     ax2.plot(wf_salt_s1, label='Sprinkled S1', color='b')
