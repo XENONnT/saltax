@@ -676,7 +676,8 @@ def show_area_bias(salt, simu, title,
 
 def show_eff1d(events_simu, events_simu_matched_to_salt, mask_salt_cut=None, 
                coord="e_ces", bins=np.linspace(0,12,25), 
-               labels = ['Simulation before matching&cuts', 'Simulation after matching', 'Simulation after matching&cuts'],
+               labels_hist = ['Simulation before matching&cuts', 'Simulation after matching', 'Simulation after matching&cuts'],
+               labels_eff = ['Matching', 'Cut (Already Matched)'],
                title="Matching Acceptance and Cut Acceptance"):
     """
     Show the acceptance of matching and cuts in 1D coordinates.
@@ -698,19 +699,19 @@ def show_eff1d(events_simu, events_simu_matched_to_salt, mask_salt_cut=None,
     plt.figure(dpi=150)
     plt.hist(
         events_simu[coord], bins=bins,
-        label=labels[0]
+        label=labels_hist[0]
     )
     plt.hist(
         events_simu_matched_to_salt[coord], 
         bins=bins,
-        label=labels[1]
+        label=labels_hist[1]
     )
     if mask_salt_cut is not None:
         plt.hist(
             events_simu_matched_to_salt[mask_salt_cut][coord], 
             bins=bins,
             color='tab:red',
-            label=labels[2]
+            label=labels_hist[2]
         )
     plt.yscale('log')
     plt.xlabel(xlabel_dict[coord])
@@ -756,12 +757,12 @@ def show_eff1d(events_simu, events_simu_matched_to_salt, mask_salt_cut=None,
     
     plt.plot(coords, 
              counts_events_simu_matched_to_salt/counts_events_simu,
-            label='Matching', color="tab:blue")
+            label=labels_eff[0], color="tab:blue")
     plt.fill_between(coords, matching_l, matching_u, alpha=0.5, color="tab:blue")
     if mask_salt_cut is not None:
         plt.plot(coords, 
                 counts_events_simu_matched_to_salt_after_cuts/counts_events_simu_matched_to_salt,
-                label='Cut (Already Matched)', color="tab:orange")
+                label=labels_eff[1], color="tab:orange")
         plt.fill_between(coords, cuts_l, cuts_u, alpha=0.5, color="tab:orange")
     
     plt.xlabel(xlabel_dict[coord])
