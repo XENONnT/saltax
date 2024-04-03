@@ -79,6 +79,23 @@ AmBe_CUTS_EXCEPT_S2PatternS1Width = np.array([
             'cut_s2_single_scatter',
             'cut_s2_width',
             'cut_cs2_area_fraction_top',])
+AmBe_CUTS = np.array([
+            'cut_daq_veto',
+            'cut_interaction_exists',
+            'cut_main_is_valid_triggering_peak',
+            'cut_run_boundaries',
+            'cut_s1_area_fraction_top',
+            'cut_s1_max_pmt',
+            'cut_s1_pattern_bottom',
+            'cut_s1_pattern_top',
+            'cut_s1_single_scatter',
+            'cut_s1_tightcoin_3fold',
+            'cut_s1_width',
+            'cut_s2_pattern',
+            'cut_s2_recon_pos_diff',
+            'cut_s2_single_scatter',
+            'cut_s2_width',
+            'cut_cs2_area_fraction_top',])
 
 
 def load_peaks(runs, st_salt, st_simu, 
