@@ -142,10 +142,16 @@ def load_events(runs, st_salt, st_simu, plugins=('event_info', 'cuts_basic'), *a
     inds_dict = {
         "ind_salt_event_found": np.array([], dtype=np.int32),
         "ind_salt_s1_found": np.array([], dtype=np.int32),
+        "ind_salt_s1_made_alt": np.array([], dtype=np.int32),
         "ind_salt_s2_found": np.array([], dtype=np.int32),
+        "ind_salt_s2_made_alt": np.array([], dtype=np.int32),
         "ind_simu_event_found": np.array([], dtype=np.int32),
         "ind_simu_s1_found": np.array([], dtype=np.int32),
-        "ind_simu_s2_found": np.array([], dtype=np.int32)
+        "inds_simu_s1_made_alt": np.array([], dtype=np.int32),
+        "ind_simu_s2_found": np.array([], dtype=np.int32),
+        "ind_simu_s2_made_alt": np.array([], dtype=np.int32),
+        "ind_simu_event_lost": np.array([], dtype=np.int32),
+        "ind_simu_event_split": np.array([], dtype=np.int32),
     }
 
     len_simu_so_far = 0
