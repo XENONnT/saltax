@@ -161,8 +161,8 @@ def load_events(runs, st_salt, st_simu, plugins=('event_info', 'cuts_basic'), *a
         (
             events_simu_filtered_i,
             ind_salt_event_found_i, ind_simu_event_found_i, ind_simu_event_lost_i, ind_simu_event_split_i,
-            ind_salt_s1_found_i, ind_simu_s1_found_i,
-            ind_salt_s2_found_i, ind_simu_s2_found_i
+            ind_salt_s1_found_i, ind_simu_s1_found_i, ind_salt_s1_made_alt_i, ind_simu_s1_made_alt_i,
+            ind_salt_s2_found_i, ind_simu_s2_found_i, ind_salt_s2_made_alt_i, ind_simu_s2_made_alt_i
         ) = saltax.match_events(events_simu_i, events_salt_i, *args)
 
         # Load the indices into the dictionary
@@ -172,8 +172,14 @@ def load_events(runs, st_salt, st_simu, plugins=('event_info', 'cuts_basic'), *a
         inds_dict["ind_salt_s1_found"] = np.concatenate(
             (inds_dict["ind_salt_s1_found"], ind_salt_s1_found_i+len_salt_so_far)
         )
+        inds_dict["ind_salt_s1_made_alt"] = np.concatenate(
+            (inds_dict["ind_salt_s1_made_alt"], ind_salt_s1_made_alt_i+len_salt_so_far)
+        )   
         inds_dict["ind_salt_s2_found"] = np.concatenate(
             (inds_dict["ind_salt_s2_found"], ind_salt_s2_found_i+len_salt_so_far)
+        )
+        inds_dict["ind_salt_s2_made_alt"] = np.concatenate(
+            (inds_dict["ind_salt_s2_made_alt"], ind_salt_s2_made_alt_i+len_salt_so_far)
         )
         inds_dict["ind_simu_event_found"] = np.concatenate(
             (inds_dict["ind_simu_event_found"], ind_simu_event_found_i+len_simu_so_far)
@@ -181,8 +187,20 @@ def load_events(runs, st_salt, st_simu, plugins=('event_info', 'cuts_basic'), *a
         inds_dict["ind_simu_s1_found"] = np.concatenate(
             (inds_dict["ind_simu_s1_found"], ind_simu_s1_found_i+len_simu_so_far)
         )
+        inds_dict["ind_simu_s1_made_alt"] = np.concatenate(
+            (inds_dict["ind_simu_s1_made_alt"], ind_simu_s1_made_alt_i+len_simu_so_far)
+        )   
         inds_dict["ind_simu_s2_found"] = np.concatenate(
             (inds_dict["ind_simu_s2_found"], ind_simu_s2_found_i+len_simu_so_far)
+        )
+        inds_dict["ind_simu_s2_made_alt"] = np.concatenate(
+            (inds_dict["ind_simu_s2_made_alt"], ind_simu_s2_made_alt_i+len_simu_so_far)
+        )
+        inds_dict["ind_simu_event_lost"] = np.concatenate(
+            (inds_dict["ind_simu_event_lost"], ind_simu_event_lost_i+len_simu_so_far)
+        )
+        inds_dict["ind_simu_event_split"] = np.concatenate(
+            (inds_dict["ind_simu_event_split"], ind_simu_event_split_i+len_simu_so_far)
         )
 
         # Concatenate the events
