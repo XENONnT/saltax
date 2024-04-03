@@ -21,10 +21,12 @@ def match_events(events_simu, events_salt,
            range: ind_salt_s1_found. Those events_salt[ind_salt_s1_found] are called events_salt_s1_found.
         5. Find indcies of events_simu_filtered whose S1 time range overlaps with events_salt_s1_found:
            ind_simu_s1_found. Those events_simu_filtered[ind_simu_s1_found] are called events_simu_s1_found.
+           The processes in step 4 and 5 are repeated also for alt_s1.
         6. Find indcies of events_salt whose S2 time range overlaps with events_simu_filtered's S2 time 
            range: ind_salt_s2_found. Those events_salt[ind_salt_s2_found] are called events_salt_s2_found.
         7. Find indcies of events_simu_filtered whose S2 time range overlaps with events_salt_s2_found:
            ind_simu_s2_found. Those events_simu_filtered[ind_simu_s2_found] are called events_simu_s2_found.
+           The processes in step 6 and 7 are repeated also for alt_s2.
     :param events_simu: event_info from wfsim
     :param events_salt: event_info from saltax
     :param event_window_fuzz: extended time range to consider as matched for events, default 0 ns
@@ -33,8 +35,8 @@ def match_events(events_simu, events_salt,
     :param s2_window_fuzz: extended time range to consider as matched for S2, default 0 ns
     :return: events_simu_filtered, 
              ind_salt_event_found, ind_simu_event_found, ind_simu_event_lost, ind_simu_event_split,
-             ind_salt_s1_found, ind_simu_s1_found, 
-             ind_salt_s2_found, ind_simu_s2_found
+             ind_salt_s1_found, ind_simu_s1_found, ind_salt_s1_made_alt, ind_simu_s1_made_alt,
+             ind_salt_s2_found, ind_simu_s2_found, ind_salt_s2_made_alt, ind_simu_s2_made_alt
     """
     # Step 1.
     # Filter out events_simu which is missing S1
@@ -68,6 +70,18 @@ def match_events(events_simu, events_salt,
     mask_simu_s1_found = s1_windows_length == 1
     ind_simu_s1_found = np.where(mask_simu_s1_found)[0]
     ind_salt_s1_found = s1_touching_windows[mask_simu_s1_found][:,0]
+    # Repeat the process for alt_s1
+    alt_s1_touching_windows = strax.processing.general._touching_windows(
+        events_salt["alt_s1_time"],
+        events_salt["alt_s1_endtime"],
+        events_simu_filtered["s1_time"],
+        events_simu_filtered["s1_endtime"],
+        window=s1_window_fuzz
+    )
+    alt_s1_windows_length = alt_s1_touching_windows[:,1] - alt_s1_touching_windows[:,0]
+    mask_simu_s1_made_alt = alt_s1_windows_length == 1
+    ind_simu_s1_made_alt = np.where(mask_simu_s1_made_alt)[0]
+    ind_salt_s1_made_alt = alt_s1_touching_windows[mask_simu_s1_made_alt][:,0]
 
     # Step 6 & 7.
     # Assumed s2 times has been sorted! It should be a safe assumption because their events are sorted.
@@ -82,12 +96,24 @@ def match_events(events_simu, events_salt,
     mask_simu_s2_found = s2_windows_length == 1
     ind_simu_s2_found = np.where(mask_simu_s2_found)[0]
     ind_salt_s2_found = s2_touching_windows[mask_simu_s2_found][:,0]
+    # Repeat the process for alt_s2
+    alt_s2_touching_windows = strax.processing.general._touching_windows(
+        events_salt["alt_s2_time"],
+        events_salt["alt_s2_endtime"],
+        events_simu_filtered["s2_time"],
+        events_simu_filtered["s2_endtime"],
+        window=s2_window_fuzz
+    )
+    alt_s2_windows_length = alt_s2_touching_windows[:,1] - alt_s2_touching_windows[:,0]
+    mask_simu_s2_made_alt = alt_s2_windows_length == 1
+    ind_simu_s2_made_alt = np.where(mask_simu_s2_made_alt)[0]
+    ind_salt_s2_made_alt = alt_s2_touching_windows[mask_simu_s2_made_alt][:,0]
 
     return (
         events_simu_filtered,
         ind_salt_event_found, ind_simu_event_found, ind_simu_event_lost, ind_simu_event_split,
-        ind_salt_s1_found, ind_simu_s1_found,
-        ind_salt_s2_found, ind_simu_s2_found
+        ind_salt_s1_found, ind_simu_s1_found, ind_salt_s1_made_alt, ind_simu_s1_made_alt,
+        ind_salt_s2_found, ind_simu_s2_found, ind_salt_s2_made_alt, ind_simu_s2_made_alt
     )
 
 
