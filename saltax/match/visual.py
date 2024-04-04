@@ -62,12 +62,11 @@ def plot_event_wf(ind, st_salt, st_simu, st_data, runid, events_simu,
                                           time_range=extended_simu_event_timerange_ns, 
                                           progress_bar=False)
 
-
     # Get waveforms for the event
     print("Building waveforms...")
     total_length = int((extended_simu_event_timerange_ns[1] - extended_simu_event_timerange_ns[0])/10)
     to_pes = st_data.get_single_plugin(runid, 'peaklets').to_pe
-    
+    # Initialize waveforms
     wf_salt_s1 = np.zeros(total_length)
     wf_simu_s1 = np.zeros(total_length)
     wf_salt_s2 = np.zeros(total_length)
@@ -75,7 +74,7 @@ def plot_event_wf(ind, st_salt, st_simu, st_data, runid, events_simu,
     wf_salt_others = np.zeros(total_length)
     wf_simu_others = np.zeros(total_length)
     wf_data = np.zeros(total_length)
-    
+    # Fill sprinkled waveforms with peaks and lone hits
     if len(peaks_salt_selected):
         for p in peaks_salt_selected:
             start_i = int((p['time'] - int(extended_simu_event_timerange_ns[0]))/10)
@@ -95,7 +94,7 @@ def plot_event_wf(ind, st_salt, st_simu, st_data, runid, events_simu,
             time_i = int((l['time'] - int(extended_simu_event_timerange_ns[0]))/10)
             amp = l['area'] * to_pes[l['channel']]
             wf_salt_others[time_i] += amp/10
-    
+    # Fill simulated waveforms with peaks and lone hits
     if len(peaks_simu_selected):
         for p in peaks_simu_selected:
             start_i = int((p['time'] - int(extended_simu_event_timerange_ns[0]))/10)
@@ -115,7 +114,7 @@ def plot_event_wf(ind, st_salt, st_simu, st_data, runid, events_simu,
             time_i = int((l['time'] - int(extended_simu_event_timerange_ns[0]))/10)
             amp = l['area'] * to_pes[l['channel']]
             wf_simu_others[time_i] += amp/10
-    
+    # Fill data waveform with peaks and lone hits
     if len(peaks_data_selected):
         for p in peaks_data_selected:
             start_i = int((p['time'] - int(extended_simu_event_timerange_ns[0]))/10)
@@ -132,6 +131,7 @@ def plot_event_wf(ind, st_salt, st_simu, st_data, runid, events_simu,
     # Plot full event waveform
     print("Plotting waveforms for the whole event...")
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(15, 8), dpi=150)
+    # Plot waveforms for simulated dataset
     ax1.plot(wf_data, label='Data', color='k', alpha=0.5)
     ax1.plot(wf_simu_s1, label='Simulated S1', color='tab:blue')
     ax1.plot(wf_simu_s2, label='Simulated S2', color='tab:red')
@@ -148,7 +148,7 @@ def plot_event_wf(ind, st_salt, st_simu, st_data, runid, events_simu,
                                                         int(10*events_simu['s2_area'][ind])/10,
                                                         int(10*events_salt['s2_area'][ind])/10))
     ax1.set_ylim(ylim)
-    
+    # Plot waveforms for sprinkeld dataset
     ax2.plot(wf_data, label='Data', color='k', alpha=0.5)
     ax2.plot(wf_salt_s1, label='Sprinkled S1', color='b')
     ax2.plot(wf_salt_s2, label='Sprinkled S2', color='r')
@@ -160,7 +160,7 @@ def plot_event_wf(ind, st_salt, st_simu, st_data, runid, events_simu,
         ax2.axvspan(matched_salt_s2_timerange_i[0],matched_salt_s2_timerange_i[1], color='r', alpha=0.2, label='Sprinkled S2 Range')
     ax2.legend()
     ax2.set_ylim(ylim)
-    
+    # Set labels for full event waveform plot
     ax1.set_ylabel("Amplitude [PE/10ns]")
     ax2.set_xlabel("Time [10ns]")
     ax2.set_ylabel("Amplitude [PE/10ns]")
@@ -169,6 +169,7 @@ def plot_event_wf(ind, st_salt, st_simu, st_data, runid, events_simu,
     # Zoom into S1 and S2 waveforms
     print("Zooming into S1 and S2 respectively...")
     fig, axs = plt.subplots(2, 2, figsize=(15, 8), dpi=150)
+    # Plot zoomed-in waveforms for simulated dataset around main S1
     axs[0,0].plot(wf_data, label='Data', color='k', alpha=0.5)
     axs[0,0].plot(wf_simu_s1, label='Simulated S1', color='tab:blue')
     axs[0,0].plot(wf_simu_s2, label='Simulated S2', color='tab:red')
@@ -183,7 +184,7 @@ def plot_event_wf(ind, st_salt, st_simu, st_data, runid, events_simu,
     axs[0,0].set_ylabel("Amplitude [PE/10ns]")
     axs[0,0].legend()
     axs[0,0].set_ylim(ylim)
-    
+    # Plot zoomed-in waveforms for simulated dataset around main S2
     axs[0,1].plot(wf_data, label='Data', color='k', alpha=0.5)
     axs[0,1].plot(wf_simu_s1, label='Simulated S1', color='tab:blue')
     axs[0,1].plot(wf_simu_s2, label='Simulated S2', color='tab:red')
@@ -197,7 +198,7 @@ def plot_event_wf(ind, st_salt, st_simu, st_data, runid, events_simu,
                       matched_simu_s2_timerange_i[1]+s2_ext_window_samples)
     axs[0,1].legend()
     axs[0,1].set_ylim(ylim)
-    
+    # Plot zoomed-in waveforms for sprinkled dataset around main S1
     axs[1,0].plot(wf_data, label='Data', color='k', alpha=0.5)
     axs[1,0].plot(wf_salt_s1, label='Sprinkled S1', color='b')
     axs[1,0].plot(wf_salt_s2, label='Sprinkled S2', color='r')
@@ -215,7 +216,7 @@ def plot_event_wf(ind, st_salt, st_simu, st_data, runid, events_simu,
     axs[1,0].set_ylabel("Amplitude [PE/10ns]")
     axs[1,0].legend()
     axs[1,0].set_ylim(ylim)
-    
+    # Plot zoomed-in waveforms for sprinkled dataset around main S2
     axs[1,1].plot(wf_data, label='Data', color='k', alpha=0.5)
     axs[1,1].plot(wf_salt_s1, label='Sprinkled S1', color='b')
     axs[1,1].plot(wf_salt_s2, label='Sprinkled S2', color='r')
