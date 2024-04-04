@@ -125,6 +125,9 @@ def match_peaks(peaks_simu, peaks_salt):
            Those peaks_salt[ind_salt_peak_found] are called peaks_salt_peak_found.
         2. Find indcies of peaks_simu whose time range overlaps with peaks_salt_peak_found: 
            ind_simu_peak_found. Those peaks_simu[ind_simu_peak_found] are called peaks_simu_peak_found.
+        3. If window_length is 0, the sprinkled peak is lost: ind_simu_peak_lost.
+        4. If window_length is larger than 1, the sprinkled peak is split: ind_simu_peak_split.
+           When a peak is split, the peak with the largest area is selected.
     :param peaks_simu: peaks from wfsim, typically peak_basics
     :param peaks_salt: peaks from saltax, typically peak_basics
     :return: ind_salt_peak_found, ind_simu_peak_found, 
