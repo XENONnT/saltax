@@ -117,66 +117,45 @@ def match_events(events_simu, events_salt,
     )
 
 
-def match_peaks(match, peaks_simu, peaks_salt):
+def match_peaks(peaks_simu, peaks_salt):
     """
-    Match salted peaks to simulation peaks.
-    :param match: match_acceptance_extended from pema
-    :param peaks_simu: peaks from wfsim
-    :param peaks_salt: peaks from saltax
-    :param type: 1 for S1, 2 for S2 to require 'found'
-    :return: peaks_salt_matched_to_simu, peaks_simu_matched_to_salt: matched peaks with equal length
+    Match salted peaks to simulation peaks based on peak timing, without checking simulation truth.
+    The procedures are:
+        1. Find indices of peaks_salt whose time range overlaps with peaks_simu: ind_salt_peak_found.
+           Those peaks_salt[ind_salt_peak_found] are called peaks_salt_peak_found.
+        2. Find indcies of peaks_simu whose time range overlaps with peaks_salt_peak_found: 
+           ind_simu_peak_found. Those peaks_simu[ind_simu_peak_found] are called peaks_simu_peak_found.
+    :param peaks_simu: peaks from wfsim, typically peak_basics
+    :param peaks_salt: peaks from saltax, typically peak_basics
+    :return: ind_salt_peak_found, ind_simu_peak_found, 
+             ind_simu_peak_lost,
+             ind_salt_peak_split, ind_simu_peak_split
     """
-    # Remove bad simulation truth and then their paired simulated events
-    match = match[match['matched_to']>=0]
+    # Find indices of peaks_salt whose time range overlaps with peaks_simu
+    peak_touching_windows = strax.touching_windows(peaks_salt, peaks_simu)
+    peak_windows_length = peak_touching_windows[:,1] - peak_touching_windows[:,0]
+    
+    # If windows_length is not 1, the sprinkled peak is either split or not found
+    mask_simu_peak_found = peak_windows_length == 1
+    ind_simu_peak_found = np.where(mask_simu_peak_found)[0]
+    # Find indcies of peaks_simu whose time range overlaps with peaks_salt_peak_found
+    ind_salt_peak_found = peak_touching_windows[mask_simu_peak_found][:,0]
 
-    ind_salt_matched_to_simu, \
-        ind_simu_matched_to_truth = pair_salt_to_simu_peaks(match, peaks_simu, peaks_salt)
+    # If window_length is 0, the sprinkled peak is lost
+    ind_simu_peak_lost = np.where(peak_windows_length == 0)[0]
+    
+    # If window_length is larger than 1, the sprinkled peak is split
+    ind_simu_peak_split = np.where(peak_windows_length > 1)[0]
+    # When a peak is split, the peak with the largest area is selected
+    ind_salt_peak_split = []
+    for i in ind_simu_peak_split:
+        # get peaks_salt touched by peaks_simu
+        _peaks_salt_split = peaks_salt[peak_touching_windows[i][0]:peak_touching_windows[i][1]]
+        # get the index of the peak with the largest area
+        relative_ind_max_area = np.argmax(_peaks_salt_split['area'])
+        ind_salt_peak_split.append(relative_ind_max_area+peak_touching_windows[i][0])
+    ind_salt_peak_split = np.array(ind_salt_peak_split)
 
-    peaks_simu_matched_to_truth = peaks_simu[ind_simu_matched_to_truth[ind_simu_matched_to_truth>=0]]
-    peaks_salt_matched_to_simu = peaks_salt[ind_salt_matched_to_simu[ind_salt_matched_to_simu>=0]]
-    peaks_simu_matched_to_salt = peaks_simu_matched_to_truth[ind_salt_matched_to_simu>=0]
-
-    return peaks_salt_matched_to_simu, peaks_simu_matched_to_salt
-
-
-def pair_salt_to_simu_peaks(match, peaks_simu, peaks_salt):
-    """
-    Filter out bad simulation truth and then pair salted events to matched simulation events.
-    :param match: match_acceptance_extended from pema
-    :param peaks_simu: peaks from wfsim
-    :param peaks_salt: peaks from saltax after reconstruction
-    :return: ind_salt_matched_to_simu, ind_simu_matched_to_truth
-    """
-    ind_simu_matched_to_truth = match['matched_to']
-    peaks_simu_matched_to_truth = peaks_simu[ind_simu_matched_to_truth]
-
-    (_ind_simu_matched_to_truth, 
-     ind_salt_matched_to_simu) = pair_peaks_to_matched_simu(peaks_simu_matched_to_truth, 
-                                                            peaks_salt)
-    ind_simu_matched_to_truth = ind_simu_matched_to_truth[_ind_simu_matched_to_truth]
-
-    return ind_salt_matched_to_simu, ind_simu_matched_to_truth
-
-
-def pair_peaks_to_matched_simu(matched_simu, peaks, safeguard=0):
-    """
-    Pair salted peaks to simulation peaks who have been matched to truth.
-    :param matched_simu: simulation peaks already matched to truth
-    :param peaks: peaks from saltax after reconstruction
-    :param safeguard: extension of time range to consider as matched, as a workaround for timing problem in wfsim s2
-    :return: ind_simu_matched_to_salt: the index of matched simulation peaks for each salted peak
-    :return: ind_salt_matched_to_simu: the index of matched salted peaks for each simulation peak
-    """
-    windows = strax.touching_windows(peaks, 
-                                     matched_simu, 
-                                     window=safeguard)
-    windows_length = windows[:,1] - windows[:,0]
-    simu_matched_to_salt_mask = windows_length == 1
-    print("Filter out %s percent of simulation due to multiple or no matched sprinkled \
-           peaks"%(np.sum(~simu_matched_to_salt_mask)/len(matched_simu)*100))
-
-    matched_simu = matched_simu[simu_matched_to_salt_mask]
-    ind_simu_matched_to_salt = np.where(simu_matched_to_salt_mask)[0]
-    ind_salt_matched_to_simu = windows[simu_matched_to_salt_mask][:,0]
-
-    return ind_simu_matched_to_salt, ind_salt_matched_to_simu
+    return (ind_salt_peak_found, ind_simu_peak_found, 
+            ind_simu_peak_lost, 
+            ind_salt_peak_split, ind_simu_peak_split)
