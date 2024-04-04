@@ -43,6 +43,15 @@ def plot_event_wf(ind, st_salt, st_simu, st_data, runid, events_simu,
                                        int((events_salt['s2_endtime'][ind]-extended_simu_event_timerange_ns[0])/10))
 
     # Get peaks and lone hits for the event
+    # Make sure the data is stored before loading
+    context_dict = {'salt': st_salt, 'simu': st_simu, 'data': st_data}
+    for context_mode in context_dict.keys():
+        st = context_dict[context_mode]
+        for target in ["lone_hits", "peaklets", "peaklet_classification", "merged_s2s"]:
+            assert st.is_stored(runid, target), "Data not stored for %s in %s mode"%(
+                st.key_for(runid, target), str(context_mode)
+            )
+    # Actual data loading
     peaks_salt_selected = st_salt.get_array(runid, "peaks", 
                                             time_range=extended_simu_event_timerange_ns, 
                                             progress_bar=False)
