@@ -3,7 +3,7 @@ import numpy as np
 
 def plot_event_wf(ind, st_salt, st_simu, st_data, runid, events_simu, 
                   events_salt=None,
-                  event_ext_window_ns=1e6, 
+                  event_ext_window_ns=2.4e6, 
                   s1_ext_window_samples=25, 
                   s2_ext_window_samples=100,
                   ylim=(0,5)):
