@@ -99,63 +99,74 @@ AmBe_CUTS = np.array([
 
 
 def load_peaks(runs, st_salt, st_simu, 
-               plugins=('peak_basics', 'peak_positions_mlp'), 
-               truth_fv_cut=True):
+               plugins=('peak_basics', 'peak_positions_mlp')):
     """
-    Load peaks from the runs and do basic filtering suggeted by saltax.match_peaks
+    Load peaks from the runs and find matching indices for salted and simulated peaks.
     :param runs: list of runs.
     :param st_salt: saltax context for salt mode
     :param st_simu: saltax context for simu mode
     :param plugins: plugins to be loaded, default to ('peak_basics', 'peak_positions_mlp')
-    :param truth_fv_cut: whether to apply truth FV cut, default to True
-    :return: peaks_simu: peaks related plugins from simulated dataset
-    :return: peaks_salt:  peaks related plugins from sprinkled dataset
-    :return: truth: truth information in simulation
-    :return: match: pema match information
-    :return: peaks_salt_matched_to_simu: peaks related plugins from sprinkled matched to simulated
-    :return: peaks_simu_matched_to_salt: peaks related plugins from simulated matched to sprinkled
+    :return: peaks_simu: peaks from simulated dataset
+    :return: peaks_salt: peaks from sprinkled dataset
+    :return: inds_dict: dictionary of indices of peaks from sprinkled or filtered simulated dataset, 
+                       regarding matching peaks
     """
+    # Initialize the dictionary to store the indices
+    inds_dict = {
+        "ind_salt_peak_found": np.array([], dtype=np.int32),
+        "ind_simu_peak_found": np.array([], dtype=np.int32),
+        "ind_simu_peak_lost": np.array([], dtype=np.int32),
+        "ind_salt_peak_split": np.array([], dtype=np.int32),
+        "ind_simu_peak_split": np.array([], dtype=np.int32),
+    }
+
+    len_simu_so_far = 0
+    len_salt_so_far = 0
     for i, run in enumerate(runs):
         print("Loading run %s"%(run))
+        
+        # Load plugins for both salt and simu
+        peaks_simu_i = st_simu.get_array(run, plugins, progress_bar=False)
+        peaks_salt_i = st_salt.get_array(run, plugins, progress_bar=False)
 
-        peaks_simu_i = st_simu.get_array(run, plugins, 
-                                         progress_bar=False)
-        peaks_salt_i = st_salt.get_array(run, plugins, 
-                                         progress_bar=False)
-        truth_i = st_simu.get_array(run, 'truth', progress_bar=False)
-        match_i = st_simu.get_array(run, 'match_acceptance_extended', progress_bar=False)
+        # Get matching result
+        (
+            ind_salt_peak_found_i, ind_simu_peak_found_i, 
+            ind_simu_peak_lost_i, 
+            ind_salt_peak_split_i, ind_simu_peak_split_i
+        ) = saltax.match_peaks(peaks_simu_i, peaks_salt_i)
 
-        # TODO: Ugly hardcoding for FV cut, need to be fixed
-        if truth_fv_cut:
-            peaks_salt_matched_to_simu_i, \
-                peaks_simu_matched_to_salt_i = saltax.match_peaks(
-                    match_i[(truth_i['z']<-13)&(truth_i['z']>-145)&(truth_i['x']**2+truth_i['y']**2<64**2)],
-                    peaks_simu_i, peaks_salt_i
-                )    
-        else:
-            peaks_salt_matched_to_simu_i, \
-                peaks_simu_matched_to_salt_i = saltax.match_peaks(
-                    match_i, peaks_simu_i, peaks_salt_i
-                )
+        # Load the indices into the dictionary
+        inds_dict["ind_salt_peak_found"] = np.concatenate(
+            (inds_dict["ind_salt_peak_found"], ind_salt_peak_found_i+len_salt_so_far)
+        )
+        inds_dict["ind_simu_peak_found"] = np.concatenate(
+            (inds_dict["ind_simu_peak_found"], ind_simu_peak_found_i+len_simu_so_far)
+        )
+        inds_dict["ind_simu_peak_lost"] = np.concatenate(
+            (inds_dict["ind_simu_peak_lost"], ind_simu_peak_lost_i+len_simu_so_far)
+        )
+        inds_dict["ind_salt_peak_split"] = np.concatenate(
+            (inds_dict["ind_salt_peak_split"], ind_salt_peak_split_i+len_salt_so_far)
+        )
+        inds_dict["ind_simu_peak_split"] = np.concatenate(
+            (inds_dict["ind_simu_peak_split"], ind_simu_peak_split_i+len_simu_so_far)
+        )
 
+        # Concatenate the peaks
         if i==0:
             peaks_simu = peaks_simu_i
             peaks_salt = peaks_salt_i
-            truth = truth_i
-            match = match_i
-            peaks_salt_matched_to_simu = peaks_salt_matched_to_simu_i
-            peaks_simu_matched_to_salt = peaks_simu_matched_to_salt_i
         else:
-            peaks_simu = np.concatenate((peaks_simu,peaks_simu_i))
-            peaks_salt = np.concatenate((peaks_salt,peaks_salt_i))
-            truth = np.concatenate((truth,truth_i))
-            match = np.concatenate((match,match_i))
-            peaks_salt_matched_to_simu = np.concatenate((peaks_salt_matched_to_simu,
-                                                      peaks_salt_matched_to_simu_i))
-            peaks_simu_matched_to_salt = np.concatenate((peaks_simu_matched_to_salt,
-                                                      peaks_simu_matched_to_salt_i))
+            peaks_simu = np.concatenate((peaks_simu, peaks_simu_i))
+            peaks_salt = np.concatenate((peaks_salt, peaks_salt_i))
+        
+        # Update the length of the peaks
+        len_simu_so_far += len(peaks_simu_i)
+        len_salt_so_far += len(peaks_salt_i)
+    
+    return peaks_simu, peaks_salt, inds_dict
 
-    return peaks_simu, peaks_salt, truth, match, peaks_salt_matched_to_simu, peaks_simu_matched_to_salt
 
 
 def load_events(runs, st_salt, st_simu, plugins=('event_info', 'cuts_basic'), *args):
