@@ -134,10 +134,10 @@ def is_stored_dtypes(st, runid, dtypes):
     """
     if not len(dtypes):
         return True
-    for dtype in dtypes:
-        if not st.is_stored(runid, dtype):
-            return False
-    return True
+    else:
+        for dtype in dtypes:
+            if not st.is_stored(runid, dtype):
+                return False
 
 
 def get_available_runs(runs, st_salt, st_simu,
