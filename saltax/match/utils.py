@@ -645,7 +645,7 @@ def compare_bands(salt, simu, title,
 
 
 def show_area_bias(salt, simu, title, fraction=False,
-                   coord='s1_area', s1s2='S1', n_bins=16, ylim=(-5,20)):
+                   coord='s1_area', s1s2='s1', n_bins=16, ylim=(-5,20)):
     """
     Show the bias due to ambience interference VS a coordinate.
     :param salt: events from the first dataset
@@ -653,7 +653,7 @@ def show_area_bias(salt, simu, title, fraction=False,
     :param title: title of the plot
     :param fraction: whether to show the bias in fraction, default to False
     :param coord: coordinate to be compared, default to 's1_area', can choose from ['z', 's1_area', 's2_area', 's1_range_50p_area', 's1_range_90p_area', 's1_rise_time', 's2_range_50p_area', 's2_range_90p_area']
-    :param s1s2: S1 or S2, default to 'S1'
+    :param s1s2: s1 or s2, default to 's1'
     :param n_bins: number of bins for the coordinate, default to 16
     :param ylim: y-axis limits, default to (-5,20)
     """
@@ -679,9 +679,9 @@ def show_area_bias(salt, simu, title, fraction=False,
     }
     bins = BINS[coord]
     units_dict = UNITS_DICT
-    if s1s2 == 'S1':
+    if s1s2 == 's1':
         bias = salt['s1_area'] - simu['s1_area']
-    elif s1s2 == 'S2':
+    elif s1s2 == 's2':
         bias = salt['s2_area'] - simu['s2_area']
     else:
         raise ValueError
