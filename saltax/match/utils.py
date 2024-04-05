@@ -727,7 +727,8 @@ def show_area_bias(salt, simu, title, fraction=False,
     plt.xlabel(coord+units_dict[coord])
     plt.xlim(bins[0], bins[-1])
     plt.legend()
-    plt.ylim(ylim)
+    if ylim is not None:
+        plt.ylim(ylim)
     plt.title(title)
     plt.show()
 
