@@ -713,7 +713,10 @@ def show_area_bias(salt, simu, title, fraction=False,
             bias_2sig_u.append(np.percentile(bias_i, 97.5)*100)
 
     plt.figure(dpi=150)
-    plt.scatter(simu[coord], bias, s=0.5, alpha=0.2, color='k')
+    if not fraction:
+        plt.scatter(simu[coord], bias, s=0.5, alpha=0.2, color='k')
+    else:
+        plt.scatter(simu[coord], bias/simu[coord]*100, s=0.5, alpha=0.2, color='k')
     plt.plot(bins_mid, bias_med, color='tab:blue', label='Median')
     plt.plot(bins_mid, bias_1sig_l, color='tab:blue', linestyle='dashed', label='1Sig')
     plt.plot(bins_mid, bias_1sig_u, color='tab:blue', linestyle='dashed')
