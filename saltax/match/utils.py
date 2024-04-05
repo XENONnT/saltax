@@ -705,12 +705,12 @@ def show_area_bias(salt, simu, title, fraction=False,
     else:
         for i in range(n_bins-1):
             mask0_i = (simu[coord]>=bins[i])&(simu[coord]<bins[i+1])
-            bias_i = bias[mask0_i]
-            bias_med.append(np.median(bias_i)/np.median(simu[coord][mask0_i])*100)
-            bias_1sig_l.append(np.percentile(bias_i, 16.5)/np.percentile(simu[coord][mask0_i], 16.5)*100)
-            bias_1sig_u.append(np.percentile(bias_i, 83.5)/np.percentile(simu[coord][mask0_i], 83.5)*100)
-            bias_2sig_l.append(np.percentile(bias_i, 2.5)/np.percentile(simu[coord][mask0_i], 2.5)*100)
-            bias_2sig_u.append(np.percentile(bias_i, 97.5)/np.percentile(simu[coord][mask0_i], 97.5)*100)
+            bias_i = bias[mask0_i]/simu[coord][mask0_i]
+            bias_med.append(np.median(bias_i)*100)
+            bias_1sig_l.append(np.percentile(bias_i, 16.5)*100)
+            bias_1sig_u.append(np.percentile(bias_i, 83.5)*100)
+            bias_2sig_l.append(np.percentile(bias_i, 2.5)*100)
+            bias_2sig_u.append(np.percentile(bias_i, 97.5)*100)
 
     plt.figure(dpi=150)
     plt.scatter(simu[coord], bias, s=0.5, alpha=0.2, color='k')
