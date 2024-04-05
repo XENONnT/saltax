@@ -6,6 +6,8 @@ from tabulate import tabulate
 from itertools import cycle
 import saltax
 from scipy.stats import binomtest
+import utilix
+from glob import glob
 
 ALL_CUTS = np.array([
             'cut_daq_veto',
@@ -96,6 +98,104 @@ AmBe_CUTS = np.array([
             'cut_s2_single_scatter',
             'cut_s2_width',
             'cut_cs2_area_fraction_top',])
+
+
+def find_runs_with_rawdata(
+        rawdata_folders=[
+            '/project/lgrandi/yuanlq/salt/raw_records/',
+            '/scratch/midway2/yuanlq/salt/raw_records/',
+            '/scratch/midway3/yuanlq/salt/raw_records/'
+        ]
+    ):
+    # Find the files that correspond to strax data
+    files_found = []
+    for folder in rawdata_folders:
+        _files_found = glob(folder+'0*')
+        files_found += _files_found
+
+    # Find the runs that have standard raw_records available
+    runs = []
+    for f in files_found:
+        _f = f.split('/')[-1]
+        runid, datatype, shash = _f.split('-')
+        if datatype == "raw_records" and shash == "rfzvpzj4mf":
+            runs.append(runid)
+    runs = np.array(runs)
+    return runs
+
+
+def is_stored_dtypes(st, runid, dtypes):
+    """
+    Check if all dtypes are stored for a run.
+    :param st: saltax context
+    :param runid: runid
+    :param dtypes: list of dtypes
+    :return: True if all dtypes are stored, False otherwise
+    """
+    if not len(dtypes):
+        return True
+    for dtype in dtypes:
+        if not st.is_stored(runid, dtype):
+            return False
+    return True
+
+
+def get_available_runs(runs, st_salt, st_simu,
+                       salt_available=['peak_basics', 'peak_positions_mlp'],
+                       simu_available=['peak_basics', 'peak_positions_mlp']):
+    """
+    Print out available runs for both salt and simu modes.
+    :param runs: list of runs.
+    :param st_salt: saltax context for salt mode
+    :param st_simu: saltax context for simu mode
+    :param salt_available: list of available dtypes for salt mode
+    :param simu_available: list of available dtypes for simu mode
+    """
+    rundb = utilix.rundb.xent_collection()
+    # Find run modes and duration correspondingly
+    modes = []
+    durations = []
+    for run in runs:
+        query = {'number': int(run)}
+        doc = rundb.find_one(query)
+
+        # get mode
+        mode = doc['mode']
+        # duration
+        td = doc['end'] - doc['start']
+        td_min = int(td.total_seconds()/60)
+
+        modes.append(mode)
+        durations.append(td_min)
+    modes = np.array(modes)
+    durations = np.array(durations)
+
+    # build dictionaries for modes and runs
+    modes_dict = {}
+    for mode in np.unique(modes):
+        modes_dict[mode] = runs[modes == mode]
+    durations_dict = {}
+    for i,run in enumerate(runs):
+        durations_dict[run] = durations[i]
+
+    # Prepare data for tabulate
+    available_runs = []
+    table_data = []
+    for mode, runids in modes_dict.items():
+        for runid in runids:
+            if int(runid) in runs:
+                if (is_stored_dtypes(st_salt, runid, salt_available) and 
+                    is_stored_dtypes(st_simu, runid, simu_available)):
+                    duration = durations_dict.get(runid, 'N/A')  # Get duration or 'N/A' if not found
+                    table_data.append([mode, runid, duration])
+                    available_runs.append(runid)
+
+    # Print table using tabulate
+    print(tabulate(table_data, headers=["mode", "runid", "duration [min]"]))
+    print("=============================")
+    print("The runs below are available:")
+    print(available_runs)
+    print("=============================")
 
 
 def load_peaks(runs, st_salt, st_simu, 
