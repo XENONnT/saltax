@@ -184,12 +184,11 @@ def get_available_runs(runs, st_salt, st_simu,
     table_data = []
     for mode, runids in modes_dict.items():
         for runid in runids:
-            if int(runid) in runs:
-                if (is_stored_dtypes(st_salt, runid, salt_available) and 
-                    is_stored_dtypes(st_simu, runid, simu_available)):
-                    duration = durations_dict.get(runid, 'N/A')  # Get duration or 'N/A' if not found
-                    table_data.append([mode, runid, duration])
-                    available_runs.append(runid)
+            if (is_stored_dtypes(st_salt, runid, salt_available) and 
+                is_stored_dtypes(st_simu, runid, simu_available)):
+                duration = durations_dict.get(runid, 'N/A')  # Get duration or 'N/A' if not found
+                table_data.append([mode, runid, duration])
+                available_runs.append(runid)
 
     # Print table using tabulate
     print(tabulate(table_data, headers=["mode", "runid", "duration [min]"]))
