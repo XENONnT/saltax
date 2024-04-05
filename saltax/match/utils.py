@@ -644,13 +644,14 @@ def compare_bands(salt, simu, title,
                coords=coords)
 
 
-def show_area_bias(salt, simu, title, 
+def show_area_bias(salt, simu, title, fraction=False,
                    coord='s1_area', s1s2='S1', n_bins=16, ylim=(-5,20)):
     """
     Show the bias due to ambience interference VS a coordinate.
     :param salt: events from the first dataset
     :param simu: events from the second dataset
     :param title: title of the plot
+    :param fraction: whether to show the bias in fraction, default to False
     :param coord: coordinate to be compared, default to 's1_area', can choose from ['z', 's1_area', 's2_area', 's1_range_50p_area', 's1_range_90p_area', 's1_rise_time', 's2_range_50p_area', 's2_range_90p_area']
     :param s1s2: S1 or S2, default to 'S1'
     :param n_bins: number of bins for the coordinate, default to 16
@@ -702,15 +703,28 @@ def show_area_bias(salt, simu, title,
         bias_2sig_u.append(np.percentile(bias_i, 97.5))
 
     plt.figure(dpi=150)
-    plt.scatter(simu[coord], bias, s=0.5, alpha=0.2, color='k')
-    plt.plot(bins_mid, bias_med, color='tab:blue', label='Median')
-    plt.plot(bins_mid, bias_1sig_l, color='tab:blue', linestyle='dashed', label='1Sig')
-    plt.plot(bins_mid, bias_1sig_u, color='tab:blue', linestyle='dashed')
-    plt.plot(bins_mid, bias_2sig_l, color='tab:blue', linestyle='dashed', alpha=0.5, label='2Sig')
-    plt.plot(bins_mid, bias_2sig_u, color='tab:blue', linestyle='dashed', alpha=0.5)
-
+    if not fraction:
+        plt.scatter(simu[coord], bias, s=0.5, alpha=0.2, color='k')
+        plt.plot(bins_mid, bias_med, color='tab:blue', label='Median')
+        plt.plot(bins_mid, bias_1sig_l, color='tab:blue', linestyle='dashed', label='1Sig')
+        plt.plot(bins_mid, bias_1sig_u, color='tab:blue', linestyle='dashed')
+        plt.plot(bins_mid, bias_2sig_l, color='tab:blue', linestyle='dashed', alpha=0.5, label='2Sig')
+        plt.plot(bins_mid, bias_2sig_u, color='tab:blue', linestyle='dashed', alpha=0.5)
+        plt.ylabel('Change in %s Area [PE]'%(s1s2))
+    else:
+        plt.scatter(simu[coord], bias/simu[s1s2+'_area']*100, s=0.5, alpha=0.2, color='k')
+        plt.plot(bins_mid, np.array(bias_med)/np.array(simu[s1s2+'_area'][np.array(simu[coord]>=bins[0])]), 
+                 color='tab:blue', label='Median')
+        plt.plot(bins_mid, np.array(bias_1sig_l)/np.array(simu[s1s2+'_area'][np.array(simu[coord]>=bins[0])]), 
+                 color='tab:blue', linestyle='dashed', label='1Sig')
+        plt.plot(bins_mid, np.array(bias_1sig_u)/np.array(simu[s1s2+'_area'][np.array(simu[coord]>=bins[0])]), 
+                 color='tab:blue', linestyle='dashed')
+        plt.plot(bins_mid, np.array(bias_2sig_l)/np.array(simu[s1s2+'_area'][np.array(simu[coord]>=bins[0])]), 
+                 color='tab:blue', linestyle='dashed', alpha=0.5, label='2Sig')
+        plt.plot(bins_mid, np.array(bias_2sig_u)/np.array(simu[s1s2+'_area'][np.array(simu[coord]>=bins[0])]), 
+                 color='tab:blue', linestyle='dashed', alpha=0.5)
+        plt.ylabel('Change in %s Area [%%]'%(s1s2))
     plt.xlabel(coord+units_dict[coord])
-    plt.ylabel('Change in %s Area [PE]'%(s1s2))
     plt.xlim(bins[0], bins[-1])
     plt.legend()
     plt.ylim(ylim)
