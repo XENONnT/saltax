@@ -1,6 +1,6 @@
 # Instructions
 ## Scope
-`wfsim` instructions. 
+`wfsim` instructions.
 ## Structure
 - `generator.py`: `wfsim` instruction infrastructures and instruction generators.
 ## Available Generators

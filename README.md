@@ -1,5 +1,5 @@
 # saltax
-Salting `wfsim` into `strax` data, followed by comparison and analysis. 
+Salting `wfsim` into `strax` data, followed by comparison and analysis.
 
 ## Installation
 ```

@@ -17,7 +17,7 @@ YOUR (PSEUDO) CODE GOES HERE
 ```
 
 **Proposed implementation**
-_Any rough idea how would you implement this feature?_ 
+_Any rough idea how would you implement this feature?_
 
 **Potential risk**
 _Will there be any risk after adding this feature?_

@@ -1,0 +1,16 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "setupEnvironment",
+            "type": "shell",
+            "command": ". /cvmfs/xenon.opensciencegrid.org/releases/nT/development/setup.sh",
+            "problemMatcher": [],
+            "options": {
+                "env": {
+                    // If there are any environment variables your script needs, define them here
+                }
+            }
+        }
+    ]
+}

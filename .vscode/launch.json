@@ -1,0 +1,30 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python Debugger: Merged S2s Segmentation Fault",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/.vscode/debug_merged_s2s.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "preLaunchTask": "", // Temporarily remove this or ensure it doesn't conflict
+            "args": [],
+            "python": "${command:python.interpreterPath}",
+            "presentation": {
+                "group": "",
+                "hidden": false
+            }
+        }
+    ],
+    "inputs": [
+        {
+            "id": "setupCmd",
+            "type": "command",
+            "command": "workbench.action.terminal.sendSequence",
+            "args": {
+              "text": ". /cvmfs/xenon.opensciencegrid.org/releases/nT/development/setup.sh && python ${workspaceFolder}/debug_merged_s2s.py\u000D"
+            }
+        }
+    ]
+}
