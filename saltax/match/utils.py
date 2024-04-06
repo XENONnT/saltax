@@ -949,3 +949,4 @@ def show_eff1d(events_simu, events_simu_matched_to_salt, mask_salt_cut=None,
     plt.ylabel("Acceptance")
     plt.title(title)
     plt.show()
+    
