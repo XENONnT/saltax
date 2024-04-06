@@ -5,4 +5,4 @@ These are notebooks for hopefully pedagogical purpose. Due to the sensitive info
 An example of using this framework to sprinkle events into real data, with followed analysis functions defined in this package.
 
 ## `example_peaks.ipynb`
-An example of using this framework to sprinkle single electron peaks into real data, with followed analysis functions defined in this package.
+An example of using this framework to sprinkle single electron peaks (with realistic timestamps and XY information passing SE selection, based on bootstrapping data SEs) into real data, with followed analysis functions defined in this package.
