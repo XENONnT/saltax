@@ -7,6 +7,7 @@ from itertools import cycle
 import saltax
 from scipy.stats import binomtest
 import utilix
+import strax
 from glob import glob
 
 ALL_CUTS = np.array([
@@ -950,3 +951,24 @@ def show_eff1d(events_simu, events_simu_matched_to_salt, mask_salt_cut=None,
     plt.title(title)
     plt.show()
     
+
+def apply_peaks_daq_cuts(st_data, runs, peaks, proximity_extension=int(0.25e6)):
+    """
+    Analogy to DAQVeto in cutax: https://github.com/XENONnT/cutax/blob/fb9c23cea86b44c0402437189fc606399d4e134c/cutax/cuts/daq_veto.py#L8
+    Apply cuts based on veto_intervals, using strax.touching_windows
+    :param st_data: context for data in cutax
+    :param runs: ordered runs list
+    :param peaks: peaks level data with ordered times
+    :param proximity_extension: extension of the veto proximity cut, default to int(0.25e6)
+    :return: mask_daq_cut mask for veto cuts
+    """
+    # Load veto_intervals
+    veto_intervals = st_data.get_array(runs, "veto_intervals")
+
+    mask_daq_cut = np.ones(len(peaks), dtype=bool)
+    # Once the peaks are in proximity of the veto intervals, they are cut
+    windows = strax.touching_windows(veto_intervals, peaks, window=proximity_extension)
+    windows_length = windows[:,1] - windows[:,0]
+    mask_daq_cut[windows_length>0] = False
+    
+    return mask_daq_cut
