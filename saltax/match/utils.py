@@ -6,6 +6,9 @@ from tabulate import tabulate
 from itertools import cycle
 import saltax
 from scipy.stats import binomtest
+import utilix
+import strax
+from glob import glob
 
 ALL_CUTS = np.array([
             'cut_daq_veto',
@@ -98,64 +101,188 @@ AmBe_CUTS = np.array([
             'cut_cs2_area_fraction_top',])
 
 
-def load_peaks(runs, st_salt, st_simu, 
-               plugins=('peak_basics', 'peak_positions_mlp'), 
-               truth_fv_cut=True):
+def find_runs_with_rawdata(
+        rawdata_folders=[
+            '/project/lgrandi/yuanlq/salt/raw_records/',
+            '/scratch/midway2/yuanlq/salt/raw_records/',
+            '/scratch/midway3/yuanlq/salt/raw_records/'
+        ]
+    ):
+    # Find the files that correspond to strax data
+    files_found = []
+    for folder in rawdata_folders:
+        _files_found = glob(folder+'0*')
+        files_found += _files_found
+
+    # Find the runs that have standard raw_records available
+    runs = []
+    for f in files_found:
+        _f = f.split('/')[-1]
+        runid, datatype, shash = _f.split('-')
+        if datatype == "raw_records" and shash == "rfzvpzj4mf":
+            runs.append(runid)
+    runs = np.array(runs)
+    return runs
+
+
+def is_stored_dtypes(st, runid, dtypes):
     """
-    Load peaks from the runs and do basic filtering suggeted by saltax.match_peaks
+    Check if all dtypes are stored for a run.
+    :param st: saltax context
+    :param runid: runid
+    :param dtypes: list of dtypes
+    :return: True if all dtypes are stored, False otherwise
+    """
+    if not len(dtypes):
+        return True
+    else:
+        for dtype in dtypes:
+            if not st.is_stored(runid, dtype):
+                return False
+        return True 
+
+
+def sort_runs(runs):
+    """
+    Sort the runs in time order based on runid
+    :param runs: list of runs' str.
+    :return: ordered runlist based on runid number
+    """
+    runs_number = []
+    for r in runs:
+        runs_number.append(int(r))
+    return np.array(runs)[np.argsort(runs_number)]
+
+
+def get_available_runs(runs, st_salt, st_simu,
+                       salt_available=['peak_basics', 'peak_positions_mlp'],
+                       simu_available=['peak_basics', 'peak_positions_mlp']):
+    """
+    Print out available runs for both salt and simu modes.
+    :param runs: list of runs.
+    :param st_salt: saltax context for salt mode
+    :param st_simu: saltax context for simu mode
+    :param salt_available: list of available dtypes for salt mode
+    :param simu_available: list of available dtypes for simu mode
+    """
+    rundb = utilix.rundb.xent_collection()
+    # Find run modes and duration correspondingly
+    modes = []
+    durations = []
+    for run in runs:
+        query = {'number': int(run)}
+        doc = rundb.find_one(query)
+
+        # get mode
+        mode = doc['mode']
+        # duration
+        td = doc['end'] - doc['start']
+        td_min = int(td.total_seconds()/60)
+
+        modes.append(mode)
+        durations.append(td_min)
+    modes = np.array(modes)
+    durations = np.array(durations)
+
+    # build dictionaries for modes and runs
+    modes_dict = {}
+    for mode in np.unique(modes):
+        modes_dict[mode] = runs[modes == mode]
+    durations_dict = {}
+    for i,run in enumerate(runs):
+        durations_dict[run] = durations[i]
+
+    # Prepare data for tabulate
+    available_runs = []
+    table_data = []
+    for mode, runids in modes_dict.items():
+        for runid in runids:
+            if (is_stored_dtypes(st_salt, runid, salt_available) and 
+                is_stored_dtypes(st_simu, runid, simu_available)):
+                duration = durations_dict.get(runid, 'N/A')  # Get duration or 'N/A' if not found
+                table_data.append([mode, runid, duration])
+                available_runs.append(runid)
+
+    # Print table using tabulate
+    print(tabulate(table_data, headers=["mode", "runid", "duration [min]"]))
+    print("=============================")
+    print("The runs below are available:")
+    print(available_runs)
+    print("=============================")
+
+
+def load_peaks(runs, st_salt, st_simu, 
+               plugins=('peak_basics', 'peak_positions_mlp')):
+    """
+    Load peaks from the runs and find matching indices for salted and simulated peaks.
     :param runs: list of runs.
     :param st_salt: saltax context for salt mode
     :param st_simu: saltax context for simu mode
     :param plugins: plugins to be loaded, default to ('peak_basics', 'peak_positions_mlp')
-    :param truth_fv_cut: whether to apply truth FV cut, default to True
-    :return: peaks_simu: peaks related plugins from simulated dataset
-    :return: peaks_salt:  peaks related plugins from sprinkled dataset
-    :return: truth: truth information in simulation
-    :return: match: pema match information
-    :return: peaks_salt_matched_to_simu: peaks related plugins from sprinkled matched to simulated
-    :return: peaks_simu_matched_to_salt: peaks related plugins from simulated matched to sprinkled
+    :return: peaks_simu: peaks from simulated dataset
+    :return: peaks_salt: peaks from sprinkled dataset
+    :return: inds_dict: dictionary of indices of peaks from sprinkled or filtered simulated dataset, 
+                       regarding matching peaks
     """
+    # Order runs so we have monotonically increasing time stamps
+    runs = sort_runs(runs)
+
+    # Initialize the dictionary to store the indices
+    inds_dict = {
+        "ind_salt_peak_found": np.array([], dtype=np.int32),
+        "ind_simu_peak_found": np.array([], dtype=np.int32),
+        "ind_simu_peak_lost": np.array([], dtype=np.int32),
+        "ind_salt_peak_split": np.array([], dtype=np.int32),
+        "ind_simu_peak_split": np.array([], dtype=np.int32),
+    }
+
+    len_simu_so_far = 0
+    len_salt_so_far = 0
     for i, run in enumerate(runs):
         print("Loading run %s"%(run))
+        
+        # Load plugins for both salt and simu
+        peaks_simu_i = st_simu.get_array(run, plugins, progress_bar=False)
+        peaks_salt_i = st_salt.get_array(run, plugins, progress_bar=False)
 
-        peaks_simu_i = st_simu.get_array(run, plugins, 
-                                         progress_bar=False)
-        peaks_salt_i = st_salt.get_array(run, plugins, 
-                                         progress_bar=False)
-        truth_i = st_simu.get_array(run, 'truth', progress_bar=False)
-        match_i = st_simu.get_array(run, 'match_acceptance_extended', progress_bar=False)
+        # Get matching result
+        (
+            ind_salt_peak_found_i, ind_simu_peak_found_i, 
+            ind_simu_peak_lost_i, 
+            ind_salt_peak_split_i, ind_simu_peak_split_i
+        ) = saltax.match_peaks(peaks_simu_i, peaks_salt_i)
 
-        # TODO: Ugly hardcoding for FV cut, need to be fixed
-        if truth_fv_cut:
-            peaks_salt_matched_to_simu_i, \
-                peaks_simu_matched_to_salt_i = saltax.match_peaks(
-                    match_i[(truth_i['z']<-13)&(truth_i['z']>-145)&(truth_i['x']**2+truth_i['y']**2<64**2)],
-                    peaks_simu_i, peaks_salt_i
-                )    
-        else:
-            peaks_salt_matched_to_simu_i, \
-                peaks_simu_matched_to_salt_i = saltax.match_peaks(
-                    match_i, peaks_simu_i, peaks_salt_i
-                )
+        # Load the indices into the dictionary
+        inds_dict["ind_salt_peak_found"] = np.concatenate(
+            (inds_dict["ind_salt_peak_found"], ind_salt_peak_found_i+len_salt_so_far)
+        )
+        inds_dict["ind_simu_peak_found"] = np.concatenate(
+            (inds_dict["ind_simu_peak_found"], ind_simu_peak_found_i+len_simu_so_far)
+        )
+        inds_dict["ind_simu_peak_lost"] = np.concatenate(
+            (inds_dict["ind_simu_peak_lost"], ind_simu_peak_lost_i+len_simu_so_far)
+        )
+        inds_dict["ind_salt_peak_split"] = np.concatenate(
+            (inds_dict["ind_salt_peak_split"], ind_salt_peak_split_i+len_salt_so_far)
+        )
+        inds_dict["ind_simu_peak_split"] = np.concatenate(
+            (inds_dict["ind_simu_peak_split"], ind_simu_peak_split_i+len_simu_so_far)
+        )
 
+        # Concatenate the peaks
         if i==0:
             peaks_simu = peaks_simu_i
             peaks_salt = peaks_salt_i
-            truth = truth_i
-            match = match_i
-            peaks_salt_matched_to_simu = peaks_salt_matched_to_simu_i
-            peaks_simu_matched_to_salt = peaks_simu_matched_to_salt_i
         else:
-            peaks_simu = np.concatenate((peaks_simu,peaks_simu_i))
-            peaks_salt = np.concatenate((peaks_salt,peaks_salt_i))
-            truth = np.concatenate((truth,truth_i))
-            match = np.concatenate((match,match_i))
-            peaks_salt_matched_to_simu = np.concatenate((peaks_salt_matched_to_simu,
-                                                      peaks_salt_matched_to_simu_i))
-            peaks_simu_matched_to_salt = np.concatenate((peaks_simu_matched_to_salt,
-                                                      peaks_simu_matched_to_salt_i))
+            peaks_simu = np.concatenate((peaks_simu, peaks_simu_i))
+            peaks_salt = np.concatenate((peaks_salt, peaks_salt_i))
+        
+        # Update the length of the peaks
+        len_simu_so_far += len(peaks_simu_i)
+        len_salt_so_far += len(peaks_salt_i)
+    
+    return peaks_simu, peaks_salt, inds_dict
 
-    return peaks_simu, peaks_salt, truth, match, peaks_salt_matched_to_simu, peaks_simu_matched_to_salt
 
 
 def load_events(runs, st_salt, st_simu, plugins=('event_info', 'cuts_basic'), *args):
@@ -171,6 +298,9 @@ def load_events(runs, st_salt, st_simu, plugins=('event_info', 'cuts_basic'), *a
     :return inds_dict: dictionary of indices of events from sprinkled or filtered simulated dataset, 
                        regarding matching events or s1 or s2
     """
+    # Order runs so we have monotonically increasing time stamps
+    runs = sort_runs(runs)
+
     # Initialize the dictionary to store the indices
     inds_dict = {
         "ind_salt_event_found": np.array([], dtype=np.int32),
@@ -633,15 +763,16 @@ def compare_bands(salt, simu, title,
                coords=coords)
 
 
-def show_area_bias(salt, simu, title, 
-                   coord='s1_area', s1s2='S1', n_bins=16, ylim=(-5,20)):
+def show_area_bias(salt, simu, title, fraction=False,
+                   coord='s1_area', s1s2='s1', n_bins=16, ylim=(-5,20)):
     """
     Show the bias due to ambience interference VS a coordinate.
     :param salt: events from the first dataset
     :param simu: events from the second dataset
     :param title: title of the plot
+    :param fraction: whether to show the bias in fraction, default to False
     :param coord: coordinate to be compared, default to 's1_area', can choose from ['z', 's1_area', 's2_area', 's1_range_50p_area', 's1_range_90p_area', 's1_rise_time', 's2_range_50p_area', 's2_range_90p_area']
-    :param s1s2: S1 or S2, default to 'S1'
+    :param s1s2: s1 or s2, default to 's1'
     :param n_bins: number of bins for the coordinate, default to 16
     :param ylim: y-axis limits, default to (-5,20)
     """
@@ -667,9 +798,9 @@ def show_area_bias(salt, simu, title,
     }
     bins = BINS[coord]
     units_dict = UNITS_DICT
-    if s1s2 == 'S1':
+    if s1s2 == 's1':
         bias = salt['s1_area'] - simu['s1_area']
-    elif s1s2 == 'S2':
+    elif s1s2 == 's2':
         bias = salt['s2_area'] - simu['s2_area']
     else:
         raise ValueError
@@ -681,28 +812,44 @@ def show_area_bias(salt, simu, title,
     bias_2sig_u = []
     bias_2sig_l = []
 
-    for i in range(n_bins-1):
-        mask0_i = (simu[coord]>=bins[i])&(simu[coord]<bins[i+1])
-        bias_i = bias[mask0_i]
-        bias_med.append(np.median(bias_i))
-        bias_1sig_l.append(np.percentile(bias_i, 16.5))
-        bias_1sig_u.append(np.percentile(bias_i, 83.5))
-        bias_2sig_l.append(np.percentile(bias_i, 2.5))
-        bias_2sig_u.append(np.percentile(bias_i, 97.5))
+    if not fraction:
+        for i in range(n_bins-1):
+            mask0_i = (simu[coord]>=bins[i])&(simu[coord]<bins[i+1])
+            bias_i = bias[mask0_i]
+            bias_med.append(np.median(bias_i))
+            bias_1sig_l.append(np.percentile(bias_i, 16.5))
+            bias_1sig_u.append(np.percentile(bias_i, 83.5))
+            bias_2sig_l.append(np.percentile(bias_i, 2.5))
+            bias_2sig_u.append(np.percentile(bias_i, 97.5))
+    else:
+        for i in range(n_bins-1):
+            mask0_i = (simu[coord]>=bins[i])&(simu[coord]<bins[i+1])
+            bias_i = bias[mask0_i]/simu[coord][mask0_i]
+            bias_med.append(np.median(bias_i)*100)
+            bias_1sig_l.append(np.percentile(bias_i, 16.5)*100)
+            bias_1sig_u.append(np.percentile(bias_i, 83.5)*100)
+            bias_2sig_l.append(np.percentile(bias_i, 2.5)*100)
+            bias_2sig_u.append(np.percentile(bias_i, 97.5)*100)
 
     plt.figure(dpi=150)
-    plt.scatter(simu[coord], bias, s=0.5, alpha=0.2, color='k')
+    if not fraction:
+        plt.scatter(simu[coord], bias, s=0.5, alpha=0.2, color='k')
+    else:
+        plt.scatter(simu[coord], bias/simu[coord]*100, s=0.5, alpha=0.2, color='k')
     plt.plot(bins_mid, bias_med, color='tab:blue', label='Median')
     plt.plot(bins_mid, bias_1sig_l, color='tab:blue', linestyle='dashed', label='1Sig')
     plt.plot(bins_mid, bias_1sig_u, color='tab:blue', linestyle='dashed')
     plt.plot(bins_mid, bias_2sig_l, color='tab:blue', linestyle='dashed', alpha=0.5, label='2Sig')
     plt.plot(bins_mid, bias_2sig_u, color='tab:blue', linestyle='dashed', alpha=0.5)
-
+    if not fraction:
+        plt.ylabel('Change in %s Area [PE]'%(s1s2))
+    else:
+        plt.ylabel('Change in %s Area [%%]'%(s1s2))
     plt.xlabel(coord+units_dict[coord])
-    plt.ylabel('Change in %s Area [PE]'%(s1s2))
     plt.xlim(bins[0], bins[-1])
     plt.legend()
-    plt.ylim(ylim)
+    if ylim is not None:
+        plt.ylim(ylim)
     plt.title(title)
     plt.show()
 
@@ -803,3 +950,25 @@ def show_eff1d(events_simu, events_simu_matched_to_salt, mask_salt_cut=None,
     plt.ylabel("Acceptance")
     plt.title(title)
     plt.show()
+    
+
+def apply_peaks_daq_cuts(st_data, runs, peaks, proximity_extension=int(0.25e6)):
+    """
+    Analogy to DAQVeto in cutax: https://github.com/XENONnT/cutax/blob/fb9c23cea86b44c0402437189fc606399d4e134c/cutax/cuts/daq_veto.py#L8
+    Apply cuts based on veto_intervals, using strax.touching_windows
+    :param st_data: context for data in cutax
+    :param runs: ordered runs list
+    :param peaks: peaks level data with ordered times
+    :param proximity_extension: extension of the veto proximity cut, default to int(0.25e6)
+    :return: mask_daq_cut mask for veto cuts
+    """
+    # Load veto_intervals
+    veto_intervals = st_data.get_array(runs, "veto_intervals")
+
+    mask_daq_cut = np.ones(len(peaks), dtype=bool)
+    # Once the peaks are in proximity of the veto intervals, they are cut
+    windows = strax.touching_windows(veto_intervals, peaks, window=proximity_extension)
+    windows_length = windows[:,1] - windows[:,0]
+    mask_daq_cut[windows_length>0] = False
+    
+    return mask_daq_cut
