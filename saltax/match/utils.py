@@ -141,6 +141,18 @@ def is_stored_dtypes(st, runid, dtypes):
         return True 
 
 
+def sort_runs(runs):
+    """
+    Sort the runs in time order based on runid
+    :param runs: list of runs' str.
+    :return: ordered runlist based on runid number
+    """
+    runs_number = []
+    for r in runs:
+        runs_number.append(int(r))
+    return np.array(runs)[np.argsort(runs_number)]
+
+
 def get_available_runs(runs, st_salt, st_simu,
                        salt_available=['peak_basics', 'peak_positions_mlp'],
                        simu_available=['peak_basics', 'peak_positions_mlp']):
@@ -211,6 +223,9 @@ def load_peaks(runs, st_salt, st_simu,
     :return: inds_dict: dictionary of indices of peaks from sprinkled or filtered simulated dataset, 
                        regarding matching peaks
     """
+    # Order runs so we have monotonically increasing time stamps
+    runs = sort_runs(runs)
+
     # Initialize the dictionary to store the indices
     inds_dict = {
         "ind_salt_peak_found": np.array([], dtype=np.int32),
@@ -282,6 +297,9 @@ def load_events(runs, st_salt, st_simu, plugins=('event_info', 'cuts_basic'), *a
     :return inds_dict: dictionary of indices of events from sprinkled or filtered simulated dataset, 
                        regarding matching events or s1 or s2
     """
+    # Order runs so we have monotonically increasing time stamps
+    runs = sort_runs(runs)
+
     # Initialize the dictionary to store the indices
     inds_dict = {
         "ind_salt_event_found": np.array([], dtype=np.int32),
