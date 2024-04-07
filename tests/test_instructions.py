@@ -29,6 +29,7 @@ def test_generate_vertex():
     assert not np.all(y1 == y2)
     assert not np.all(z1 == z2)
 
+
 def test_generate_times():
     # Test that the function generates event times within the specified range
     start_time = 0
@@ -43,16 +44,17 @@ def test_generate_times():
     assert len(times) == 1000
 
     # Test that the function generates event times in the expected mode
-    times = generate_times(start_time, end_time, size=1000, time_mode='realistic')
+    times = generate_times(start_time, end_time, size=1000, time_mode="realistic")
     assert (np.diff(times) >= 0).all()
 
-    times = generate_times(start_time, end_time, size=1000, time_mode='uniform')
+    times = generate_times(start_time, end_time, size=1000, time_mode="uniform")
     assert (np.diff(times) >= 0).all()
+
 
 def test_get_run_start_end():
     # Test with a non-integer runid
     with pytest.raises(AssertionError):
-        get_run_start_end('abc')
+        get_run_start_end("abc")
 
     # Test with a runid that does not exist in RunDB
     with pytest.raises(RuntimeError):
@@ -68,6 +70,7 @@ def test_get_run_start_end():
 
     # Check that the start time is before the end time
     assert start_time < end_time
+
 
 def test_generator_flat():
     # Test with default parameters

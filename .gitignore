@@ -1,3 +1,6 @@
+# vscode related
+.vscode/
+
 # configs
 jobs/config.ini
 

@@ -13,10 +13,16 @@ from straxen.plugins.peaklets.peaklets import hit_max_sample, get_tight_coin, dr
 
 export, __all__ = strax.exporter()
 
+
 @export
 @strax.takes_config(
-    strax.Option('saltax_mode', default='salt', track=True, infer_type=False,
-                 help="'data', 'simu', or 'salt'"), 
+    strax.Option(
+        "saltax_mode",
+        default="salt",
+        track=True,
+        infer_type=False,
+        help="'data', 'simu', or 'salt'",
+    ),
 )
 class SPeaklets(strax.Plugin):
     """
@@ -38,125 +44,131 @@ class SPeaklets(strax.Plugin):
     lone_hits includes the left and right hit extension, except the
     extension overlaps with any peaks or other hits.
     """
-    depends_on = ('records',)
-    provides = ('peaklets', 'lone_hits')
-    data_kind = dict(peaklets='peaklets',
-                     lone_hits='lone_hits')
-    parallel = 'process'
-    compressor = 'zstd'
 
-    __version__ = '0.0.4'
+    depends_on = ("records",)
+    provides = ("peaklets", "lone_hits")
+    data_kind = dict(peaklets="peaklets", lone_hits="lone_hits")
+    parallel = "process"
+    compressor = "zstd"
+
+    __version__ = "0.0.4"
 
     peaklet_gap_threshold = straxen.URLConfig(
-        default=700, infer_type=False,
-        help="No hits for this many ns triggers a new peak")
+        default=700, infer_type=False, help="No hits for this many ns triggers a new peak"
+    )
 
     peak_left_extension = straxen.URLConfig(
-        default=30, infer_type=False,
-        help="Include this many ns left of hits in peaks")
+        default=30, infer_type=False, help="Include this many ns left of hits in peaks"
+    )
 
     peak_right_extension = straxen.URLConfig(
-        default=200, infer_type=False,
-        help="Include this many ns right of hits in peaks")
+        default=200, infer_type=False, help="Include this many ns right of hits in peaks"
+    )
 
     peak_min_pmts = straxen.URLConfig(
-        default=2, infer_type=False,
-        help="Minimum number of contributing PMTs needed to define a peak")
+        default=2,
+        infer_type=False,
+        help="Minimum number of contributing PMTs needed to define a peak",
+    )
 
     peak_split_gof_threshold = straxen.URLConfig(
         # See https://xe1t-wiki.lngs.infn.it/doku.php?id=
         # xenon:xenonnt:analysis:strax_clustering_classification
         # #natural_breaks_splitting
         # for more information
-        default=(
-            None,  # Reserved
-            ((0.5, 1.0), (6.0, 0.4)),
-            ((2.5, 1.0), (5.625, 0.4))), infer_type=False,
-        help='Natural breaks goodness of fit/split threshold to split '
-             'a peak. Specify as tuples of (log10(area), threshold).')
+        default=(None, ((0.5, 1.0), (6.0, 0.4)), ((2.5, 1.0), (5.625, 0.4))),  # Reserved
+        infer_type=False,
+        help="Natural breaks goodness of fit/split threshold to split "
+        "a peak. Specify as tuples of (log10(area), threshold).",
+    )
 
     peak_split_filter_wing_width = straxen.URLConfig(
-        default=70, infer_type=False,
-        help='Wing width of moving average filter for '
-             'low-split natural breaks')
+        default=70,
+        infer_type=False,
+        help="Wing width of moving average filter for " "low-split natural breaks",
+    )
 
     peak_split_min_area = straxen.URLConfig(
-        default=40., infer_type=False,
-        help='Minimum area to evaluate natural breaks criterion. '
-             'Smaller peaks are not split.')
+        default=40.0,
+        infer_type=False,
+        help="Minimum area to evaluate natural breaks criterion. " "Smaller peaks are not split.",
+    )
 
     peak_split_iterations = straxen.URLConfig(
-        default=20, infer_type=False,
-        help='Maximum number of recursive peak splits to do.')
+        default=20, infer_type=False, help="Maximum number of recursive peak splits to do."
+    )
 
     diagnose_sorting = straxen.URLConfig(
-        track=False, default=False, infer_type=False,
-        help="Enable runtime checks for sorting and disjointness")
+        track=False,
+        default=False,
+        infer_type=False,
+        help="Enable runtime checks for sorting and disjointness",
+    )
 
     gain_model = straxen.URLConfig(
-        infer_type=False,
-        help='PMT gain model. Specify as URL or explicit value'
+        infer_type=False, help="PMT gain model. Specify as URL or explicit value"
     )
 
     gain_model_mc = straxen.URLConfig(
-        infer_type=False,
-        help='PMT gain model. Specify as URL or explicit value'
+        infer_type=False, help="PMT gain model. Specify as URL or explicit value"
     )
 
     tight_coincidence_window_left = straxen.URLConfig(
-        default=50, infer_type=False,
-        help="Time range left of peak center to call a hit a tight coincidence (ns)")
+        default=50,
+        infer_type=False,
+        help="Time range left of peak center to call a hit a tight coincidence (ns)",
+    )
 
     tight_coincidence_window_right = straxen.URLConfig(
-        default=50, infer_type=False,
-        help="Time range right of peak center to call a hit a tight coincidence (ns)")
+        default=50,
+        infer_type=False,
+        help="Time range right of peak center to call a hit a tight coincidence (ns)",
+    )
 
-    n_tpc_pmts = straxen.URLConfig(
-        type=int,
-        help='Number of TPC PMTs')
+    n_tpc_pmts = straxen.URLConfig(type=int, help="Number of TPC PMTs")
 
-    n_top_pmts = straxen.URLConfig(
-        type=int,
-        help="Number of top TPC array PMTs")
+    n_top_pmts = straxen.URLConfig(type=int, help="Number of top TPC array PMTs")
 
     sum_waveform_top_array = straxen.URLConfig(
-        default=True,
-        type=bool,
-        help='Digitize the sum waveform of the top array separately'
+        default=True, type=bool, help="Digitize the sum waveform of the top array separately"
     )
 
     saturation_correction_on = straxen.URLConfig(
-        default=True, infer_type=False,
-        help='On off switch for saturation correction')
+        default=True, infer_type=False, help="On off switch for saturation correction"
+    )
 
     saturation_reference_length = straxen.URLConfig(
-        default=100, infer_type=False,
-        help="Maximum number of reference sample used "
-             "to correct saturated samples")
+        default=100,
+        infer_type=False,
+        help="Maximum number of reference sample used " "to correct saturated samples",
+    )
 
     saturation_min_reference_length = straxen.URLConfig(
-        default=20, infer_type=False,
-        help="Minimum number of reference sample used "
-             "to correct saturated samples")
+        default=20,
+        infer_type=False,
+        help="Minimum number of reference sample used " "to correct saturated samples",
+    )
 
     peaklet_max_duration = straxen.URLConfig(
-        default=int(10e6), infer_type=False,
-        help="Maximum duration [ns] of a peaklet")
+        default=int(10e6), infer_type=False, help="Maximum duration [ns] of a peaklet"
+    )
 
     channel_map = straxen.URLConfig(
-        track=False, type=immutabledict,
-        help="immutabledict mapping subdetector to (min, max) "
-             "channel number.")
+        track=False,
+        type=immutabledict,
+        help="immutabledict mapping subdetector to (min, max) " "channel number.",
+    )
 
     hit_min_amplitude = straxen.URLConfig(
-        track=True, infer_type=False,
-        default='cmt://hit_thresholds_tpc?version=ONLINE&run_id=plugin.run_id',
-        help='Minimum hit amplitude in ADC counts above baseline. '
-             'Specify as a tuple of length n_tpc_pmts, or a number,'
-             'or a string like "pmt_commissioning_initial" which means calling'
-             'hitfinder_thresholds.py'
-             'or a tuple like (correction=str, version=str, nT=boolean),'
-             'which means we are using cmt.'
+        track=True,
+        infer_type=False,
+        default="cmt://hit_thresholds_tpc?version=ONLINE&run_id=plugin.run_id",
+        help="Minimum hit amplitude in ADC counts above baseline. "
+        "Specify as a tuple of length n_tpc_pmts, or a number,"
+        'or a string like "pmt_commissioning_initial" which means calling'
+        "hitfinder_thresholds.py"
+        "or a tuple like (correction=str, version=str, nT=boolean),"
+        "which means we are using cmt.",
     )
 
     def infer_dtype(self):
@@ -167,47 +179,51 @@ class SPeaklets(strax.Plugin):
             ),
             lone_hits=strax.hit_dtype,
         )
-    
+
     def setup(self):
         if self.peak_min_pmts > 2:
             # Can fix by re-splitting,
             raise NotImplementedError(
                 f"Raising the peak_min_pmts to {self.peak_min_pmts} "
                 f"interferes with lone_hit definition. "
-                f"See github.com/XENONnT/straxen/issues/295")
+                f"See github.com/XENONnT/straxen/issues/295"
+            )
 
         # Get the gain model
         # It should have length 3494 for XENONnT
         to_pe = np.zeros(SCHANNEL_STARTS_AT + self.n_tpc_pmts, dtype=np.float64)
         self.to_pe_data = self.gain_model
         self.to_pe_simu = self.gain_model_mc
-        to_pe[:self.n_tpc_pmts] = self.to_pe_data
+        to_pe[: self.n_tpc_pmts] = self.to_pe_data
         to_pe[SCHANNEL_STARTS_AT:] = self.to_pe_simu
         self.to_pe = to_pe
 
         # Get the hitfinder thresholds
         hit_thresholds = np.zeros(SCHANNEL_STARTS_AT + self.n_tpc_pmts, dtype=np.int64)
-        hit_thresholds[:self.n_tpc_pmts] = self.hit_min_amplitude
+        hit_thresholds[: self.n_tpc_pmts] = self.hit_min_amplitude
         hit_thresholds[SCHANNEL_STARTS_AT:] = self.hit_min_amplitude
         self.hit_thresholds = hit_thresholds
 
-        self.channel_range = (min(min(self.channel_map['tpc']), min(self.channel_map['stpc'])),
-                              max(max(self.channel_map['tpc']), max(self.channel_map['stpc'])))
+        self.channel_range = (
+            min(min(self.channel_map["tpc"]), min(self.channel_map["stpc"])),
+            max(max(self.channel_map["tpc"]), max(self.channel_map["stpc"])),
+        )
 
         # Override strax.sum_waveform
         setattr(strax, "sum_waveform", sum_waveform_salted)
-        
+
     def compute(self, records, start, end):
         # FIXME: This is going to make the same lone hit having different record_i, between in salt mode and others
         # FIXME: surgery here; channel specification related
         # Based on saltax_mode, determine what channels to involve
-        if self.config['saltax_mode'] == 'salt':
-            records = records[(records['channel']>=SCHANNEL_STARTS_AT)|
-                        (records['channel']<self.n_tpc_pmts)]
-        elif self.config['saltax_mode'] == 'simu':
-            records = records[(records['channel']>=SCHANNEL_STARTS_AT)]
-        elif self.config['saltax_mode'] == 'data':
-            records = records[(records['channel']<self.n_tpc_pmts)]
+        if self.config["saltax_mode"] == "salt":
+            records = records[
+                (records["channel"] >= SCHANNEL_STARTS_AT) | (records["channel"] < self.n_tpc_pmts)
+            ]
+        elif self.config["saltax_mode"] == "simu":
+            records = records[(records["channel"] >= SCHANNEL_STARTS_AT)]
+        elif self.config["saltax_mode"] == "data":
+            records = records[(records["channel"] < self.n_tpc_pmts)]
         else:
             raise ValueError(f"Unknown saltax_mode {self.config['saltax_mode']}")
         r = records
@@ -219,7 +235,7 @@ class SPeaklets(strax.Plugin):
         # they should not affect the clustering!
         # NB: it's attempting to shift hit channel here, but will lead to significant troubles when summing waveforms,
         # because the 988-channel number is still requred when reading records_i data.
-        hits = hits[self.to_pe[hits['channel']] != 0]
+        hits = hits[self.to_pe[hits["channel"]] != 0]
 
         hits = strax.sort_by_time(hits)
 
@@ -227,7 +243,8 @@ class SPeaklets(strax.Plugin):
         # Use peaklet gap threshold for initial clustering
         # based on gaps between hits
         peaklets = find_peaks(
-            hits, self.to_pe,
+            hits,
+            self.to_pe,
             gap_threshold=self.peaklet_gap_threshold,
             left_extension=self.peak_left_extension,
             right_extension=self.peak_right_extension,
@@ -250,11 +267,13 @@ class SPeaklets(strax.Plugin):
 
         # Update the area of lone_hits to the integral in ADCcounts x samples
         strax.integrate_lone_hits(
-            lone_hits, records, peaklets,
-            save_outside_hits=(self.peak_left_extension,
-                               self.peak_right_extension),
-            n_channels=len(self.to_pe))
-        
+            lone_hits,
+            records,
+            peaklets,
+            save_outside_hits=(self.peak_left_extension, self.peak_right_extension),
+            n_channels=len(self.to_pe),
+        )
+
         # Compute basic peak properties -- needed before natural breaks
         hits = hits[~is_lone_hit]
         # Define regions outside of peaks such that _find_hit_integration_bounds
@@ -262,9 +281,10 @@ class SPeaklets(strax.Plugin):
         outside_peaks = self.create_outside_peaks_region(peaklets, start, end)
         # Still assuming we have 2*n_tpc_channels to reduce bias from pileup cases
         strax.find_hit_integration_bounds(
-            hits, outside_peaks, records,
-            save_outside_hits=(self.peak_left_extension,
-                               self.peak_right_extension),
+            hits,
+            outside_peaks,
+            records,
+            save_outside_hits=(self.peak_left_extension, self.peak_right_extension),
             n_channels=len(self.to_pe),
             allow_bounds_beyond_records=True,
         )
@@ -277,8 +297,8 @@ class SPeaklets(strax.Plugin):
         del hits
 
         # Extend hits into hitlets and clip at chunk boundaries:
-        hitlets['time'] -= (hitlets['left'] - hitlets['left_integration']) * hitlets['dt']
-        hitlets['length'] = hitlets['right_integration'] - hitlets['left_integration']
+        hitlets["time"] -= (hitlets["left"] - hitlets["left_integration"]) * hitlets["dt"]
+        hitlets["length"] = hitlets["right_integration"] - hitlets["left_integration"]
 
         hitlets = strax.sort_by_time(hitlets)
         hitlets_time = np.copy(hitlets["time"])
@@ -288,7 +308,9 @@ class SPeaklets(strax.Plugin):
         # If sum_waveform_top_array is false, don't digitize the top array
         n_top_pmts_if_digitize_top = self.n_top_pmts if self.sum_waveform_top_array else -1
         # FIXME: surgery here; top/bot array related
-        strax.sum_waveform(peaklets, hitlets, r, rlinks, self.to_pe, n_top_channels=n_top_pmts_if_digitize_top)
+        strax.sum_waveform(
+            peaklets, hitlets, r, rlinks, self.to_pe, n_top_channels=n_top_pmts_if_digitize_top
+        )
 
         strax.compute_widths(peaklets)
 
@@ -297,14 +319,18 @@ class SPeaklets(strax.Plugin):
         # see https://github.com/XENONnT/straxen/pull/45
         # and https://github.com/AxFoundation/strax/pull/225
         peaklets = strax.split_peaks(
-            peaklets, hitlets, r, rlinks, self.to_pe,
-            algorithm='natural_breaks',
+            peaklets,
+            hitlets,
+            r,
+            rlinks,
+            self.to_pe,
+            algorithm="natural_breaks",
             threshold=self.natural_breaks_threshold,
             split_low=True,
             filter_wing_width=self.peak_split_filter_wing_width,
             min_area=self.peak_split_min_area,
             do_iterations=self.peak_split_iterations,
-            n_top_channels=n_top_pmts_if_digitize_top
+            n_top_channels=n_top_pmts_if_digitize_top,
         )
 
         # FIXME: Saturation correction in salt mode is nonsense
@@ -314,12 +340,16 @@ class SPeaklets(strax.Plugin):
         # Cases when records is not writeable for unclear reason
         # only see this when loading 1T test data
         # more details on https://numpy.org/doc/stable/reference/generated/numpy.ndarray.flags.html
-        if not r['data'].flags.writeable:
+        if not r["data"].flags.writeable:
             r = r.copy()
 
         if self.saturation_correction_on:
             peak_list = peak_saturation_correction(
-                r, rlinks, peaklets, hitlets, self.to_pe,
+                r,
+                rlinks,
+                peaklets,
+                hitlets,
+                self.to_pe,
                 reference_length=self.saturation_reference_length,
                 min_reference_length=self.saturation_min_reference_length,
                 n_top_channels=n_top_pmts_if_digitize_top,
@@ -333,128 +363,125 @@ class SPeaklets(strax.Plugin):
         # (a) doing hitfinding yet again (or storing hits)
         # (b) increase strax memory usage / max_messages,
         #     possibly due to its currently primitive scheduling.
-        hitlet_time_shift = (hitlets['left'] - hitlets['left_integration']) * hitlets['dt']
+        hitlet_time_shift = (hitlets["left"] - hitlets["left_integration"]) * hitlets["dt"]
         hit_max_times = (
             hitlets_time + hitlet_time_shift
         )  # add time shift again to get correct maximum
-        hit_max_times += hitlets['dt'] * hit_max_sample(records, hitlets)
+        hit_max_times += hitlets["dt"] * hit_max_sample(records, hitlets)
 
         hit_max_times_argsort = np.argsort(hit_max_times)
         sorted_hit_max_times = hit_max_times[hit_max_times_argsort]
-        sorted_hit_channels = hitlets['channel'][hit_max_times_argsort]
-        peaklet_max_times = (
-            peaklets['time']
-            + np.argmax(peaklets['data'], axis=1) * peaklets['dt'])
-        peaklets['tight_coincidence'] = get_tight_coin(
+        sorted_hit_channels = hitlets["channel"][hit_max_times_argsort]
+        peaklet_max_times = peaklets["time"] + np.argmax(peaklets["data"], axis=1) * peaklets["dt"]
+        peaklets["tight_coincidence"] = get_tight_coin(
             sorted_hit_max_times,
             sorted_hit_channels,
             peaklet_max_times,
             self.tight_coincidence_window_left,
             self.tight_coincidence_window_right,
-            self.channel_range)
+            self.channel_range,
+        )
 
         # Add max and min time difference between apexes of hits
         self.add_hit_features(hitlets, hit_max_times, peaklets)
 
         if self.diagnose_sorting and len(r):
-            assert np.diff(r['time']).min(initial=1) >= 0, "Records not sorted"
-            assert np.diff(hitlets['time']).min(initial=1) >= 0, "Hits/Hitlets not sorted"
-            assert np.all(peaklets['time'][1:]
-                          >= strax.endtime(peaklets)[:-1]), "Peaks not disjoint"
+            assert np.diff(r["time"]).min(initial=1) >= 0, "Records not sorted"
+            assert np.diff(hitlets["time"]).min(initial=1) >= 0, "Hits/Hitlets not sorted"
+            assert np.all(
+                peaklets["time"][1:] >= strax.endtime(peaklets)[:-1]
+            ), "Peaks not disjoint"
 
         # Update nhits of peaklets:
         counts = strax.touching_windows(hitlets, peaklets)
         counts = np.diff(counts, axis=1).flatten()
-        peaklets['n_hits'] = counts
+        peaklets["n_hits"] = counts
 
         # Drop the data_top field
         if n_top_pmts_if_digitize_top <= 0:
-            peaklets = drop_data_top_field(peaklets, self.dtype_for('peaklets'))
+            peaklets = drop_data_top_field(peaklets, self.dtype_for("peaklets"))
 
         # Check channel of peaklets
-        peaklets_unique_channel = np.unique(peaklets['channel'])
+        peaklets_unique_channel = np.unique(peaklets["channel"])
         if (peaklets_unique_channel == DIGITAL_SUM_WAVEFORM_CHANNEL).sum() > 1:
             raise ValueError(
-                f'Found channel number of peaklets other than {DIGITAL_SUM_WAVEFORM_CHANNEL}')
+                f"Found channel number of peaklets other than {DIGITAL_SUM_WAVEFORM_CHANNEL}"
+            )
         # Check tight_coincidence
-        if not np.all(peaklets['n_hits'] >= peaklets['tight_coincidence']):
-            raise ValueError(
-                f'Found n_hits less than tight_coincidence')
+        if not np.all(peaklets["n_hits"] >= peaklets["tight_coincidence"]):
+            raise ValueError(f"Found n_hits less than tight_coincidence")
 
         # FIXME: surgery here; shifted lone_hits' channel for those which were salted
-        mask_salted_lone_hits = lone_hits['channel'] >= SCHANNEL_STARTS_AT
-        lone_hits['channel'][mask_salted_lone_hits] -= SCHANNEL_STARTS_AT
+        mask_salted_lone_hits = lone_hits["channel"] >= SCHANNEL_STARTS_AT
+        lone_hits["channel"][mask_salted_lone_hits] -= SCHANNEL_STARTS_AT
         # Sanity check on channels non-negative
-        assert np.all(lone_hits['channel'] >= 0), "Negative channel number in lone_hits"
+        assert np.all(lone_hits["channel"] >= 0), "Negative channel number in lone_hits"
         # Sanity check that no lone_hits are in peaklets
         is_still_lone_hit = strax.fully_contained_in(lone_hits, peaklets) == -1
         assert np.all(is_still_lone_hit), "Some lone_hits are in peaklets!?"
 
-        return dict(peaklets=peaklets,
-                    lone_hits=lone_hits)
+        return dict(peaklets=peaklets, lone_hits=lone_hits)
 
     def natural_breaks_threshold(self, peaks):
         """
         Pasted from https://github.com/XENONnT/straxen/blob/5f232eb2c1ab39e11fb14d4e6ee2db369ed2c2ec/straxen/plugins/peaklets/peaklets.py#L332-L348
         """
-        rise_time = -peaks['area_decile_from_midpoint'][:, 1]
+        rise_time = -peaks["area_decile_from_midpoint"][:, 1]
 
         # This is ~1 for an clean S2, ~0 for a clean S1,
         # and transitions gradually in between.
         f_s2 = 8 * np.log10(rise_time.clip(1, 1e5) / 100)
         f_s2 = 1 / (1 + np.exp(-f_s2))
 
-        log_area = np.log10(peaks['area'].clip(1, 1e7))
+        log_area = np.log10(peaks["area"].clip(1, 1e7))
         thresholds = self.peak_split_gof_threshold
-        return (
-                f_s2 * np.interp(
-            log_area,
-            *np.transpose(thresholds[2]))
-                + (1 - f_s2) * np.interp(
-            log_area,
-            *np.transpose(thresholds[1])))
+        return f_s2 * np.interp(log_area, *np.transpose(thresholds[2])) + (1 - f_s2) * np.interp(
+            log_area, *np.transpose(thresholds[1])
+        )
 
     @staticmethod
     def clip_peaklet_times(peaklets, start, end):
-        straxen.plugins.peaklets.Peaklets.clip_peaklet_times(peaklets, 
-                                                             start, 
-                                                             end)
+        straxen.plugins.peaklets.Peaklets.clip_peaklet_times(peaklets, start, end)
 
     @staticmethod
     def create_outside_peaks_region(peaklets, start, end):
-        """
-        Creates time intervals which are outside peaks.
+        """Creates time intervals which are outside peaks.
 
-        :param peaklets: Peaklets for which intervals should be computed.
+        :param peaklets: Peaklets for which intervals should be
+            computed.
         :param start: Chunk start
         :param end: Chunk end
         :return: array of strax.time_fields dtype.
         """
-        outside_peaks = straxen.plugins.peaklets.Peaklets.create_outside_peaks_region(peaklets, 
-                                                                                      start, 
-                                                                                      end)
+        outside_peaks = straxen.plugins.peaklets.Peaklets.create_outside_peaks_region(
+            peaklets, start, end
+        )
         return outside_peaks
 
     @staticmethod
     def add_hit_features(hitlets, hit_max_times, peaklets):
-        """
-        Create hits timing features
-        :param hitlets_max: hitlets with only max height time.
-        :param peaklets: Peaklets for which intervals should be computed.
+        """Create hits timing features :param hitlets_max: hitlets with only
+        max height time.
+
+        :param peaklets: Peaklets for which intervals should be
+            computed.
         :return: array of peaklet_timing dtype.
         """
-        straxen.plugins.peaklets.Peaklets.add_hit_features(hitlets, 
-                                                           hit_max_times, 
-                                                           peaklets)
+        straxen.plugins.peaklets.Peaklets.add_hit_features(hitlets, hit_max_times, peaklets)
 
 
 @numba.jit(nopython=True, nogil=True, cache=False)
-def peak_saturation_correction(records, rlinks, peaks, hitlets, to_pe,
-                               reference_length=100,
-                               min_reference_length=20,
-                               use_classification=False,
-                               n_top_channels=0,
-                               ):
+def peak_saturation_correction(
+    records,
+    rlinks,
+    peaks,
+    hitlets,
+    to_pe,
+    reference_length=100,
+    min_reference_length=20,
+    use_classification=False,
+    n_top_channels=0,
+):
     """WARNING: This probably doesn't work when we have the salted channel also saturated!!!
     We will be using only the real TPC channels to correct the saturation!!! This is dangerous
     if you are salting things outside WIMP/LowER regions!!!
@@ -479,22 +506,23 @@ def peak_saturation_correction(records, rlinks, peaks, hitlets, to_pe,
         return
 
     # Search for peaks with saturated channels
-    mask = peaks['n_saturated_channels'] > 0
+    mask = peaks["n_saturated_channels"] > 0
     if use_classification:
-        mask &= peaks['type'] == 2
+        mask &= peaks["type"] == 2
     peak_list = np.where(mask)[0]
     # Look up records that touch each peak
     record_ranges = _touching_windows(
-        records['time'],
+        records["time"],
         strax.endtime(records),
-        peaks[peak_list]['time'],
-        strax.endtime(peaks[peak_list]))
+        peaks[peak_list]["time"],
+        strax.endtime(peaks[peak_list]),
+    )
 
     # Create temporary arrays for calculation
-    dt = records[0]['dt']
-    n_channels = len(peaks[0]['saturated_channel'])
-    len_buffer = np.max(peaks['length'] * peaks['dt']) // dt + 1
-    max_nrecord = len_buffer // len(records[0]['data']) + 1
+    dt = records[0]["dt"]
+    n_channels = len(peaks[0]["saturated_channel"])
+    len_buffer = np.max(peaks["length"] * peaks["dt"]) // dt + 1
+    max_nrecord = len_buffer // len(records[0]["data"]) + 1
 
     # Buff the sum wf [pe] of non-saturated channels
     b_sumwf = np.zeros(len_buffer, dtype=np.float32)
@@ -511,47 +539,59 @@ def peak_saturation_correction(records, rlinks, peaks, hitlets, to_pe,
         b_index[:] = -1
 
         p = peaks[peak_i]
-        channel_saturated = p['saturated_channel'] > 0
+        channel_saturated = p["saturated_channel"] > 0
 
         for record_i in range(record_ranges[ix][0], record_ranges[ix][1]):
             r = records[record_i]
             r_slice, b_slice = strax.overlap_indices(
-                r['time'] // dt, r['length'],
-                p['time'] // dt, p['length'] * p['dt'] // dt)
+                r["time"] // dt, r["length"], p["time"] // dt, p["length"] * p["dt"] // dt
+            )
 
             # Shift channels to handle salted channels
-            ch = r['channel']
+            ch = r["channel"]
             if ch >= SCHANNEL_STARTS_AT:
                 ch_shifted = ch - SCHANNEL_STARTS_AT
             else:
                 ch_shifted = ch
 
             if channel_saturated[ch]:
-                b_pulse[ch_shifted, slice(*b_slice)] += r['data'][slice(*r_slice)]
+                b_pulse[ch_shifted, slice(*b_slice)] += r["data"][slice(*r_slice)]
                 b_index[ch_shifted, np.argmin(b_index[ch_shifted])] = record_i
             else:
-                b_sumwf[slice(*b_slice)] += r['data'][slice(*r_slice)] \
-                                            * to_pe[ch]
+                b_sumwf[slice(*b_slice)] += r["data"][slice(*r_slice)] * to_pe[ch]
 
         _peak_saturation_correction_inner(
-            channel_saturated, records, p,
-            to_pe, b_sumwf, b_pulse, b_index,
-            reference_length, min_reference_length)
+            channel_saturated,
+            records,
+            p,
+            to_pe,
+            b_sumwf,
+            b_pulse,
+            b_index,
+            reference_length,
+            min_reference_length,
+        )
 
         # Back track sum wf downsampling
-        peaks[peak_i]['length'] = p['length'] * p['dt'] / dt
-        peaks[peak_i]['dt'] = dt
+        peaks[peak_i]["length"] = p["length"] * p["dt"] / dt
+        peaks[peak_i]["dt"] = dt
 
     strax.sum_waveform(peaks, hitlets, records, rlinks, to_pe, n_top_channels, peak_list)
     return peak_list
 
 
 @numba.jit(nopython=True, nogil=True, cache=True)
-def _peak_saturation_correction_inner(channel_saturated, records, p,
-                                      to_pe, b_sumwf, b_pulse, b_index,
-                                      reference_length=100,
-                                      min_reference_length=20,
-                                      ):
+def _peak_saturation_correction_inner(
+    channel_saturated,
+    records,
+    p,
+    to_pe,
+    b_sumwf,
+    b_pulse,
+    b_index,
+    reference_length=100,
+    min_reference_length=20,
+):
     """WARNING: This probably doesn't work when we have the salted channel also saturated!!!
     We will be using only the real TPC channels to correct the saturation!!! This is dangerous
     if you are salting things outside WIMP/LowER regions!!!
@@ -562,7 +602,7 @@ def _peak_saturation_correction_inner(channel_saturated, records, p,
     :param to_pe: adc to PE conversion (length should equal number of PMTs)
     :param b_sumwf, b_pulse, b_index: Filled buffers
     """
-    dt = records['dt'][0]
+    dt = records["dt"][0]
     n_channels = len(channel_saturated)
 
     for ch in range(n_channels):
@@ -577,7 +617,7 @@ def _peak_saturation_correction_inner(channel_saturated, records, p,
         for record_i in b_index[ch]:
             if record_i == -1:
                 break
-            bl = min(bl, records['baseline'][record_i])
+            bl = min(bl, records["baseline"][record_i])
 
         s0 = np.argmax(b >= np.int16(bl))
         ref = slice(max(0, s0 - reference_length), s0)
@@ -602,8 +642,8 @@ def _peak_saturation_correction_inner(channel_saturated, records, p,
                 break
             r = records[record_i]
             r_slice, b_slice = strax.overlap_indices(
-                r['time'] // dt, r['length'],
-                p['time'] // dt + s0, p['length'] * p['dt'] // dt - s0)
+                r["time"] // dt, r["length"], p["time"] // dt + s0, p["length"] * p["dt"] // dt - s0
+            )
 
             if r_slice[1] == r_slice[0]:  # This record proceeds saturation
                 continue
@@ -613,101 +653,108 @@ def _peak_saturation_correction_inner(channel_saturated, records, p,
             # because we need to bit shift the whole record if it exceeds int16 range
             apax = scale * max(b_sumwf[slice(*b_slice)])
 
-            if np.int32(apax) >= 2 ** 15:  # int16(2**15) is -2**15
+            if np.int32(apax) >= 2**15:  # int16(2**15) is -2**15
                 bshift = int(np.floor(np.log2(apax) - 14))
 
-                tmp = r['data'].astype(np.int32)
+                tmp = r["data"].astype(np.int32)
                 tmp[slice(*r_slice)] = b_sumwf[slice(*b_slice)] * scale
 
-                r['area'] = np.sum(tmp)  # Auto covert to int64
-                r['data'][:] = np.right_shift(tmp, bshift)
-                r['amplitude_bit_shift'] += bshift
+                r["area"] = np.sum(tmp)  # Auto covert to int64
+                r["data"][:] = np.right_shift(tmp, bshift)
+                r["amplitude_bit_shift"] += bshift
             else:
-                r['data'][slice(*r_slice)] = b_sumwf[slice(*b_slice)] * scale
-                r['area'] = np.sum(r['data'])
+                r["data"][slice(*r_slice)] = b_sumwf[slice(*b_slice)] * scale
+                r["area"] = np.sum(r["data"])
 
 
 @export
 @utils.growing_result(dtype=strax.dtypes.peak_dtype(), chunk_size=int(1e4))
 @numba.jit(nopython=True, nogil=True, cache=True)
-def find_peaks(hits, adc_to_pe,
-               gap_threshold=300,
-               left_extension=20, right_extension=150,
-               min_area=0,
-               min_channels=2,
-               max_duration=10_000_000,
-               _result_buffer=None, result_dtype=None):
-    """Return peaks made from grouping hits together. Modified parts related to area_per_channel
-    Assumes all hits have the same dt
-    :param hits: Hit (or any interval) to group
-    :param left_extension: Extend peaks by this many ns left
-    :param right_extension: Extend peaks by this many ns right
-    :param gap_threshold: No hits for this much ns means new peak
-    :param min_area: Peaks with less than min_area are not returned
-    :param min_channels: Peaks with less contributing channels are not returned
-    :param max_duration: max duration time of merged peak in ns
+def find_peaks(
+    hits,
+    adc_to_pe,
+    gap_threshold=300,
+    left_extension=20,
+    right_extension=150,
+    min_area=0,
+    min_channels=2,
+    max_duration=10_000_000,
+    _result_buffer=None,
+    result_dtype=None,
+):
+    """Return peaks made from grouping hits together. Modified parts related to
+    area_per_channel Assumes all hits have the same dt :param hits: Hit (or any
+    interval) to group :param left_extension: Extend peaks by this many ns left
+    :param right_extension: Extend peaks by this many ns right :param
+    gap_threshold: No hits for this much ns means new peak :param min_area:
+    Peaks with less than min_area are not returned :param min_channels: Peaks
+    with less contributing channels are not returned :param max_duration: max
+    duration time of merged peak in ns.
 
-    Modified based on https://github.com/AxFoundation/strax/blob/9b508f7f8d441bf1fe441695115d292c59ce631a/strax/processing/peak_building.py#L13
+    Modified based on
+    https://github.com/AxFoundation/strax/blob/9b508f7f8d441bf1fe441695115d292c59ce631a/strax/processing/peak_building.py#L13
     """
     buffer = _result_buffer
     offset = 0
     if not len(hits):
         return
-    assert hits[0]['dt'] > 0, "Hit does not indicate sampling time"
+    assert hits[0]["dt"] > 0, "Hit does not indicate sampling time"
     assert min_channels >= 1, "min_channels must be >= 1"
-    assert gap_threshold > left_extension + right_extension, \
-        "gap_threshold must be larger than left + right extension"
-    assert max(hits['channel']) < len(adc_to_pe), "more channels than to_pe"
+    assert (
+        gap_threshold > left_extension + right_extension
+    ), "gap_threshold must be larger than left + right extension"
+    assert max(hits["channel"]) < len(adc_to_pe), "more channels than to_pe"
     # Magic number comes from
     #   np.iinfo(p['dt'].dtype).max*np.shape(p['data'])[1] = 429496729400 ns
     # but numba does not like it
-    assert left_extension+max_duration+right_extension < 429496729400, (
-        "Too large max duration causes integer overflow")
+    assert (
+        left_extension + max_duration + right_extension < 429496729400
+    ), "Too large max duration causes integer overflow"
 
-    n_channels = len(buffer[0]['area_per_channel'])
+    n_channels = len(buffer[0]["area_per_channel"])
     area_per_channel = np.zeros(n_channels, dtype=np.float32)
 
     in_peak = False
     peak_endtime = 0
     for hit_i, hit in enumerate(hits):
         p = buffer[offset]
-        t0 = hit['time']
-        dt = hit['dt']
-        t1 = hit['time'] + dt * hit['length']
+        t0 = hit["time"]
+        dt = hit["dt"]
+        t1 = hit["time"] + dt * hit["length"]
 
         if in_peak:
             # This hit continues an existing peak
-            p['max_gap'] = max(p['max_gap'], t0 - peak_endtime)
+            p["max_gap"] = max(p["max_gap"], t0 - peak_endtime)
 
         else:
             # This hit starts a new peak candidate
             area_per_channel *= 0
             peak_endtime = t1
-            p['time'] = t0 - left_extension
-            p['channel'] = DIGITAL_SUM_WAVEFORM_CHANNEL
-            p['dt'] = dt
+            p["time"] = t0 - left_extension
+            p["channel"] = DIGITAL_SUM_WAVEFORM_CHANNEL
+            p["dt"] = dt
             # These are necessary as prev peak may have been rejected:
-            p['n_hits'] = 0
-            p['area'] = 0
+            p["n_hits"] = 0
+            p["area"] = 0
             in_peak = True
-            p['max_gap'] = 0
+            p["max_gap"] = 0
 
         # Add hit's properties to the current peak candidate
 
-        # NB! One pulse can result in two hits, if it occours at the 
+        # NB! One pulse can result in two hits, if it occours at the
         # boundary of a record. This is the default of strax.find_hits.
-        p['n_hits'] += 1
+        p["n_hits"] += 1
 
         peak_endtime = max(peak_endtime, t1)
-        hit_area_pe = hit['area'] * adc_to_pe[hit['channel']]
-        
+        hit_area_pe = hit["area"] * adc_to_pe[hit["channel"]]
+
         # FIXME: surgery here; top/bot array related
         # Manually shift channels for area_per_channel
-        if hit['channel']>=SCHANNEL_STARTS_AT:
-            area_per_channel[hit['channel']-SCHANNEL_STARTS_AT] += hit_area_pe
+        if hit["channel"] >= SCHANNEL_STARTS_AT:
+            area_per_channel[hit["channel"] - SCHANNEL_STARTS_AT] += hit_area_pe
         else:
-            area_per_channel[hit['channel']] += hit_area_pe
-        p['area'] += hit_area_pe
+            area_per_channel[hit["channel"]] += hit_area_pe
+        p["area"] += hit_area_pe
 
         # Look at the next hit to see if THIS hit is the last in a peak.
         # If this is the final hit, it is last by definition.
@@ -718,30 +765,32 @@ def find_peaks(hits, adc_to_pe,
         if not is_last_hit:
             # These can only be computed if there is a next hit
             next_hit = hits[hit_i + 1]
-            next_hit_is_far = next_hit['time'] - peak_endtime >= gap_threshold
+            next_hit_is_far = next_hit["time"] - peak_endtime >= gap_threshold
             # Peaks may not extend the max_duration
-            peak_too_long = (next_hit['time'] - p['time']
-                             + next_hit['dt'] * next_hit['length']
-                             + left_extension
-                             + right_extension) > max_duration
+            peak_too_long = (
+                next_hit["time"]
+                - p["time"]
+                + next_hit["dt"] * next_hit["length"]
+                + left_extension
+                + right_extension
+            ) > max_duration
         if is_last_hit or next_hit_is_far or peak_too_long:
             # Next hit (if it exists) will initialize the new peak candidate
             in_peak = False
 
             # Do not save if tests are not met. Next hit will erase temp info
-            if p['area'] < min_area:
+            if p["area"] < min_area:
                 continue
             n_channels = (area_per_channel != 0).sum()
             if n_channels < min_channels:
                 continue
 
             # Compute final quantities
-            p['length'] = (peak_endtime - p['time'] + right_extension) / dt
-            if p['length'] <= 0:
+            p["length"] = (peak_endtime - p["time"] + right_extension) / dt
+            if p["length"] <= 0:
                 # This is most likely caused by a negative dt
-                raise ValueError(
-                    "Caught attempt to save nonpositive peak length?!")
-            p['area_per_channel'][:] = area_per_channel
+                raise ValueError("Caught attempt to save nonpositive peak length?!")
+            p["area_per_channel"][:] = area_per_channel
 
             # Save the current peak, advance the buffer
             offset += 1
@@ -751,15 +800,17 @@ def find_peaks(hits, adc_to_pe,
 
     yield offset
 
+
 @export
 @numba.jit(nopython=True, nogil=True, cache=True)
-def sum_waveform_salted(peaks, hits, records, record_links, adc_to_pe, n_top_channels=0,
-                 select_peaks_indices=None):
-    """Modified to handle array channels range.
-    Compute sum waveforms for all peaks in peaks. Only builds summed
-    waveform other regions in which hits were found. This is required
-    to avoid any bias due to zero-padding and baselining.
-    Will downsample sum waveforms if they do not fit in per-peak buffer
+def sum_waveform_salted(
+    peaks, hits, records, record_links, adc_to_pe, n_top_channels=0, select_peaks_indices=None
+):
+    """Modified to handle array channels range. Compute sum waveforms for all
+    peaks in peaks. Only builds summed waveform other regions in which hits
+    were found. This is required to avoid any bias due to zero-padding and
+    baselining. Will downsample sum waveforms if they do not fit in per-peak
+    buffer.
 
     :param peaks: Peaks for which the summed waveform should be build.
     :param hits: Hits which are inside peaks. Must be sorted according
@@ -768,10 +819,9 @@ def sum_waveform_salted(peaks, hits, records, record_links, adc_to_pe, n_top_cha
     :param record_links: Tuple of previous and next records.
     :param n_top_channels: Number of top array channels.
     :param select_peaks_indices: Indices of the peaks for partial
-    processing. In the form of np.array([np.int, np.int, ..]). If
-    None (default), all the peaks are used for the summation.
-
-    Assumes all peaks AND pulses have the same dt!
+        processing. In the form of np.array([np.int, np.int, ..]). If
+        None (default), all the peaks are used for the summation.
+        Assumes all peaks AND pulses have the same dt!
     """
     if not len(records):
         return
@@ -781,45 +831,45 @@ def sum_waveform_salted(peaks, hits, records, record_links, adc_to_pe, n_top_cha
         select_peaks_indices = np.arange(len(peaks))
     if not len(select_peaks_indices):
         return
-    dt = records[0]['dt']
-    n_samples_record = len(records[0]['data'])
+    dt = records[0]["dt"]
+    n_samples_record = len(records[0]["data"])
     prev_record_i, next_record_i = record_links
 
     # Big buffer to hold even largest sum waveforms
     # Need a little more even for downsampling..
-    swv_buffer = np.zeros(peaks['length'].max() * 2, dtype=np.float32)
+    swv_buffer = np.zeros(peaks["length"].max() * 2, dtype=np.float32)
 
     if n_top_channels > 0:
-        twv_buffer = np.zeros(peaks['length'].max() * 2, dtype=np.float32)
+        twv_buffer = np.zeros(peaks["length"].max() * 2, dtype=np.float32)
 
-    n_channels = len(peaks[0]['area_per_channel'])
+    n_channels = len(peaks[0]["area_per_channel"])
     area_per_channel = np.zeros(n_channels, dtype=np.float32)
 
     # Hit index for hits in peaks
     left_h_i = 0
     # Create hit waveform buffer
-    hit_waveform = np.zeros(hits['length'].max(), dtype=np.float32)
+    hit_waveform = np.zeros(hits["length"].max(), dtype=np.float32)
 
     for peak_i in select_peaks_indices:
         p = peaks[peak_i]
         # Clear the relevant part of the swv buffer for use
         # (we clear a bit extra for use in downsampling)
-        p_length = p['length']
-        swv_buffer[:min(2 * p_length, len(swv_buffer))] = 0
+        p_length = p["length"]
+        swv_buffer[: min(2 * p_length, len(swv_buffer))] = 0
 
         if n_top_channels > 0:
-            twv_buffer[:min(2 * p_length, len(twv_buffer))] = 0
+            twv_buffer[: min(2 * p_length, len(twv_buffer))] = 0
 
         # Clear area and area per channel
         # (in case find_peaks already populated them)
         area_per_channel *= 0
-        p['area'] = 0
+        p["area"] = 0
 
         # Find first hit that contributes to this peak
         for left_h_i in range(left_h_i, len(hits)):
             h = hits[left_h_i]
             # TODO: need test that fails if we replace < with <= here
-            if p['time'] < h['time'] + h['length'] * dt:
+            if p["time"] < h["time"] + h["length"] * dt:
                 break
         else:
             # Hits exhausted before peaks exhausted
@@ -829,18 +879,18 @@ def sum_waveform_salted(peaks, hits, records, record_links, adc_to_pe, n_top_cha
         # Scan over hits that overlap with peak
         for right_h_i in range(left_h_i, len(hits)):
             h = hits[right_h_i]
-            record_i = h['record_i']
-            
+            record_i = h["record_i"]
+
             # Shift salted channel
-            ch = h['channel']
+            ch = h["channel"]
             ch_shifted = ch
             if ch >= n_channels:
                 ch_shifted = ch - SCHANNEL_STARTS_AT
 
-            assert p['dt'] == h['dt'], "Hits and peaks must have same dt"
+            assert p["dt"] == h["dt"], "Hits and peaks must have same dt"
 
-            shift = (p['time'] - h['time']) // dt
-            n_samples_hit = h['length']
+            shift = (p["time"] - h["time"]) // dt
+            n_samples_hit = h["length"]
             n_samples_peak = p_length
 
             if shift <= -n_samples_peak:
@@ -856,8 +906,8 @@ def sum_waveform_salted(peaks, hits, records, record_links, adc_to_pe, n_top_cha
 
             # Get overlapping samples between hit and peak:
             (h_start, h_end), (p_start, p_end) = strax.overlap_indices(
-                h['time'] // dt, n_samples_hit,
-                p['time'] // dt, n_samples_peak)
+                h["time"] // dt, n_samples_hit, p["time"] // dt, n_samples_peak
+            )
 
             hit_waveform[:] = 0
 
@@ -868,15 +918,15 @@ def sum_waveform_salted(peaks, hits, records, record_links, adc_to_pe, n_top_cha
 
             # Now check if we also have to go to prev/next record due to integration bounds.
             # If bounds are outside of peak we chop when building the summed waveform later.
-            if h['left_integration'] < 0 and prev_record_i[record_i] != -1:
+            if h["left_integration"] < 0 and prev_record_i[record_i] != -1:
                 r = records[prev_record_i[record_i]]
                 is_saturated |= _build_hit_waveform(h, r, hit_waveform)
 
-            if h['right_integration'] > n_samples_record and next_record_i[record_i] != -1:
+            if h["right_integration"] > n_samples_record and next_record_i[record_i] != -1:
                 r = records[next_record_i[record_i]]
                 is_saturated |= _build_hit_waveform(h, r, hit_waveform)
 
-            p['saturated_channel'][ch_shifted] |= is_saturated
+            p["saturated_channel"][ch_shifted] |= is_saturated
 
             hit_data = hit_waveform[h_start:h_end]
             hit_data *= adc_to_pe[ch]
@@ -888,12 +938,12 @@ def sum_waveform_salted(peaks, hits, records, record_links, adc_to_pe, n_top_cha
 
             area_pe = hit_data.sum()
             area_per_channel[ch_shifted] += area_pe
-            p['area'] += area_pe
+            p["area"] += area_pe
 
         if n_top_channels > 0:
             strax.store_downsampled_waveform(p, swv_buffer, True, twv_buffer)
         else:
             strax.store_downsampled_waveform(p, swv_buffer)
 
-        p['n_saturated_channels'] = p['saturated_channel'].sum()
-        p['area_per_channel'][:] = area_per_channel
+        p["n_saturated_channels"] = p["saturated_channel"].sum()
+        p["area_per_channel"][:] = area_per_channel
