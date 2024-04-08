@@ -234,7 +234,7 @@ def get_available_runs(
     print("=============================")
 
 
-def load_peaks(runs, st_salt, st_simu, plugins=("peak_basics", "peak_positions_mlp")):
+def load_peaks(runs, st_salt, st_simu, plugins=("peak_basics", "peak_positions_mlp"), **kwargs):
     """Load peaks from the runs and find matching indices for salted and
     simulated peaks.
 
@@ -243,6 +243,7 @@ def load_peaks(runs, st_salt, st_simu, plugins=("peak_basics", "peak_positions_m
     :param st_simu: saltax context for simu mode
     :param plugins: plugins to be loaded, default to ('peak_basics',
         'peak_positions_mlp')
+    :param kwargs: arguments for saltax.match_peaks, i.e. window_length
     :return: peaks_simu: peaks from simulated dataset
     :return: peaks_salt: peaks from sprinkled dataset
     :return: inds_dict: dictionary of indices of peaks from sprinkled or
@@ -276,7 +277,7 @@ def load_peaks(runs, st_salt, st_simu, plugins=("peak_basics", "peak_positions_m
             ind_simu_peak_lost_i,
             ind_salt_peak_split_i,
             ind_simu_peak_split_i,
-        ) = saltax.match_peaks(peaks_simu_i, peaks_salt_i)
+        ) = saltax.match_peaks(peaks_simu_i, peaks_salt_i, **kwargs)
 
         # Load the indices into the dictionary
         inds_dict["ind_salt_peak_found"] = np.concatenate(
@@ -310,7 +311,7 @@ def load_peaks(runs, st_salt, st_simu, plugins=("peak_basics", "peak_positions_m
     return peaks_simu, peaks_salt, inds_dict
 
 
-def load_events(runs, st_salt, st_simu, plugins=("event_info", "cuts_basic")):
+def load_events(runs, st_salt, st_simu, plugins=("event_info", "cuts_basic"), **kwargs):
     """Load events from the runs and do basic filtering suggeted by
     saltax.match_events :param runs: list of runs.
 
@@ -318,8 +319,7 @@ def load_events(runs, st_salt, st_simu, plugins=("event_info", "cuts_basic")):
     :param st_simu: saltax context for simu mode
     :param plugins: plugins to be loaded, default to ('event_info',
         'cuts_basic')
-    :param args: arguments for saltax.match_events, i.e.
-        event_window_fuzz, s1_window_fuzz, s2_window_fuzz
+    :param kwargs: arguments for saltax.match_events, i.e. event_window_fuzz,
     :return: events_simu: events from simulated dataset, filtered out
         those who miss S1
     :return: events_salt: events from sprinkled dataset
@@ -370,7 +370,7 @@ def load_events(runs, st_salt, st_simu, plugins=("event_info", "cuts_basic")):
             ind_simu_s2_found_i,
             ind_salt_s2_made_alt_i,
             ind_simu_s2_made_alt_i,
-        ) = saltax.match_events(events_simu_i, events_salt_i)
+        ) = saltax.match_events(events_simu_i, events_salt_i, **kwargs)
 
         # Load the indices into the dictionary
         inds_dict["ind_salt_event_found"] = np.concatenate(
