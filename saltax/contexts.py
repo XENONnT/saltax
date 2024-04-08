@@ -113,7 +113,7 @@ def xenonnt_salted(
 
     # Specify simulation instructions
     instr_file_name = saltax.instr_file_name(
-        runid=runid, recoil=recoil, generator_name=generator_name, mode=simu_mode
+        runid=runid, recoil=recoil, generator_name=generator_name, mode=simu_mode, *args
     )
     # If runid is not None, then we need to either load instruction or generate it
     if runid is not None:
