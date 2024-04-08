@@ -229,6 +229,7 @@ def sxenonnt(
     generator_name="flat",
     recoil=7,
     simu_mode="all",
+    *args,
     **kwargs,
 ):
     """United strax context for XENONnT data, simulation, or salted data.
@@ -254,6 +255,7 @@ def sxenonnt(
     :param recoil: (for simulation) NEST recoil type, defaults to 7
         (beta ER)
     :param simu_mode: 's1', 's2', or 'all'. Defaults to 'all'
+    :param args: Extra args to pass to the generator function, like rate
     :param kwargs: Additional kwargs to pass
     :return: strax context
     """
@@ -279,5 +281,6 @@ def sxenonnt(
         recoil=recoil,
         simu_mode=simu_mode,
         saltax_mode=saltax_mode,
+        *args,
         **kwargs,
     )
