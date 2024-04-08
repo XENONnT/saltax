@@ -21,7 +21,7 @@ saltax_mode = config.get("job", "saltax_mode")
 faxconf_version = config.get("job", "faxconf_version")
 generator_name = config.get("job", "generator_name")
 recoil = config.getint("job", "recoil")
-mode = config.get("job", "mode")
+simu_mode = config.get("job", "mode")
 _rate = config.get("job", "rate", fallback=None)
 if _rate is not None and _rate.strip():  # Check if rate_value is not just whitespace
     rate = float(_rate)
@@ -85,7 +85,7 @@ if rate is None:
         faxconf_version=faxconf_version,
         generator_name=generator_name,
         recoil=recoil,
-        mode=mode,
+        simu_mode=simu_mode,
     )
 else:
     st = saltax.contexts.sxenonnt(
@@ -95,7 +95,7 @@ else:
         faxconf_version=faxconf_version,
         generator_name=generator_name,
         recoil=recoil,
-        mode=mode,
+        simu_mode=simu_mode,
         rate=rate,
     )
 if len(storage_to_patch) and storage_to_patch[0] != "":
@@ -138,7 +138,7 @@ if saltax_mode == "salt":
                 faxconf_version=faxconf_version,
                 generator_name=generator_name,
                 recoil=recoil,
-                mode=mode,
+                simu_mode=simu_mode,
             )
         else:
             st = saltax.contexts.sxenonnt(
@@ -148,7 +148,7 @@ if saltax_mode == "salt":
                 faxconf_version=faxconf_version,
                 generator_name=generator_name,
                 recoil=recoil,
-                mode=mode,
+                simu_mode=simu_mode,
                 rate=rate,
             )
         if len(storage_to_patch) and storage_to_patch[0] != "":
@@ -187,7 +187,7 @@ if saltax_mode == "salt":
                 faxconf_version=faxconf_version,
                 generator_name=generator_name,
                 recoil=recoil,
-                mode=mode,
+                simu_mode=simu_mode,
             )
         else:
             st = saltax.contexts.sxenonnt(
@@ -197,7 +197,7 @@ if saltax_mode == "salt":
                 faxconf_version=faxconf_version,
                 generator_name=generator_name,
                 recoil=recoil,
-                mode=mode,
+                simu_mode=simu_mode,
                 rate=rate,
             )
         if len(storage_to_patch) and storage_to_patch[0] != "":
