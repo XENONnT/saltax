@@ -310,7 +310,7 @@ def load_peaks(runs, st_salt, st_simu, plugins=("peak_basics", "peak_positions_m
     return peaks_simu, peaks_salt, inds_dict
 
 
-def load_events(runs, st_salt, st_simu, plugins=("event_info", "cuts_basic"), *args):
+def load_events(runs, st_salt, st_simu, plugins=("event_info", "cuts_basic")):
     """Load events from the runs and do basic filtering suggeted by
     saltax.match_events :param runs: list of runs.
 
@@ -370,7 +370,7 @@ def load_events(runs, st_salt, st_simu, plugins=("event_info", "cuts_basic"), *a
             ind_simu_s2_found_i,
             ind_salt_s2_made_alt_i,
             ind_simu_s2_made_alt_i,
-        ) = saltax.match_events(events_simu_i, events_salt_i, *args)
+        ) = saltax.match_events(events_simu_i, events_salt_i)
 
         # Load the indices into the dictionary
         inds_dict["ind_salt_event_found"] = np.concatenate(
