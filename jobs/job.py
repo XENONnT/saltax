@@ -21,7 +21,7 @@ saltax_mode = config.get("job", "saltax_mode")
 faxconf_version = config.get("job", "faxconf_version")
 generator_name = config.get("job", "generator_name")
 recoil = config.getint("job", "recoil")
-simu_mode = config.get("job", "mode")
+simu_mode = config.get("job", "simu_mode")
 _rate = config.get("job", "rate", fallback=None)
 if _rate is not None and _rate.strip():  # Check if rate_value is not just whitespace
     rate = float(_rate)
