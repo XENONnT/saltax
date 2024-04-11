@@ -102,7 +102,8 @@ def xenonnt_salted(
     :param recoil: (for simulation) NEST recoil type, defaults to 7
         (beta ER)
     :param simu_mode: 's1', 's2', or 'all'. Defaults to 'all'
-    :param kwargs: Extra options to pass to strax.Context or generator, and rate for generator
+    :param kwargs: Extra options to pass to strax.Context or generator,
+        and rate for generator
     :return: strax context
     """
     # Get salt generator

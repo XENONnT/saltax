@@ -319,7 +319,8 @@ def load_events(runs, st_salt, st_simu, plugins=("event_info", "cuts_basic"), **
     :param st_simu: saltax context for simu mode
     :param plugins: plugins to be loaded, default to ('event_info',
         'cuts_basic')
-    :param kwargs: arguments for saltax.match_events, i.e. event_window_fuzz,
+    :param kwargs: arguments for saltax.match_events, i.e.
+        event_window_fuzz,
     :return: events_simu: events from simulated dataset, filtered out
         those who miss S1
     :return: events_salt: events from sprinkled dataset
