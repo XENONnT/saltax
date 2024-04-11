@@ -16,7 +16,7 @@ logging.basicConfig(handlers=[logging.StreamHandler()])
 log = logging.getLogger("wfsim.interface")
 log.setLevel("WARNING")
 
-NS_NO_INSTRUCTION_BEFORE_CHUNK_END  = 5e7
+NS_NO_INSTRUCTION_BEFORE_CHUNK_END = 5e7
 NS_NO_INSTRUCTION_AFTER_CHUNK_START = 5e7
 
 
