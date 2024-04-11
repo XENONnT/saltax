@@ -58,6 +58,8 @@ to_process_dtypes_se = [
     "merged_s2s",
     "peak_basics",
     "peak_positions_mlp",
+    "peak_shadow",
+    "peak_ambience",
 ]
 if "se" in generator_name:
     to_process_dtypes = to_process_dtypes_se
