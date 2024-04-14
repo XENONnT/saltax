@@ -1,5 +1,5 @@
 # saltax
-Salting `wfsim` into `strax` data, followed by comparison and analysis.
+Salting `wfsim` into `strax` data, followed by comparison and analysis. See this [notes](https://xe1t-wiki.lngs.infn.it/doku.php?id=lanqing:ambience_interference_and_sprinkling#raw_records_simu) to see how it serves physics.
 
 ## Installation
 ```
