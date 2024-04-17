@@ -3,7 +3,8 @@ import saltax
 import cutax
 import strax
 from immutabledict import immutabledict
-#import pema
+
+# import pema
 import pandas as pd
 
 
@@ -209,7 +210,7 @@ def xenonnt_salted(
     st.set_config(dict(saltax_mode=saltax_mode))
 
     # Register pema plugins
-    #st.register_all(pema.match_plugins)
+    # st.register_all(pema.match_plugins)
 
     return st
 
