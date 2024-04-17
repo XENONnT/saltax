@@ -23,10 +23,5 @@ repos:
     hooks:
     -   id: docformatter
 
--   repo: https://github.com/pycqa/flake8
-    rev: 7.0.0
-    hooks:
-    -   id: flake8
-
 ci:
     autoupdate_schedule: weekly
