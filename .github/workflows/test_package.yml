@@ -53,7 +53,7 @@ jobs:
       - name: Install saltax
         run: python setup.py develop
       - name: Install pytest and hypothesis
-        run: pip install pytest hypothesis flake8 pytest-cov coverage
+        run: pip install pytest hypothesis pytest-cov coverage
       - name: Test package
         env:
           HAVE_ACCESS_TO_SECTETS: ${{ secrets.RUNDB_API_URL }}
