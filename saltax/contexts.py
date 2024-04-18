@@ -179,6 +179,9 @@ def xenonnt_salted_fuse(
     # Deregister plugins with missing dependencies
     st.deregister_plugins_with_missing_dependencies()
 
+    # Add saltax mode
+    st.set_config(dict(saltax_mode=saltax_mode))
+
     return st
 
 
