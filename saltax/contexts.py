@@ -104,7 +104,7 @@ def xenonnt_salted_fuse(
     output_folder="./fuse_data",
     auto_register_cuts=True,
     cut_list=cutax.BasicCuts,
-    corrections_version=None,
+    corrections_version=DEFAULT_XEDOCS_VERSION,
     simulation_config_file="fuse_config_nt_sr1_dev.json",
     run_id_specific_config={
         "gain_model_mc": "gain_model",
@@ -188,6 +188,33 @@ def xenonnt_salted_fuse(
         st.register_cuts()
     if cut_list is not None:
         st.register_cut_list(cut_list)
+
+    # Get salt generator
+    generator_func = get_generator(generator_name)
+
+    # Specify simulation instructions
+    instr_file_name = saltax.instr_file_name(
+        runid=runid, recoil=recoil, generator_name=generator_name, mode=simu_mode, **kwargs
+    )
+    # If runid is not None, then we need to either load instruction or generate it
+    if runid is not None:
+        # Try to load instruction from file and generate if not found
+        try:
+            instr = pd.read_csv(instr_file_name)
+            print("Loaded instructions from file", instr_file_name)
+        except:
+            print(f"Instruction file {instr_file_name} not found. Generating instructions...")
+            instr = generator_func(runid=runid, **kwargs)
+            pd.DataFrame(instr).to_csv(instr_file_name, index=False)
+            print(f"Instructions saved to {instr_file_name}")
+
+        # Load instructions into config
+        st.set_config(
+            {
+                "input_file": instr_file_name,
+                # "n_interactions_per_chunk": 50, #TODO: Surgery needed here
+            }
+        )
 
     return st
 
