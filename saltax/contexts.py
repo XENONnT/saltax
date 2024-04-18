@@ -11,7 +11,7 @@ import pandas as pd
 
 # fuse plugins
 # Plugins to simulate microphysics
-microphysics_plugins = [
+MICROPHYSICS_PLUGINS = [
     fuse.micro_physics.ChunkInput,
     fuse.micro_physics.FindCluster,
     fuse.micro_physics.MergeCluster,
@@ -23,12 +23,12 @@ microphysics_plugins = [
     fuse.micro_physics.MicroPhysicsSummary,
 ]
 # Plugins to simulate S1 signals
-s1_simulation_plugins = [
+S1_SIMULATION_PLUGINS = [
     fuse.detector_physics.S1PhotonHits,
     fuse.detector_physics.S1PhotonPropagation,
 ]
 # Plugins to simulate S2 signals
-s2_simulation_plugins = [
+S2_SIMULATION_PLUGINS = [
     fuse.detector_physics.ElectronDrift,
     fuse.detector_physics.ElectronExtraction,
     fuse.detector_physics.ElectronTiming,
@@ -36,7 +36,7 @@ s2_simulation_plugins = [
     fuse.detector_physics.S2PhotonPropagation,
 ]
 # Plugins to simulate delayed electrons
-delayed_electron_simulation_plugins = [
+DELAYED_ELECTRON_SIMULATION_PLUGINS = [
     fuse.detector_physics.delayed_electrons.PhotoIonizationElectrons,
     fuse.detector_physics.delayed_electrons.DelayedElectronsDrift,
     fuse.detector_physics.delayed_electrons.DelayedElectronsExtraction,
@@ -45,7 +45,7 @@ delayed_electron_simulation_plugins = [
     fuse.detector_physics.delayed_electrons.S1PhotonHitsEmpty,
 ]
 # Plugins to merge delayed and regular electrons
-delayed_electron_merger_plugins = [
+DELAYED_ELECTRON_MERGER_PLUGINS = [
     fuse.detector_physics.delayed_electrons.DriftedElectronsMerger,
     fuse.detector_physics.delayed_electrons.ExtractedElectronsMerger,
     fuse.detector_physics.delayed_electrons.ElectronTimingMerger,
@@ -55,14 +55,14 @@ delayed_electron_merger_plugins = [
     fuse.detector_physics.delayed_electrons.S1PhotonHitsMerger,
 ]
 # Plugins to simulate PMTs and DAQ
-pmt_and_daq_plugins = [
+PMT_AND_DAQ_PLUGINS = [
     fuse.pmt_and_daq.PMTAfterPulses,
     fuse.pmt_and_daq.PhotonSummary,
     fuse.pmt_and_daq.PulseWindow,
     fuse.pmt_and_daq.PMTResponseAndDAQ, # TODO: this plugin will be replaced
 ]
 # Plugins to get truth information
-truth_information_plugins = [
+TRUTH_INFORMATION_PLUGINS = [
     fuse.truth_information.RecordsTruth,
     fuse.truth_information.PeakTruth,
     fuse.truth_information.EventTruth,
