@@ -5,6 +5,7 @@ import strax
 from immutabledict import immutabledict
 import fuse
 import logging
+
 # import pema
 import pandas as pd
 
@@ -129,7 +130,8 @@ def xenonnt_salted_fuse(
     :param corrections_version: XENONnT documentation version to use,
         defaults to DEFAULT_XEDOCS_VERSION
     :param cut_list: Cut list to use, defaults to cutax.BasicCuts
-    :param simulation_config_file: File containing simulation configuration
+    :param simulation_config_file: File containing simulation
+        configuration
     :param run_id_specific_config: Mapping of run_id specific config
     :param run_without_proper_corrections: Whether to run without proper
         corrections, defaults to False
@@ -152,7 +154,7 @@ def xenonnt_salted_fuse(
         )
     if simulation_config_file is None:
         raise ValueError("Specify a simulation configuration file")
-    
+
     if run_without_proper_corrections:
         log.warning(
             "Running without proper correction version. This is not recommended for production use."
@@ -203,7 +205,7 @@ def xenonnt_salted_fuse(
 
     # Add saltax mode
     st.set_config(dict(saltax_mode=saltax_mode))
-    
+
     # Register cuts plugins
     if cut_list is not None:
         st.register_cut_list(cut_list)
@@ -408,8 +410,8 @@ def fxenonnt(
     simu_mode="all",
     **kwargs,
 ):
-    """United strax context for XENONnT data, simulation, or salted data.
-    Based on fuse.
+    """United strax context for XENONnT data, simulation, or salted data. Based
+    on fuse.
 
     :param runid: run number in integer. Must exist in RunDB if you use
         this context to compute raw_records_simu, or use None for data-
@@ -417,11 +419,12 @@ def fxenonnt(
     :param saltax_mode: 'data', 'simu', or 'salt'
     :param output_folder: Output folder for strax data, default
         './strax_data'
-    :param corrections_version: xedocs version to use, default is synced with
-        cutax latest
+    :param corrections_version: xedocs version to use, default is synced
+        with cutax latest
     :param cut_list: List of cuts to register, default is
         cutax.BasicCuts
-    :param auto_register_cuts: Whether to auto register cuts, default True
+    :param auto_register_cuts: Whether to auto register cuts, default
+        True
     :param faxconf_version: fax config version to use, default is synced
         with cutax latest
     :param cmt_version: cmt version to use, default is synced with cutax
@@ -474,8 +477,8 @@ def sxenonnt(
     simu_mode="all",
     **kwargs,
 ):
-    """United strax context for XENONnT data, simulation, or salted data.
-    Based on wfsim
+    """United strax context for XENONnT data, simulation, or salted data. Based
+    on wfsim.
 
     :param runid: run number in integer. Must exist in RunDB if you use
         this context to compute raw_records_simu, or use None for data-
@@ -483,11 +486,12 @@ def sxenonnt(
     :param saltax_mode: 'data', 'simu', or 'salt'
     :param output_folder: Output folder for strax data, default
         './strax_data'
-    :param corrections_version: xedocs version to use, default is synced with
-        cutax latest
+    :param corrections_version: xedocs version to use, default is synced
+        with cutax latest
     :param cut_list: List of cuts to register, default is
         cutax.BasicCuts
-    :param auto_register_cuts: Whether to auto register cuts, default True
+    :param auto_register_cuts: Whether to auto register cuts, default
+        True
     :param faxconf_version: fax config version to use, default is synced
         with cutax latest
     :param cmt_version: cmt version to use, default is synced with cutax
