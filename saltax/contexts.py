@@ -165,6 +165,7 @@ def xenonnt_salted_fuse(
             # detector='XENONnT',
             check_raw_record_overlaps=True,
             **XNT_COMMON_OPTS,
+            **SXNT_COMMON_CONFIG,
         )
     )
 
