@@ -4,9 +4,12 @@ import cutax
 import strax
 from immutabledict import immutabledict
 import fuse
-
+import logging
 # import pema
 import pandas as pd
+
+logging.basicConfig(handlers=[logging.StreamHandler()])
+log = logging.getLogger("fuse.context")
 
 
 # fuse plugins
@@ -25,6 +28,19 @@ DELAYED_ELECTRON_MERGER_PLUGINS = fuse.context.delayed_electron_merger_plugins
 PMT_AND_DAQ_PLUGINS = fuse.context.pmt_and_daq_plugins
 # Plugins to get truth information
 TRUTH_INFORMATION_PLUGINS = fuse.context.truth_information_plugins
+# All plugins with fuse
+FUSED_PLUGINS = [
+    MICROPHYSICS_PLUGINS,
+    S1_SIMULATION_PLUGINS,
+    S2_SIMULATION_PLUGINS,
+    DELAYED_ELECTRON_SIMULATION_PLUGINS,
+    DELAYED_ELECTRON_MERGER_PLUGINS,
+    PMT_AND_DAQ_PLUGINS,
+    TRUTH_INFORMATION_PLUGINS,
+]
+
+# fuse placeholder parameters
+CORRECTION_RUN_ID_DEFAULT = "046477"
 
 # straxen XENONnT options/configuration
 XNT_COMMON_OPTS = straxen.contexts.xnt_common_opts.copy()
@@ -82,18 +98,102 @@ def get_generator(generator_name):
     return generator_func
 
 
+def xenonnt_salted_fuse(
+    runid=None,
+    saltax_mode="salt",
+    output_folder="./fuse_data",
+    cut_list=cutax.BasicCuts,
+    corrections_version=None,
+    simulation_config_file="fuse_config_nt_sr1_dev.json",
+    run_id_specific_config={
+        "gain_model_mc": "gain_model",
+        "electron_lifetime_liquid": "elife",
+        "drift_velocity_liquid": "electron_drift_velocity",
+        "drift_time_gate": "electron_drift_time_gate",
+    },
+    run_without_proper_corrections=False,
+    generator_name="flat",
+    recoil=8,
+    simu_mode="all",
+    **kwargs,
+):
+    """Return a strax context for XENONnT data analysis with saltax."""
+    # Manually assign a correction_run_id if runid is None
+    if runid is None:
+        corrections_run_id = CORRECTION_RUN_ID_DEFAULT
+    else:
+        corrections_run_id = runid
+    if (corrections_version is None) & (not run_without_proper_corrections):
+        raise ValueError(
+            "Specify a corrections_version. If you want to run without proper "
+            "corrections for testing or just trying out fuse, "
+            "set run_without_proper_corrections to True"
+        )
+    if simulation_config_file is None:
+        raise ValueError("Specify a simulation configuration file")
+    
+    if run_without_proper_corrections:
+        log.warning(
+            "Running without proper correction version. This is not recommended for production use."
+            "Take the context defined in cutax if you want to run XENONnT simulations."
+        )
+
+    st = strax.Context(storage=strax.DataDirectory(output_folder), **XNT_COMMON_OPTS)
+
+    st.config.update(
+        dict(
+            # detector='XENONnT',
+            check_raw_record_overlaps=True,
+            **XNT_COMMON_OPTS,
+        )
+    )
+
+    for plugin_list in FUSED_PLUGINS:
+        for plugin in plugin_list:
+            st.register(plugin)
+
+    if corrections_version is not None:
+        st.apply_xedocs_configs(version=corrections_version)
+
+    fuse.context.set_simulation_config_file(st, simulation_config_file)
+
+    local_versions = st.config
+    for config_name, url_config in local_versions.items():
+        if isinstance(url_config, str):
+            if "run_id" in url_config:
+                local_versions[config_name] = straxen.URLConfig.format_url_kwargs(
+                    url_config, run_id=corrections_run_id
+                )
+    st.config = local_versions
+
+    # Update some run specific config
+    for mc_config, processing_config in run_id_specific_config.items():
+        if processing_config in st.config:
+            st.config[mc_config] = st.config[processing_config]
+        else:
+            print(f"Warning! {processing_config} not in context config, skipping...")
+
+    # No blinding in simulations
+    st.config["event_info_function"] = "disabled"
+
+    # Deregister plugins with missing dependencies
+    st.deregister_plugins_with_missing_dependencies()
+
+    return st
+
+
 def xenonnt_salted_wfsim(
     runid=None,
     saltax_mode="salt",
     output_folder="./strax_data",
-    xedocs_version=DEFAULT_XEDOCS_VERSION,
+    correction_version=DEFAULT_XEDOCS_VERSION,
     cut_list=cutax.BasicCuts,
     auto_register=True,
     faxconf_version="sr0_v4",
     cmt_version="global_v9",
     cmt_run_id="026000",
     generator_name="flat",
-    recoil=7,
+    recoil=8,
     simu_mode="all",
     **kwargs,
 ):
@@ -105,7 +205,7 @@ def xenonnt_salted_wfsim(
     :param saltax_mode: 'data', 'simu', or 'salt'.
     :param output_folder: Directory where data will be stored, defaults
         to ./strax_data
-    :param xedocs_version: XENONnT documentation version to use,
+    :param correction_version: XENONnT documentation version to use,
         defaults to DEFAULT_XEDOCS_VERSION
     :param cut_list: Cut list to use, defaults to cutax.BasicCuts
     :param auto_register: Whether to automatically register cuts,
@@ -165,8 +265,8 @@ def xenonnt_salted_wfsim(
 
     # Based on straxen.contexts.xenonnt()
     # st.apply_cmt_version(cmt_version)
-    if xedocs_version is not None:
-        st.apply_xedocs_configs(version=xedocs_version, **kwargs)
+    if correction_version is not None:
+        st.apply_xedocs_configs(version=correction_version, **kwargs)
 
     # Based on cutax.xenonnt_offline()
     # extra plugins to register
@@ -237,7 +337,7 @@ def sxenonnt(
     runid=None,
     saltax_mode="salt",
     output_folder="./strax_data",
-    xedocs_version=DEFAULT_XEDOCS_VERSION,
+    correction_version=DEFAULT_XEDOCS_VERSION,
     cut_list=cutax.BasicCuts,
     auto_register=True,
     faxconf_version="sr0_v4",
@@ -256,7 +356,7 @@ def sxenonnt(
     :param saltax_mode: 'data', 'simu', or 'salt'
     :param output_folder: Output folder for strax data, default
         './strax_data'
-    :param xedocs_version: xedocs version to use, default is synced with
+    :param correction_version: xedocs version to use, default is synced with
         cutax latest
     :param cut_list: List of cuts to register, default is
         cutax.BasicCuts
@@ -286,7 +386,7 @@ def sxenonnt(
     return xenonnt_salted_wfsim(
         runid=runid,
         output_folder=output_folder,
-        xedocs_version=xedocs_version,
+        correction_version=correction_version,
         cut_list=cut_list,
         auto_register=auto_register,
         faxconf_version=faxconf_version,
