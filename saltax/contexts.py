@@ -13,12 +13,9 @@ import pandas as pd
 # Plugins to simulate microphysics
 MICROPHYSICS_PLUGINS = fuse.context.microphysics_plugins
 # Plugins to simulate S1 signals
-S1_SIMULATION_PLUGINS = [
-    fuse.detector_physics.S1PhotonHits,
-    fuse.detector_physics.S1PhotonPropagation,
-]
+S1_SIMULATION_PLUGINS = fuse.context.s1_simulation_plugins
 # Plugins to simulate S2 signals
-S2_SIMULATION_PLUGINS = fuse.context.s1_simulation_plugins
+S2_SIMULATION_PLUGINS = fuse.context.s2_simulation_plugins
 # Plugins to simulate delayed electrons
 DELAYED_ELECTRON_SIMULATION_PLUGINS = fuse.context.delayed_electron_simulation_plugins
 # Plugins to merge delayed and regular electrons
@@ -85,7 +82,7 @@ def get_generator(generator_name):
     return generator_func
 
 
-def xenonnt_salted(
+def xenonnt_salted_wfsim(
     runid=None,
     saltax_mode="salt",
     output_folder="./strax_data",
@@ -286,7 +283,7 @@ def sxenonnt(
     else:
         print("Welcome to computation mode which only works for run %s!" % (runid))
 
-    return xenonnt_salted(
+    return xenonnt_salted_wfsim(
         runid=runid,
         output_folder=output_folder,
         xedocs_version=xedocs_version,
