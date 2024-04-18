@@ -242,7 +242,7 @@ def xenonnt_salted_wfsim(
     runid=None,
     saltax_mode="salt",
     output_folder="./strax_data",
-    correction_version=DEFAULT_XEDOCS_VERSION,
+    corrections_version=DEFAULT_XEDOCS_VERSION,
     cut_list=cutax.BasicCuts,
     auto_register_cuts=True,
     faxconf_version="sr0_v4",
@@ -261,7 +261,7 @@ def xenonnt_salted_wfsim(
     :param saltax_mode: 'data', 'simu', or 'salt'.
     :param output_folder: Directory where data will be stored, defaults
         to ./strax_data
-    :param correction_version: XENONnT documentation version to use,
+    :param corrections_version: XENONnT documentation version to use,
         defaults to DEFAULT_XEDOCS_VERSION
     :param cut_list: Cut list to use, defaults to cutax.BasicCuts
     :param auto_register_cuts: Whether to automatically register cuts,
@@ -321,8 +321,8 @@ def xenonnt_salted_wfsim(
 
     # Based on straxen.contexts.xenonnt()
     # st.apply_cmt_version(cmt_version)
-    if correction_version is not None:
-        st.apply_xedocs_configs(version=correction_version, **kwargs)
+    if corrections_version is not None:
+        st.apply_xedocs_configs(version=corrections_version, **kwargs)
 
     # Based on cutax.xenonnt_offline()
     # extra plugins to register
@@ -417,7 +417,7 @@ def fxenonnt(
     :param saltax_mode: 'data', 'simu', or 'salt'
     :param output_folder: Output folder for strax data, default
         './strax_data'
-    :param correction_version: xedocs version to use, default is synced with
+    :param corrections_version: xedocs version to use, default is synced with
         cutax latest
     :param cut_list: List of cuts to register, default is
         cutax.BasicCuts
@@ -447,7 +447,7 @@ def fxenonnt(
     return xenonnt_salted_fuse(
         runid=runid,
         output_folder=output_folder,
-        correction_version=corrections_version,
+        corrections_version=corrections_version,
         cut_list=cut_list,
         simulation_config_file=simulation_config_file,
         run_id_specific_config=run_id_specific_config,
@@ -463,7 +463,7 @@ def sxenonnt(
     runid=None,
     saltax_mode="salt",
     output_folder="./strax_data",
-    correction_version=DEFAULT_XEDOCS_VERSION,
+    corrections_version=DEFAULT_XEDOCS_VERSION,
     cut_list=cutax.BasicCuts,
     auto_register_cuts=True,
     faxconf_version="sr0_v4",
@@ -483,7 +483,7 @@ def sxenonnt(
     :param saltax_mode: 'data', 'simu', or 'salt'
     :param output_folder: Output folder for strax data, default
         './strax_data'
-    :param correction_version: xedocs version to use, default is synced with
+    :param corrections_version: xedocs version to use, default is synced with
         cutax latest
     :param cut_list: List of cuts to register, default is
         cutax.BasicCuts
@@ -513,7 +513,7 @@ def sxenonnt(
     return xenonnt_salted_wfsim(
         runid=runid,
         output_folder=output_folder,
-        correction_version=correction_version,
+        corrections_version=corrections_version,
         cut_list=cut_list,
         auto_register_cuts=auto_register_cuts,
         faxconf_version=faxconf_version,
