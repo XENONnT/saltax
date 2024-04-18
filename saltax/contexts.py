@@ -387,6 +387,76 @@ def xenonnt_salted_wfsim(
     return st
 
 
+def fxenonnt(
+    runid=None,
+    saltax_mode="salt",
+    output_folder="./fuse_data",
+    cut_list=cutax.BasicCuts,
+    corrections_version=DEFAULT_XEDOCS_VERSION,
+    simulation_config_file="fuse_config_nt_sr1_dev.json",
+    run_id_specific_config={
+        "gain_model_mc": "gain_model",
+        "electron_lifetime_liquid": "elife",
+        "drift_velocity_liquid": "electron_drift_velocity",
+        "drift_time_gate": "electron_drift_time_gate",
+    },
+    run_without_proper_corrections=False,
+    generator_name="flat",
+    recoil=8,
+    simu_mode="all",
+    **kwargs,
+):
+    """United strax context for XENONnT data, simulation, or salted data.
+    Based on fuse.
+
+    :param runid: run number in integer. Must exist in RunDB if you use
+        this context to compute raw_records_simu, or use None for data-
+        loading only.
+    :param saltax_mode: 'data', 'simu', or 'salt'
+    :param output_folder: Output folder for strax data, default
+        './strax_data'
+    :param correction_version: xedocs version to use, default is synced with
+        cutax latest
+    :param cut_list: List of cuts to register, default is
+        cutax.BasicCuts
+    :param auto_register_cuts: Whether to auto register cuts, default True
+    :param faxconf_version: fax config version to use, default is synced
+        with cutax latest
+    :param cmt_version: cmt version to use, default is synced with cutax
+        latest
+    :param cmt_run_id: cmt run id to use, default is synced with cutax
+    :param generator_name: (for simulation) Instruction mode to use,
+        defaults to 'flat'
+    :param recoil: (for simulation) NEST recoil type, defaults to 7
+        (beta ER)
+    :param simu_mode: 's1', 's2', or 'all'. Defaults to 'all'
+    :param kwargs: Additional kwargs to pass
+    :return: strax context
+    """
+    assert saltax_mode in SALTAX_MODES, "saltax_mode must be one of %s" % (SALTAX_MODES)
+    if runid is None:
+        print(
+            "Since you specified runid=None, this context will not be able to compute raw_records_simu."
+        )
+        print("Welcome to data-loading only mode!")
+    else:
+        print("Welcome to computation mode which only works for run %s!" % (runid))
+
+    return xenonnt_salted_fuse(
+        runid=runid,
+        output_folder=output_folder,
+        correction_version=corrections_version,
+        cut_list=cut_list,
+        simulation_config_file=simulation_config_file,
+        run_id_specific_config=run_id_specific_config,
+        run_without_proper_corrections=run_without_proper_corrections,
+        generator_name=generator_name,
+        recoil=recoil,
+        simu_mode=simu_mode,
+        **kwargs,
+    )
+
+
 def sxenonnt(
     runid=None,
     saltax_mode="salt",
@@ -403,6 +473,7 @@ def sxenonnt(
     **kwargs,
 ):
     """United strax context for XENONnT data, simulation, or salted data.
+    Based on wfsim
 
     :param runid: run number in integer. Must exist in RunDB if you use
         this context to compute raw_records_simu, or use None for data-
