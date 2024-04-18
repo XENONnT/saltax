@@ -117,7 +117,27 @@ def xenonnt_salted_fuse(
     simu_mode="all",
     **kwargs,
 ):
-    """Return a strax context for XENONnT data analysis with saltax."""
+    """Return a strax context for XENONnT data analysis with saltax.
+
+    :param runid: run number in integer. Must exist in RunDB if you use
+        this context to compute raw_records_simu, or use None for data-
+        loading only.
+    :param saltax_mode: 'data', 'simu', or 'salt'.
+    :param output_folder: Directory where data will be stored, defaults
+        to ./strax_data
+    :param corrections_version: XENONnT documentation version to use,
+        defaults to DEFAULT_XEDOCS_VERSION
+    :param cut_list: Cut list to use, defaults to cutax.BasicCuts
+    :param simulation_config_file: File containing simulation configuration
+    :param run_id_specific_config: Mapping of run_id specific config
+    :param run_without_proper_corrections: Whether to run without proper
+        corrections, defaults to False
+    :param generator_name: Instruction mode to use, defaults to 'flat'
+    :param recoil: NEST recoil type, defaults to 8
+    :param simu_mode: 's1', 's2', or 'all'. Defaults to 'all'
+    :param kwargs: Extra options to pass to strax.Context or generator
+    :return: strax context
+    """
     # Manually assign a correction_run_id if runid is None
     if runid is None:
         corrections_run_id = CORRECTION_RUN_ID_DEFAULT
