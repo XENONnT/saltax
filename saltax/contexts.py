@@ -102,7 +102,6 @@ def xenonnt_salted_fuse(
     runid=None,
     saltax_mode="salt",
     output_folder="./fuse_data",
-    auto_register_cuts=True,
     cut_list=cutax.BasicCuts,
     corrections_version=DEFAULT_XEDOCS_VERSION,
     simulation_config_file="fuse_config_nt_sr1_dev.json",
@@ -184,8 +183,6 @@ def xenonnt_salted_fuse(
     st.set_config(dict(saltax_mode=saltax_mode))
     
     # Register cuts plugins
-    if auto_register_cuts:
-        st.register_cuts()
     if cut_list is not None:
         st.register_cut_list(cut_list)
 
