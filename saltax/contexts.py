@@ -182,6 +182,12 @@ def xenonnt_salted_fuse(
 
     # Add saltax mode
     st.set_config(dict(saltax_mode=saltax_mode))
+    
+    # Register cuts plugins
+    if auto_register_cuts:
+        st.register_cuts()
+    if cut_list is not None:
+        st.register_cut_list(cut_list)
 
     return st
 
