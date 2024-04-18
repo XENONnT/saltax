@@ -354,7 +354,6 @@ def generator_ambe(
         instr_i["z"] = selected_ambe["z"]
         instr_i["recoil"] = selected_ambe["recoil"]
         instr_i["e_dep"] = selected_ambe["e_dep"]
-        instr_i["ed"] = selected_ambe["e_dep"]
         instr_i["amp"] = selected_ambe["amp"]
         instr_i["n_excitons"] = selected_ambe["n_excitons"]
 
@@ -417,7 +416,6 @@ def generator_flat(
     ens = np.random.uniform(en_range[0], en_range[1], size=n_tot)
     instr["recoil"][:] = recoil
     instr["e_dep"][:] = ens.repeat(2)
-    instr["ed"][:] = ens.repeat(2)
 
     # Getting local field from field map
     instr["local_field"] = fmap(np.array([np.sqrt(x**2 + y**2), z]).T).repeat(2)
