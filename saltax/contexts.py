@@ -82,6 +82,7 @@ XNT_COMMON_CONFIG_OVERRIDE = dict(
 )
 SXNT_COMMON_CONFIG = XNT_COMMON_CONFIG.copy()
 SXNT_COMMON_CONFIG["channel_map"] = XNT_COMMON_CONFIG_OVERRIDE["channel_map"]
+FXNT_COMMON_CONFIG = SXNT_COMMON_CONFIG
 DEFAULT_XEDOCS_VERSION = cutax.contexts.DEFAULT_XEDOCS_VERSION
 
 # saltax modes supported
@@ -165,7 +166,7 @@ def xenonnt_salted_fuse(
             # detector='XENONnT',
             check_raw_record_overlaps=True,
             **XNT_COMMON_OPTS,
-            **SXNT_COMMON_CONFIG,
+            **FXNT_COMMON_CONFIG,
         )
     )
 
