@@ -11,64 +11,23 @@ import pandas as pd
 
 # fuse plugins
 # Plugins to simulate microphysics
-MICROPHYSICS_PLUGINS = [
-    fuse.micro_physics.ChunkInput,
-    fuse.micro_physics.FindCluster,
-    fuse.micro_physics.MergeCluster,
-    fuse.micro_physics.XENONnT_TPC,
-    fuse.micro_physics.XENONnT_BelowCathode,
-    fuse.micro_physics.VolumesMerger,
-    fuse.micro_physics.ElectricField,
-    fuse.micro_physics.NestYields,
-    fuse.micro_physics.MicroPhysicsSummary,
-]
+MICROPHYSICS_PLUGINS = fuse.context.microphysics_plugins
 # Plugins to simulate S1 signals
 S1_SIMULATION_PLUGINS = [
     fuse.detector_physics.S1PhotonHits,
     fuse.detector_physics.S1PhotonPropagation,
 ]
 # Plugins to simulate S2 signals
-S2_SIMULATION_PLUGINS = [
-    fuse.detector_physics.ElectronDrift,
-    fuse.detector_physics.ElectronExtraction,
-    fuse.detector_physics.ElectronTiming,
-    fuse.detector_physics.SecondaryScintillation,
-    fuse.detector_physics.S2PhotonPropagation,
-]
+S2_SIMULATION_PLUGINS = fuse.context.s1_simulation_plugins
 # Plugins to simulate delayed electrons
-DELAYED_ELECTRON_SIMULATION_PLUGINS = [
-    fuse.detector_physics.delayed_electrons.PhotoIonizationElectrons,
-    fuse.detector_physics.delayed_electrons.DelayedElectronsDrift,
-    fuse.detector_physics.delayed_electrons.DelayedElectronsExtraction,
-    fuse.detector_physics.delayed_electrons.DelayedElectronsTiming,
-    fuse.detector_physics.delayed_electrons.DelayedElectronsSecondaryScintillation,
-    fuse.detector_physics.delayed_electrons.S1PhotonHitsEmpty,
-]
+DELAYED_ELECTRON_SIMULATION_PLUGINS = fuse.context.delayed_electron_simulation_plugins
 # Plugins to merge delayed and regular electrons
-DELAYED_ELECTRON_MERGER_PLUGINS = [
-    fuse.detector_physics.delayed_electrons.DriftedElectronsMerger,
-    fuse.detector_physics.delayed_electrons.ExtractedElectronsMerger,
-    fuse.detector_physics.delayed_electrons.ElectronTimingMerger,
-    fuse.detector_physics.delayed_electrons.SecondaryScintillationPhotonsMerger,
-    fuse.detector_physics.delayed_electrons.SecondaryScintillationPhotonSumMerger,
-    fuse.detector_physics.delayed_electrons.MicrophysicsSummaryMerger,
-    fuse.detector_physics.delayed_electrons.S1PhotonHitsMerger,
-]
+DELAYED_ELECTRON_MERGER_PLUGINS = fuse.context.delayed_electron_merger_plugins
 # Plugins to simulate PMTs and DAQ
-PMT_AND_DAQ_PLUGINS = [
-    fuse.pmt_and_daq.PMTAfterPulses,
-    fuse.pmt_and_daq.PhotonSummary,
-    fuse.pmt_and_daq.PulseWindow,
-    fuse.pmt_and_daq.PMTResponseAndDAQ, # TODO: this plugin will be replaced
-]
+# TODO: this plugin fuse.pmt_and_daq.PMTResponseAndDAQ will be replaced
+PMT_AND_DAQ_PLUGINS = fuse.context.pmt_and_daq_plugins
 # Plugins to get truth information
-TRUTH_INFORMATION_PLUGINS = [
-    fuse.truth_information.RecordsTruth,
-    fuse.truth_information.PeakTruth,
-    fuse.truth_information.EventTruth,
-    fuse.truth_information.SurvivingClusters,
-    fuse.truth_information.ClusterTagging,
-]
+TRUTH_INFORMATION_PLUGINS = fuse.context.truth_information_plugins
 
 # straxen XENONnT options/configuration
 XNT_COMMON_OPTS = straxen.contexts.xnt_common_opts.copy()
