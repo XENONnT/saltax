@@ -102,6 +102,7 @@ def xenonnt_salted_fuse(
     runid=None,
     saltax_mode="salt",
     output_folder="./fuse_data",
+    auto_register_cuts=True,
     cut_list=cutax.BasicCuts,
     corrections_version=None,
     simulation_config_file="fuse_config_nt_sr1_dev.json",
@@ -191,7 +192,7 @@ def xenonnt_salted_wfsim(
     output_folder="./strax_data",
     correction_version=DEFAULT_XEDOCS_VERSION,
     cut_list=cutax.BasicCuts,
-    auto_register=True,
+    auto_register_cuts=True,
     faxconf_version="sr0_v4",
     cmt_version="global_v9",
     cmt_run_id="026000",
@@ -211,7 +212,7 @@ def xenonnt_salted_wfsim(
     :param correction_version: XENONnT documentation version to use,
         defaults to DEFAULT_XEDOCS_VERSION
     :param cut_list: Cut list to use, defaults to cutax.BasicCuts
-    :param auto_register: Whether to automatically register cuts,
+    :param auto_register_cuts: Whether to automatically register cuts,
         defaults to True
     :param faxconf_version: (for simulation) fax configuration version
         to use, defaults to "sr0_v4"
@@ -281,7 +282,7 @@ def xenonnt_salted_wfsim(
             "g2": "bodega://g2?bodega_version=v5",
         }
     )
-    if auto_register:
+    if auto_register_cuts:
         st.register_cuts()
     if cut_list is not None:
         st.register_cut_list(cut_list)
@@ -342,7 +343,7 @@ def sxenonnt(
     output_folder="./strax_data",
     correction_version=DEFAULT_XEDOCS_VERSION,
     cut_list=cutax.BasicCuts,
-    auto_register=True,
+    auto_register_cuts=True,
     faxconf_version="sr0_v4",
     cmt_version="global_v9",
     cmt_run_id="026000",
@@ -363,7 +364,7 @@ def sxenonnt(
         cutax latest
     :param cut_list: List of cuts to register, default is
         cutax.BasicCuts
-    :param auto_register: Whether to auto register cuts, default True
+    :param auto_register_cuts: Whether to auto register cuts, default True
     :param faxconf_version: fax config version to use, default is synced
         with cutax latest
     :param cmt_version: cmt version to use, default is synced with cutax
@@ -391,7 +392,7 @@ def sxenonnt(
         output_folder=output_folder,
         correction_version=correction_version,
         cut_list=cut_list,
-        auto_register=auto_register,
+        auto_register_cuts=auto_register_cuts,
         faxconf_version=faxconf_version,
         cmt_version=cmt_version,
         cmt_run_id=cmt_run_id,
