@@ -276,7 +276,7 @@ class InstrTranslator:
             # Concatenate the last row to the new instructions
             if i==1:
                 rows = [last_row]
-            else:
+            elif new_cluster:
                 rows.append(last_row)
         
         return pd.DataFrame(rows)
