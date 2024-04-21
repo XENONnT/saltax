@@ -25,7 +25,7 @@ class SChunkCsvInput(FuseBasePlugin):
 
     __version__ = "0.0.0"
 
-    depends_on: Tuple = tuple("raw_records")
+    depends_on: Tuple = ("raw_records")
     provides = "microphysics_summary"
     data_kind = "interactions_in_roi"
 
