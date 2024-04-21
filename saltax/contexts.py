@@ -40,6 +40,9 @@ FUSED_PLUGINS = [
     TRUTH_INFORMATION_PLUGINS,
 ]
 
+# ~Infinite raw_records file size to avoid downchunking
+MAX_RAW_RECORDS_FILE_SIZE_MB = 1e9
+
 # fuse placeholder parameters
 CORRECTION_RUN_ID_DEFAULT = "046477"
 
@@ -233,7 +236,7 @@ def xenonnt_salted_fuse(
         st.set_config(
             {
                 "input_file": instr_file_name,
-                # "n_interactions_per_chunk": 50, #TODO: Surgery needed here
+                "raw_records_file_size_target": MAX_RAW_RECORDS_FILE_SIZE_MB,
             }
         )
 
