@@ -91,6 +91,7 @@ class SChunkCsvInput(FuseBasePlugin):
             chunk_data = self.csv_file_reader.output_chunk(start, end)
             chunk_data["time"] = chunk_data["t"]
             chunk_data["endtime"] = chunk_data["time"]
+            chunk_data = chunk_data.to_records(index=False)
             data = np.zeros(len(chunk_data), dtype=self.dtype)
             strax.copy_to_buffer(chunk_data, data, "_bring_data_into_correct_format")
 
