@@ -164,6 +164,10 @@ class SCsvFileLoader:
         self.translator = InstrTranslator(input_format="wfsim", output_format="fuse")
 
     def output_chunk(self, chunk_start, chunk_end):
+        """
+        Load the detector simulation instructions from the csv file in wfsim format and then 
+        translate them to the fuse format. Truncate the instructions to the chunk time range.
+        """
         # Load the csv file in wfsim format
         log.debug("Loaded detector simulation instructions from a csv file in wfsim format!")
         instructions = self._load_csv_file()
