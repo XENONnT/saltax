@@ -58,11 +58,11 @@ SXNT_COMMON_OPTS_REGISTER = [
     saltax.SPulseProcessing,
     saltax.SRawRecordsFromFaxNT,
 ] + SXNT_COMMON_OPTS_REGISTER
-XNT_COMMON_OPTS_OVERRIDE = dict(
+SXNT_COMMON_OPTS_OVERRIDE = dict(
     register=SXNT_COMMON_OPTS_REGISTER,
 )
 SXNT_COMMON_OPTS = XNT_COMMON_OPTS.copy()
-SXNT_COMMON_OPTS["register"] = XNT_COMMON_OPTS_OVERRIDE["register"]
+SXNT_COMMON_OPTS["register"] = SXNT_COMMON_OPTS_OVERRIDE["register"]
 
 
 # saltax configuration overrides
@@ -239,6 +239,9 @@ def xenonnt_salted_fuse(
                 "raw_records_file_size_target": MAX_RAW_RECORDS_FILE_SIZE_MB,
             }
         )
+    
+    # register the csv input plugin
+    st.register(saltax.SChunkCsvInput)
 
     return st
 
