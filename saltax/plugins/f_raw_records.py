@@ -163,40 +163,40 @@ class SCsvFileLoader:
         # Translator to translate the wfsim instructions to the fuse format
         self.translator = InstrTranslator(input_format="wfsim", output_format="fuse")
 
-        def output_chunk(self, chunk_start, chunk_end):
-            # Load the csv file in wfsim format
-            log.debug("Loaded detector simulation instructions from a csv file in wfsim format!")
-            instructions = self._load_csv_file()
+    def output_chunk(self, chunk_start, chunk_end):
+        # Load the csv file in wfsim format
+        log.debug("Loaded detector simulation instructions from a csv file in wfsim format!")
+        instructions = self._load_csv_file()
 
-            # Translate the wfsim instructions to the fuse format
-            log.debug("Translating the wfsim instructions to the fuse format!")
-            instructions = self.translator.translate(instructions)
-            log.debug("Instructions translated to the fuse format!")
+        # Translate the wfsim instructions to the fuse format
+        log.debug("Translating the wfsim instructions to the fuse format!")
+        instructions = self.translator.translate(instructions)
+        log.debug("Instructions translated to the fuse format!")
 
-            # truncate instructions to the chunk time range
-            log.debug("Truncating instructions to the chunk time range!")
-            log.debug("We will further truncate the instructions to the range [%d, %d]", 
-                      chunk_start + self.ns_no_instruction_after_chunk_start, 
-                      chunk_end - self.ns_no_instruction_before_chunk_end)
-            mask = (instructions["t"] >= chunk_start + self.ns_no_instruction_after_chunk_start)
-            mask &= (instructions["t"] < chunk_end - self.ns_no_instruction_before_chunk_end)
-            instructions = instructions[mask]
+        # truncate instructions to the chunk time range
+        log.debug("Truncating instructions to the chunk time range!")
+        log.debug("We will further truncate the instructions to the range [%d, %d]", 
+                    chunk_start + self.ns_no_instruction_after_chunk_start, 
+                    chunk_end - self.ns_no_instruction_before_chunk_end)
+        mask = (instructions["t"] >= chunk_start + self.ns_no_instruction_after_chunk_start)
+        mask &= (instructions["t"] < chunk_end - self.ns_no_instruction_before_chunk_end)
+        instructions = instructions[mask]
 
-            return instructions
+        return instructions
 
-        def _load_csv_file(self):
-            log.debug("Loading detector simulation instructions from a csv file in wfsim format!")
-            df = pd.read_csv(self.input_file)
+    def _load_csv_file(self):
+        log.debug("Loading detector simulation instructions from a csv file in wfsim format!")
+        df = pd.read_csv(self.input_file)
 
-            # Check if all needed columns are in place:
-            if not set(self.columns).issubset(df.columns):
-                log.warning("Not all needed columns provided!")
+        # Check if all needed columns are in place:
+        if not set(self.columns).issubset(df.columns):
+            log.warning("Not all needed columns provided!")
 
-            instructions = np.zeros(len(df), dtype=self.dtype)
-            for column in df.columns:
-                instructions[column] = df[column]
+        instructions = np.zeros(len(df), dtype=self.dtype)
+        for column in df.columns:
+            instructions[column] = df[column]
 
-            return instructions
+        return instructions
         
 
 class InstrTranslator:
@@ -224,6 +224,7 @@ class InstrTranslator:
 
     def translate_wfsim_to_fuse(self, instructions):
         """Translate the wfsim instructions to the fuse format"""
+        
 
     def translate_fuse_to_wfsim(self, instructions):
         """Translate the fuse instructions to the wfsim format"""
