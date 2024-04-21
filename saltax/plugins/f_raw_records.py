@@ -7,12 +7,19 @@ import strax
 import straxen
 
 from fuse.plugin import FuseBasePlugin
+from fuse.plugins.pmt_and_daq.pmt_response_and_daq import PMTResponseAndDAQ
 from .s_raw_records import NS_NO_INSTRUCTION_BEFORE_CHUNK_END, NS_NO_INSTRUCTION_AFTER_CHUNK_START
 
 export, __all__ = strax.exporter()
 
 logging.basicConfig(handlers=[logging.StreamHandler()])
 log = logging.getLogger("fuse.detector_physics.csv_input")
+
+
+@export
+class SPMTResponseAndDAQ(PMTResponseAndDAQ):
+    __version__ = "0.0.0"
+    provides = "raw_records_simu"
 
 
 @export
