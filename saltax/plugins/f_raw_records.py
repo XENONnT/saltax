@@ -255,15 +255,18 @@ class InstrTranslator:
             if new_cluster:
                 cluster_id += 1
                 new_row = {
-                    "x": row.x,
-                    "y": row.y,
-                    "z": row.z,
-                    "e_field": row.local_field,
-                    "ed": row.e_dep,
-                    "nestid": row.recoil,
-                    "t": row.time,
+                    "x": np.float32(row.x),
+                    "y": np.float32(row.y),
+                    "z": np.float32(row.z),
+                    "e_field": np.float32(row.local_field),
+                    "ed": np.float32(row.e_dep),
+                    "nestid": np.int8(row.recoil),
+                    "t": np.int64(row.time),
                     "cluster_id": np.int32(cluster_id),
                     "eventid": np.int32(event_id),
+                    "photons": np.int32(0),
+                    "electrons": np.int32(0),   
+                    "excitons": np.int32(0),
                 }
                 last_row = new_row
 
