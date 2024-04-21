@@ -25,7 +25,7 @@ DELAYED_ELECTRON_SIMULATION_PLUGINS = fuse.context.delayed_electron_simulation_p
 # Plugins to merge delayed and regular electrons
 DELAYED_ELECTRON_MERGER_PLUGINS = fuse.context.delayed_electron_merger_plugins
 # Plugins to simulate PMTs and DAQ
-# TODO: this plugin fuse.pmt_and_daq.PMTResponseAndDAQ will be replaced
+# NB: this plugin fuse.pmt_and_daq.PMTResponseAndDAQ will be replaced later in context
 PMT_AND_DAQ_PLUGINS = fuse.context.pmt_and_daq_plugins
 # Plugins to get truth information
 TRUTH_INFORMATION_PLUGINS = fuse.context.truth_information_plugins
@@ -51,8 +51,9 @@ XNT_COMMON_OPTS = straxen.contexts.xnt_common_opts.copy()
 XNT_COMMON_CONFIG = straxen.contexts.xnt_common_config.copy()
 XNT_SIMULATION_CONFIG = straxen.contexts.xnt_simulation_config.copy()
 
-# saltax options overrides
+# wfsim based saltax options overrides
 SXNT_COMMON_OPTS_REGISTER = XNT_COMMON_OPTS["register"].copy()
+SXNT_COMMON_OPTS_REGISTER.remove(straxen.Peaklets)
 SXNT_COMMON_OPTS_REGISTER.remove(straxen.PulseProcessing)
 SXNT_COMMON_OPTS_REGISTER = [
     saltax.SPulseProcessing,
@@ -64,6 +65,20 @@ SXNT_COMMON_OPTS_OVERRIDE = dict(
 SXNT_COMMON_OPTS = XNT_COMMON_OPTS.copy()
 SXNT_COMMON_OPTS["register"] = SXNT_COMMON_OPTS_OVERRIDE["register"]
 
+# fuse based saltax options overrides
+FXNT_COMMON_OPTS_REGISTER = XNT_COMMON_OPTS["register"].copy()
+FXNT_COMMON_OPTS_REGISTER.remove(straxen.Peaklets)
+FXNT_COMMON_OPTS_REGISTER.remove(straxen.PulseProcessing)
+FXNT_COMMON_OPTS_REGISTER = [
+    saltax.SPeaklets,
+    saltax.SPulseProcessing,
+    saltax.SPMTResponseAndDAQ
+] + FXNT_COMMON_OPTS_REGISTER
+FXNT_COMMON_OPTS_OVERRIDE = dict(
+    register=SXNT_COMMON_OPTS_REGISTER,
+)
+FXNT_COMMON_OPTS = XNT_COMMON_OPTS.copy()
+FXNT_COMMON_OPTS["register"] = FXNT_COMMON_OPTS_OVERRIDE["register"]
 
 # saltax configuration overrides
 SCHANNEL_STARTS_AT = 3000
@@ -164,13 +179,13 @@ def xenonnt_salted_fuse(
             "Take the context defined in cutax if you want to run XENONnT simulations."
         )
 
-    st = strax.Context(storage=strax.DataDirectory(output_folder), **XNT_COMMON_OPTS)
+    st = strax.Context(storage=strax.DataDirectory(output_folder))
 
     st.config.update(
         dict(
             # detector='XENONnT',
             check_raw_record_overlaps=True,
-            **XNT_COMMON_OPTS,
+            **FXNT_COMMON_OPTS,
             **FXNT_COMMON_CONFIG,
         )
     )
