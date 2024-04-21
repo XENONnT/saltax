@@ -275,11 +275,11 @@ class InstrTranslator:
             
             # Concatenate the last row to the new instructions
             if i==1:
-                translated = pd.DataFrame([last_row])
+                rows = [last_row]
             else:
-                translated = pd.concat([translated, pd.DataFrame([last_row])])
-
-        return translated
+                rows.append(last_row)
+        
+        return pd.DataFrame(rows)
 
     def translate_fuse_to_wfsim(self, instructions):
         """Translate the fuse instructions to the wfsim format"""
