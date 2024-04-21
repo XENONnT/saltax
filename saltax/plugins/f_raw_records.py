@@ -18,7 +18,10 @@ log = logging.getLogger("fuse.detector_physics.csv_input")
 @export
 class SChunkCsvInput(FuseBasePlugin):
     """Plugin which reads a CSV file containing instructions for the detector
-    physics simulation (in wfsim format) and returns the data in chunks."""
+    physics simulation (in wfsim format) and returns the data in chunks.
+    Modified from csv_file_loader: https://github.com/XENONnT/fuse/blob/e538d32a5a0735757a77b1dce31d6f95a379bf4e/fuse/plugins/detector_physics/csv_input.py#L118
+    Similar to the case event_rate=0 there: we don't reassign times.
+    """
 
     __version__ = "0.0.0"
 
@@ -79,6 +82,7 @@ class SChunkCsvInput(FuseBasePlugin):
     def compute(self, raw_records, start, end):
         try:
             chunk_data = self.csv_file_reader(start, end)
+            chunk_data["time"] = chunk_data["t"]
             chunk_data["endtime"] = self.chunk_data["time"]
             data = np.zeros(len(chunk_data), dtype=self.dtype)
             strax.copy_to_buffer(self.chunk_data, data, "_bring_data_into_correct_format")
@@ -156,6 +160,9 @@ class SCsvFileLoader:
             "cluster_id",
         ]
 
+        # Translator to translate the wfsim instructions to the fuse format
+        self.translator = InstrTranslator(input_format="wfsim", output_format="fuse")
+
         def output_chunk(self, chunk_start, chunk_end):
             # Load the csv file in wfsim format
             log.debug("Loaded detector simulation instructions from a csv file in wfsim format!")
@@ -163,7 +170,7 @@ class SCsvFileLoader:
 
             # Translate the wfsim instructions to the fuse format
             log.debug("Translating the wfsim instructions to the fuse format!")
-            instructions = self.translate_wfsim_to_fuse(instructions)
+            instructions = self.translator.translate(instructions)
 
             # truncate instructions to the chunk time range
             log.debug("Truncating instructions to the chunk time range!")
@@ -175,7 +182,6 @@ class SCsvFileLoader:
             instructions = instructions[mask]
 
             return instructions
-
 
         def _load_csv_file(self):
             log.debug("Loading detector simulation instructions from a csv file in wfsim format!")
@@ -192,5 +198,35 @@ class SCsvFileLoader:
             return instructions
         
         @staticmethod
-        def translate_wfsim_to_fuse(instructions):
+        def _translate_wfsim_to_fuse(instructions):
             """Translate the wfsim instructions to the fuse format"""
+
+
+class InstrTranslator:
+    """Class to translate instructions between wfsim and fuse formats"""
+    def __init__(self, input_format="wfsim", output_format="fuse"):
+        self.input_format = input_format
+        self.output_format = output_format
+
+        assert self.input_format in ["wfsim", "fuse"], "Unknown input format! Choose 'wfsim' or 'fuse'!"
+        assert self.output_format in ["wfsim", "fuse"], "Unknown output format! Choose 'wfsim' or 'fuse'!"
+
+        self.translator = self.translator()
+    
+    def translator(self):
+        if self.input_format == "wfsim" and self.output_format == "fuse":
+            return self.translate_wfsim_to_fuse
+        elif self.input_format == "fuse" and self.output_format == "wfsim":
+            return self.translate_fuse_to_wfsim
+        else:
+            raise NotImplementedError("Translation from {} to {} is not implemented yet!".format(self.input_format, self.output_format))
+    
+    def translate(self, instructions):
+        return self.translator(instructions)
+
+    def translate_wfsim_to_fuse(self, instructions):
+        """Translate the wfsim instructions to the fuse format"""
+
+    def translate_fuse_to_wfsim(self, instructions):
+        """Translate the fuse instructions to the wfsim format"""
+        raise NotImplementedError("Not implemented yet!")
