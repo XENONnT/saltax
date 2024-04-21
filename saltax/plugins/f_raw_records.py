@@ -165,7 +165,7 @@ class SCsvFileLoader:
 
     def output_chunk(self, chunk_start, chunk_end):
         """
-        Load the detector simulation instructions from the csv file in wfsim format and then 
+        Load the simulation instructions from the csv file in wfsim format and then 
         translate them to the fuse format. Truncate the instructions to the chunk time range.
         """
         # Load the csv file in wfsim format
@@ -189,6 +189,9 @@ class SCsvFileLoader:
         return instructions
 
     def _load_csv_file(self):
+        """
+        Load the simulation instructions from a csv file in wfsim format.
+        """
         log.debug("Loading detector simulation instructions from a csv file in wfsim format!")
         df = pd.read_csv(self.input_file)
 
