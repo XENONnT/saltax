@@ -232,7 +232,8 @@ class InstrTranslator:
         previous_event_number = -1
         cluster_id = 0
         event_id = 0
-        for i, row in instructions.iterrows():
+        first_row = True
+        for _, row in instructions.iterrows():
             new_cluster = False
             new_event = False
 
@@ -276,8 +277,9 @@ class InstrTranslator:
                 raise ValueError("Unknown type %s!"%(row["type"]))
             
             # Concatenate the last row to the new instructions
-            if i==1:
+            if first_row:
                 rows = [last_row]
+                first_row = False
             elif new_cluster:
                 rows.append(last_row)
         
