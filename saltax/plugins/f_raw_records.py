@@ -171,6 +171,7 @@ class SCsvFileLoader:
             # Translate the wfsim instructions to the fuse format
             log.debug("Translating the wfsim instructions to the fuse format!")
             instructions = self.translator.translate(instructions)
+            log.debug("Instructions translated to the fuse format!")
 
             # truncate instructions to the chunk time range
             log.debug("Truncating instructions to the chunk time range!")
@@ -197,10 +198,6 @@ class SCsvFileLoader:
 
             return instructions
         
-        @staticmethod
-        def _translate_wfsim_to_fuse(instructions):
-            """Translate the wfsim instructions to the fuse format"""
-
 
 class InstrTranslator:
     """Class to translate instructions between wfsim and fuse formats"""
@@ -211,6 +208,7 @@ class InstrTranslator:
         assert self.input_format in ["wfsim", "fuse"], "Unknown input format! Choose 'wfsim' or 'fuse'!"
         assert self.output_format in ["wfsim", "fuse"], "Unknown output format! Choose 'wfsim' or 'fuse'!"
 
+        log.debug("Translating instructions from %s to %s", self.input_format, self.output_format)
         self.translator = self.translator()
     
     def translator(self):
