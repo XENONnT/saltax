@@ -224,7 +224,62 @@ class InstrTranslator:
 
     def translate_wfsim_to_fuse(self, instructions):
         """Translate the wfsim instructions to the fuse format"""
-        
+        # Sort time for sanity
+        instructions = instructions.sort_values(by="time")
+
+        # Find cluster and events row by row
+        previous_time = 0
+        previous_event_number = -1
+        cluster_id = 0
+        event_id = 0
+        for i, row in instructions.iterrows():
+            new_cluster = False
+            new_event = False
+
+            # Check if we have a new cluster or event
+            if row["time"] > previous_time:
+                new_cluster = True
+            if row["event_number"] != previous_event_number:
+                new_event = True            
+            if new_event and (not new_cluster):
+                raise ValueError("New event without new cluster at time %s!?"%(row['time']))
+            
+            # Update the previous event number
+            if new_event:
+                event_id += 1
+
+            # Update the cluster as a new row
+            if new_cluster:
+                cluster_id += 1
+                new_row = {
+                    "x": row["x"],
+                    "y": row["y"],
+                    "z": row["z"],
+                    "e_field": row["local_field"],
+                    "ed": row["e_dep"],
+                    "nestid": row["recoil"],
+                    "t": row["time"],
+                    "cluster_id": cluster_id,
+                    "eventid": event_id,
+                }
+                last_row = new_row
+
+            # Assign the number of photons, excitons and electrons to the last row
+            if row["type"] == 1:
+                last_row["photons"] = row["amp"]
+                last_row["excitons"] = row["n_excitons"]
+            elif row["type"] == 2:
+                last_row["electrons"] = row["amp"]
+            else:
+                raise ValueError("Unknown type %s!"%(row["type"]))
+            
+            # Concatenate the last row to the new instructions
+            if i==1:
+                translated = pd.DataFrame([last_row])
+            else:
+                translated = pd.concat([translated, pd.DataFrame([last_row])])
+
+        return translated
 
     def translate_fuse_to_wfsim(self, instructions):
         """Translate the fuse instructions to the wfsim format"""
