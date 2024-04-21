@@ -182,14 +182,18 @@ def xenonnt_salted_fuse(
             "Take the context defined in cutax if you want to run XENONnT simulations."
         )
 
-    st = strax.Context(storage=strax.DataDirectory(output_folder))
+    if kwargs is not None:
+        context_options = dict(**FXNT_COMMON_OPTS, **kwargs)
+    else:
+        context_options = FXNT_COMMON_OPTS.copy()
+
+    st = strax.Context(storage=strax.DataDirectory(output_folder), **context_options)
 
     st.config.update(
         dict(
             # detector='XENONnT',
             check_raw_record_overlaps=True,
             **FXNT_COMMON_OPTS,
-            **FXNT_COMMON_CONFIG,
         )
     )
 
