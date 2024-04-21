@@ -25,7 +25,6 @@ DELAYED_ELECTRON_SIMULATION_PLUGINS = fuse.context.delayed_electron_simulation_p
 # Plugins to merge delayed and regular electrons
 DELAYED_ELECTRON_MERGER_PLUGINS = fuse.context.delayed_electron_merger_plugins
 # Plugins to simulate PMTs and DAQ
-# NB: this plugin fuse.pmt_and_daq.PMTResponseAndDAQ will be replaced later in context
 PMT_AND_DAQ_PLUGINS = fuse.context.pmt_and_daq_plugins
 # Plugins to get truth information
 TRUTH_INFORMATION_PLUGINS = fuse.context.truth_information_plugins
@@ -38,6 +37,10 @@ FUSED_PLUGINS = [
     DELAYED_ELECTRON_MERGER_PLUGINS,
     PMT_AND_DAQ_PLUGINS,
     TRUTH_INFORMATION_PLUGINS,
+]
+FUSE_DONT_REGISTER = [
+    fuse.plugins.micro_physics.microphysics_summary.MicroPhysicsSummary,
+    fuse.plugins.pmt_and_daq.pmt_response_and_daq.PMTResponseAndDAQ
 ]
 
 # ~Infinite raw_records file size to avoid downchunking
@@ -192,7 +195,8 @@ def xenonnt_salted_fuse(
 
     for plugin_list in FUSED_PLUGINS:
         for plugin in plugin_list:
-            st.register(plugin)
+            if plugin not in FUSE_DONT_REGISTER:
+                st.register(plugin)
 
     if corrections_version is not None:
         st.apply_xedocs_configs(version=corrections_version)
