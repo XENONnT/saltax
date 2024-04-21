@@ -243,6 +243,8 @@ class InstrTranslator:
                 new_event = True            
             if new_event and (not new_cluster):
                 raise ValueError("New event without new cluster at time %s!?"%(row['time']))
+            previous_time = row["time"]
+            previous_event_number = row["event_number"]
             
             # Update the previous event number
             if new_event:
@@ -257,10 +259,10 @@ class InstrTranslator:
                     "z": row["z"],
                     "e_field": row["local_field"],
                     "ed": row["e_dep"],
-                    "nestid": row["recoil"],
-                    "t": row["time"],
-                    "cluster_id": cluster_id,
-                    "eventid": event_id,
+                    "nestid": int(row["recoil"]),
+                    "t": int(row["time"]),
+                    "cluster_id": int(cluster_id),
+                    "eventid": int(event_id),
                 }
                 last_row = new_row
 
