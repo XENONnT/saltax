@@ -20,7 +20,7 @@ log = logging.getLogger("fuse.detector_physics.csv_input")
 class SPMTResponseAndDAQ(PMTResponseAndDAQ):
     __version__ = "0.0.0"
     provides = "raw_records_simu"
-
+    data_kind = "raw_records_simu"
 
 @export
 class SChunkCsvInput(FuseBasePlugin):
