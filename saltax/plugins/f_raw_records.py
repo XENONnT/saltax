@@ -206,11 +206,7 @@ class SCsvFileLoader:
         if not set(self.columns).issubset(df.columns):
             log.warning("Not all needed columns provided!")
 
-        instructions = np.zeros(len(df), dtype=self.dtype)
-        for column in df.columns:
-            instructions[column] = df[column]
-
-        return instructions
+        return df
         
 
 class InstrTranslator:
