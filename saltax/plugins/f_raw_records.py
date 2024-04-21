@@ -88,7 +88,7 @@ class SChunkCsvInput(FuseBasePlugin):
         
     def compute(self, raw_records, start, end):
         try:
-            chunk_data = self.output_chunk(start, end)
+            chunk_data = self.csv_file_reader.output_chunk(start, end)
             chunk_data["time"] = chunk_data["t"]
             chunk_data["endtime"] = self.chunk_data["time"]
             data = np.zeros(len(chunk_data), dtype=self.dtype)
