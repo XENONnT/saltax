@@ -254,24 +254,24 @@ class InstrTranslator:
             if new_cluster:
                 cluster_id += 1
                 new_row = {
-                    "x": row["x"],
-                    "y": row["y"],
-                    "z": row["z"],
-                    "e_field": row["local_field"],
-                    "ed": row["e_dep"],
-                    "nestid": int(row["recoil"]),
-                    "t": int(row["time"]),
-                    "cluster_id": int(cluster_id),
-                    "eventid": int(event_id),
+                    "x": np.float32(row["x"]),
+                    "y": np.float32(row["y"]),
+                    "z": np.float32(row["z"]),
+                    "e_field": np.float32(row["local_field"]),
+                    "ed": np.float32(row["e_dep"]),
+                    "nestid": np.int8(row["recoil"]),
+                    "t": np.int64(row["time"]),
+                    "cluster_id": np.int32(cluster_id),
+                    "eventid": np.int32(event_id),
                 }
                 last_row = new_row
 
             # Assign the number of photons, excitons and electrons to the last row
             if row["type"] == 1:
-                last_row["photons"] = row["amp"]
-                last_row["excitons"] = row["n_excitons"]
+                last_row["photons"] = np.int32(row["amp"])
+                last_row["excitons"] = np.int32(row["n_excitons"])
             elif row["type"] == 2:
-                last_row["electrons"] = row["amp"]
+                last_row["electrons"] = np.int32(row["amp"])
             else:
                 raise ValueError("Unknown type %s!"%(row["type"]))
             
