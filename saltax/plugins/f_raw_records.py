@@ -233,19 +233,19 @@ class InstrTranslator:
         cluster_id = 0
         event_id = 0
         first_row = True
-        for _, row in instructions.iterrows():
+        for row in instructions.itertuples():
             new_cluster = False
             new_event = False
 
             # Check if we have a new cluster or event
-            if row["time"] > previous_time:
+            if row.time > previous_time:
                 new_cluster = True
-            if row["event_number"] != previous_event_number:
+            if row.event_number != previous_event_number:
                 new_event = True            
             if new_event and (not new_cluster):
-                raise ValueError("New event without new cluster at time %s!?"%(row['time']))
-            previous_time = row["time"]
-            previous_event_number = row["event_number"]
+                raise ValueError("New event without new cluster at time %s!?"%(row.time))
+            previous_time = row.time
+            previous_event_number = row.event_number
             
             # Update the previous event number
             if new_event:
@@ -255,26 +255,26 @@ class InstrTranslator:
             if new_cluster:
                 cluster_id += 1
                 new_row = {
-                    "x": np.float32(row["x"]),
-                    "y": np.float32(row["y"]),
-                    "z": np.float32(row["z"]),
-                    "e_field": np.float32(row["local_field"]),
-                    "ed": np.float32(row["e_dep"]),
-                    "nestid": np.int8(row["recoil"]),
-                    "t": np.int64(row["time"]),
+                    "x": row.x,
+                    "y": row.y,
+                    "z": row.z,
+                    "e_field": row.local_field,
+                    "ed": row.e_dep,
+                    "nestid": row.recoil,
+                    "t": row.time,
                     "cluster_id": np.int32(cluster_id),
                     "eventid": np.int32(event_id),
                 }
                 last_row = new_row
 
             # Assign the number of photons, excitons and electrons to the last row
-            if row["type"] == 1:
-                last_row["photons"] = np.int32(row["amp"])
-                last_row["excitons"] = np.int32(row["n_excitons"])
-            elif row["type"] == 2:
-                last_row["electrons"] = np.int32(row["amp"])
+            if row.type == 1:
+                last_row["photons"] = np.int32(row.amp)
+                last_row["excitons"] = np.int32(row.n_excitons)
+            elif row.type == 2:
+                last_row["electrons"] = np.int32(row.amp)
             else:
-                raise ValueError("Unknown type %s!"%(row["type"]))
+                raise ValueError("Unknown type %s!"%(row.type))
             
             # Concatenate the last row to the new instructions
             if first_row:
