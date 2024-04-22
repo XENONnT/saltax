@@ -34,6 +34,14 @@ skip_records = config.getboolean("job", "skip_records")
 storage_to_patch = config.get("job", "storage_to_patch").split(",")
 delete_records = config.getboolean("job", "delete_records")
 
+# Determine context for processing
+if package == "wfsim":
+    context_function = saltax.contexts.sxenonnt
+elif package == "fuse":
+    scontext_function = saltax.contexts.fxenonnt
+else:
+    raise ValueError("Invalid package name %s" % package)
+
 # Determine whether to process events type plugins or just peak types
 to_process_dtypes_ev = [
     "peaklets",
@@ -83,7 +91,7 @@ print("====================")
 print("Finished importing and config loading, now start to load context.")
 print("Now starting %s context for run %d" % (saltax_mode, runid))
 if rate is None:
-    st = saltax.contexts.sxenonnt(
+    st = context_function(
         runid=runid,
         saltax_mode=saltax_mode,
         output_folder=output_folder,
@@ -93,7 +101,7 @@ if rate is None:
         simu_mode=simu_mode,
     )
 else:
-    st = saltax.contexts.sxenonnt(
+    st = context_function(
         runid=runid,
         saltax_mode=saltax_mode,
         output_folder=output_folder,
@@ -107,7 +115,14 @@ if len(storage_to_patch) and storage_to_patch[0] != "":
     for d in storage_to_patch:
         st.storage.append(strax.DataDirectory(d, readonly=True))
 
+if package == "fuse":
+    print("Making microphysics_summary.")
+    st.make(strrunid, "microphysics_summary", progress_bar=True)
+    print("Done with microphysics_summary.")
+    gc.collect()
+print("Making raw_records.")
 st.make(strrunid, "raw_records_simu", progress_bar=True)
+print("Done with raw_records.")
 gc.collect()
 for dt in to_process_dtypes:
     print("Making %s. " % dt)
@@ -136,7 +151,7 @@ if saltax_mode == "salt":
         )
         print("Now starting data-only context for run %d" % (runid))
         if rate is None:
-            st = saltax.contexts.sxenonnt(
+            st = context_function(
                 runid=runid,
                 saltax_mode="data",
                 output_folder=output_folder,
@@ -146,7 +161,7 @@ if saltax_mode == "salt":
                 simu_mode=simu_mode,
             )
         else:
-            st = saltax.contexts.sxenonnt(
+            st = context_function(
                 runid=runid,
                 saltax_mode="data",
                 output_folder=output_folder,
@@ -185,7 +200,7 @@ if saltax_mode == "salt":
         print("====================")
         print("Now starting simu-only context for run %d" % (runid))
         if rate is None:
-            st = saltax.contexts.sxenonnt(
+            st = context_function(
                 runid=runid,
                 saltax_mode="simu",
                 output_folder=output_folder,
@@ -195,7 +210,7 @@ if saltax_mode == "salt":
                 simu_mode=simu_mode,
             )
         else:
-            st = saltax.contexts.sxenonnt(
+            st = context_function(
                 runid=runid,
                 saltax_mode="simu",
                 output_folder=output_folder,
