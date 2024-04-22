@@ -383,7 +383,7 @@ def generator_flat(
 
     :param runid: run number in integer
     :param en_range: (en_min, en_max) in keV, default: (0, 30.0)
-    :param recoil: NEST recoil type, default: 7 (beta ER)
+    :param recoil: NEST recoil type, default: 8 (beta ER)
     :param n_tot: total number of events to generate, default: None i.e.
         generate events until end_time
     :param rate: rate of events in Hz, default: 1e9/SALT_TIME_INTERVAL
