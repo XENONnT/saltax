@@ -448,19 +448,18 @@ def fxenonnt(
         with cutax latest
     :param cut_list: List of cuts to register, default is
         cutax.BasicCuts
-    :param auto_register_cuts: Whether to auto register cuts, default
-        True
-    :param faxconf_version: fax config version to use, default is synced
+    :param simu_config_version: fax config version to use, default is synced
         with cutax latest
-    :param cmt_version: cmt version to use, default is synced with cutax
-        latest
-    :param cmt_run_id: cmt run id to use, default is synced with cutax
-    :param generator_name: (for simulation) Instruction mode to use,
+    :param run_id_specific_config: Mapping of run_id specific config    
+    :param run_without_proper_corrections: Whether to run without proper
+        corrections, defaults to False
+    :param generator_name: Instruction mode to use,
         defaults to 'flat'
-    :param recoil: (for simulation) NEST recoil type, defaults to 7
+    :param recoil: NEST recoil type, defaults to 8
         (beta ER)
     :param simu_mode: 's1', 's2', or 'all'. Defaults to 'all'
-    :param kwargs: Additional kwargs to pass
+    :param kwargs: Extra options to pass to strax.Context or generator,
+        and rate for generator
     :return: strax context
     """
     assert saltax_mode in SALTAX_MODES, "saltax_mode must be one of %s" % (SALTAX_MODES)
