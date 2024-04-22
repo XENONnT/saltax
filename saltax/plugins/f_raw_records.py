@@ -38,7 +38,7 @@ class SChunkCsvInput(FuseBasePlugin):
 
     save_when = strax.SaveWhen.TARGET
 
-    source_done = False
+    #source_done = False
 
     dtype = [
         (("x position of the cluster [cm]", "x"), np.float32),
@@ -95,7 +95,7 @@ class SChunkCsvInput(FuseBasePlugin):
             data = np.zeros(len(chunk_data), dtype=self.dtype)
             strax.copy_to_buffer(chunk_data, data, "_bring_data_into_correct_format")
 
-            self.source_done = True
+            #self.source_done = True
 
             # Stick rigorously with raw_records time range
             return self.chunk(
@@ -190,11 +190,19 @@ class SCsvFileLoader:
         log.debug("We will further truncate the instructions to the range [%d, %d]", 
                     chunk_start + self.ns_no_instruction_after_chunk_start, 
                     chunk_end - self.ns_no_instruction_before_chunk_end)
+        
+        # See if we have any instructions after the chunk end
+        mask_next = (instructions["t"] > chunk_end)
+        if np.any(mask_next):
+            source_done = False
+        else:
+            source_done = True
+
         mask = (instructions["t"] >= chunk_start + self.ns_no_instruction_after_chunk_start)
         mask &= (instructions["t"] < chunk_end - self.ns_no_instruction_before_chunk_end)
         instructions = instructions[mask]
 
-        return instructions
+        return instructions, source_done
 
     def _load_csv_file(self):
         """
