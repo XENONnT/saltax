@@ -64,7 +64,7 @@ class Submit(object):
 
         # Modify here for the log name
         utilix.batchq.submit_job(
-            jobstring,
+            jobstring=jobstring,
             log="%s/%s.log" % (LOG_DIR, jobname),
             partition=PARTITION,
             qos=QOS,
