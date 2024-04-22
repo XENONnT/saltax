@@ -128,7 +128,7 @@ def xenonnt_salted_fuse(
     output_folder="./fuse_data",
     cut_list=cutax.BasicCuts,
     corrections_version=DEFAULT_XEDOCS_VERSION,
-    simulation_config_file="fuse_config_nt_sr1_dev.json",
+    simu_config_version="sr1_dev",
     run_id_specific_config={
         "gain_model_mc": "gain_model",
         "electron_lifetime_liquid": "elife",
@@ -152,8 +152,8 @@ def xenonnt_salted_fuse(
     :param corrections_version: XENONnT documentation version to use,
         defaults to DEFAULT_XEDOCS_VERSION
     :param cut_list: Cut list to use, defaults to cutax.BasicCuts
-    :param simulation_config_file: File containing simulation
-        configuration
+    :param simu_config_version: simulation configuration version to use,
+        defaults to "sr1_dev"
     :param run_id_specific_config: Mapping of run_id specific config
     :param run_without_proper_corrections: Whether to run without proper
         corrections, defaults to False
@@ -174,7 +174,7 @@ def xenonnt_salted_fuse(
             "corrections for testing or just trying out fuse, "
             "set run_without_proper_corrections to True"
         )
-    if simulation_config_file is None:
+    if simu_config_version is None:
         raise ValueError("Specify a simulation configuration file")
 
     if run_without_proper_corrections:
@@ -204,6 +204,7 @@ def xenonnt_salted_fuse(
     if corrections_version is not None:
         st.apply_xedocs_configs(version=corrections_version)
 
+    simulation_config_file = "fuse_config_nt_{:s}.json".format(simu_config_version)
     fuse.context.set_simulation_config_file(st, simulation_config_file)
 
     local_versions = st.config
@@ -272,7 +273,7 @@ def xenonnt_salted_wfsim(
     corrections_version=DEFAULT_XEDOCS_VERSION,
     cut_list=cutax.BasicCuts,
     auto_register_cuts=True,
-    faxconf_version="sr0_v4",
+    simu_config_version="sr0_v4",
     cmt_version="global_v9",
     cmt_run_id="026000",
     generator_name="flat",
@@ -293,8 +294,8 @@ def xenonnt_salted_wfsim(
     :param cut_list: Cut list to use, defaults to cutax.BasicCuts
     :param auto_register_cuts: Whether to automatically register cuts,
         defaults to True
-    :param faxconf_version: (for simulation) fax configuration version
-        to use, defaults to "sr0_v4"
+    :param simu_config_version: (for simulation) fax configuration
+        version to use, defaults to "sr0_v4"
     :param cmt_version: (for simulation) CMT version to use, defaults to
         "global_v9"
     :param cmt_run_id: (for simulation) CMT run ID to use, defaults to
@@ -327,7 +328,7 @@ def xenonnt_salted_wfsim(
             print(f"Instructions saved to {instr_file_name}")
 
     # Based on cutax.xenonnt_sim_base()
-    fax_conf = "fax_config_nt_{:s}.json".format(faxconf_version)
+    fax_conf = "fax_config_nt_{:s}.json".format(simu_config_version)
 
     # Based on straxen.contexts.xenonnt_online()
     if kwargs is not None:
@@ -422,7 +423,7 @@ def fxenonnt(
     output_folder="./fuse_data",
     cut_list=cutax.BasicCuts,
     corrections_version=DEFAULT_XEDOCS_VERSION,
-    simulation_config_file="fuse_config_nt_sr1_dev.json",
+    simu_config_version="sr1_dev",
     run_id_specific_config={
         "gain_model_mc": "gain_model",
         "electron_lifetime_liquid": "elife",
@@ -448,19 +449,16 @@ def fxenonnt(
         with cutax latest
     :param cut_list: List of cuts to register, default is
         cutax.BasicCuts
-    :param auto_register_cuts: Whether to auto register cuts, default
-        True
-    :param faxconf_version: fax config version to use, default is synced
-        with cutax latest
-    :param cmt_version: cmt version to use, default is synced with cutax
-        latest
-    :param cmt_run_id: cmt run id to use, default is synced with cutax
-    :param generator_name: (for simulation) Instruction mode to use,
-        defaults to 'flat'
-    :param recoil: (for simulation) NEST recoil type, defaults to 7
-        (beta ER)
+    :param simu_config_version: fax config version to use, default is
+        synced with cutax latest
+    :param run_id_specific_config: Mapping of run_id specific config
+    :param run_without_proper_corrections: Whether to run without proper
+        corrections, defaults to False
+    :param generator_name: Instruction mode to use, defaults to 'flat'
+    :param recoil: NEST recoil type, defaults to 8 (beta ER)
     :param simu_mode: 's1', 's2', or 'all'. Defaults to 'all'
-    :param kwargs: Additional kwargs to pass
+    :param kwargs: Extra options to pass to strax.Context or generator,
+        and rate for generator
     :return: strax context
     """
     assert saltax_mode in SALTAX_MODES, "saltax_mode must be one of %s" % (SALTAX_MODES)
@@ -477,7 +475,7 @@ def fxenonnt(
         output_folder=output_folder,
         corrections_version=corrections_version,
         cut_list=cut_list,
-        simulation_config_file=simulation_config_file,
+        simu_config_version=simu_config_version,
         run_id_specific_config=run_id_specific_config,
         run_without_proper_corrections=run_without_proper_corrections,
         generator_name=generator_name,
@@ -494,7 +492,7 @@ def sxenonnt(
     corrections_version=DEFAULT_XEDOCS_VERSION,
     cut_list=cutax.BasicCuts,
     auto_register_cuts=True,
-    faxconf_version="sr0_v4",
+    simu_config_version="sr0_v4",
     cmt_version="global_v9",
     cmt_run_id="026000",
     generator_name="flat",
@@ -517,8 +515,8 @@ def sxenonnt(
         cutax.BasicCuts
     :param auto_register_cuts: Whether to auto register cuts, default
         True
-    :param faxconf_version: fax config version to use, default is synced
-        with cutax latest
+    :param simu_config_version: fax config version to use, default is
+        synced with cutax latest
     :param cmt_version: cmt version to use, default is synced with cutax
         latest
     :param cmt_run_id: cmt run id to use, default is synced with cutax
@@ -545,7 +543,7 @@ def sxenonnt(
         corrections_version=corrections_version,
         cut_list=cut_list,
         auto_register_cuts=auto_register_cuts,
-        faxconf_version=faxconf_version,
+        simu_config_version=simu_config_version,
         cmt_version=cmt_version,
         cmt_run_id=cmt_run_id,
         generator_name=generator_name,

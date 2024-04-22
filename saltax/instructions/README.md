@@ -1,6 +1,6 @@
 # Instructions
 ## Scope
-`wfsim` instructions.
+Generator for simulation instructions in `wfsim` format. If you specify `fuse` as your simulation package, it will be translated when you actually compute `microphysics_summary`.
 ## Structure
 - `generator.py`: `wfsim` instruction infrastructures and instruction generators.
 ## Available Generators
