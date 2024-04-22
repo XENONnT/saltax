@@ -18,7 +18,8 @@ config = configparser.ConfigParser()
 config.read("config.ini")
 output_folder = str(config.get("job", "output_folder"))
 saltax_mode = config.get("job", "saltax_mode")
-faxconf_version = config.get("job", "faxconf_version")
+package = config.get("job", "package")
+simu_config_version = config.get("job", "simu_config_version")
 generator_name = config.get("job", "generator_name")
 recoil = config.getint("job", "recoil")
 simu_mode = config.get("job", "simu_mode")
@@ -86,7 +87,7 @@ if rate is None:
         runid=runid,
         saltax_mode=saltax_mode,
         output_folder=output_folder,
-        faxconf_version=faxconf_version,
+        simu_config_version=simu_config_version,
         generator_name=generator_name,
         recoil=recoil,
         simu_mode=simu_mode,
@@ -96,7 +97,7 @@ else:
         runid=runid,
         saltax_mode=saltax_mode,
         output_folder=output_folder,
-        faxconf_version=faxconf_version,
+        simu_config_version=simu_config_version,
         generator_name=generator_name,
         recoil=recoil,
         simu_mode=simu_mode,
@@ -139,7 +140,7 @@ if saltax_mode == "salt":
                 runid=runid,
                 saltax_mode="data",
                 output_folder=output_folder,
-                faxconf_version=faxconf_version,
+                simu_config_version=simu_config_version,
                 generator_name=generator_name,
                 recoil=recoil,
                 simu_mode=simu_mode,
@@ -149,7 +150,7 @@ if saltax_mode == "salt":
                 runid=runid,
                 saltax_mode="data",
                 output_folder=output_folder,
-                faxconf_version=faxconf_version,
+                simu_config_version=simu_config_version,
                 generator_name=generator_name,
                 recoil=recoil,
                 simu_mode=simu_mode,
@@ -188,7 +189,7 @@ if saltax_mode == "salt":
                 runid=runid,
                 saltax_mode="simu",
                 output_folder=output_folder,
-                faxconf_version=faxconf_version,
+                simu_config_version=simu_config_version,
                 generator_name=generator_name,
                 recoil=recoil,
                 simu_mode=simu_mode,
@@ -198,7 +199,7 @@ if saltax_mode == "salt":
                 runid=runid,
                 saltax_mode="simu",
                 output_folder=output_folder,
-                faxconf_version=faxconf_version,
+                simu_config_version=simu_config_version,
                 generator_name=generator_name,
                 recoil=recoil,
                 simu_mode=simu_mode,
