@@ -6,7 +6,7 @@ from strax import utils
 from immutabledict import immutabledict
 from strax.processing.general import _touching_windows
 from strax.dtypes import DIGITAL_SUM_WAVEFORM_CHANNEL
-from .s_records import SCHANNEL_STARTS_AT
+from .records import SCHANNEL_STARTS_AT
 import straxen
 from straxen.plugins.peaklets.peaklets import hit_max_sample, get_tight_coin, drop_data_top_field
 
