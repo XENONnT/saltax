@@ -11,6 +11,7 @@ Update `config.ini` and run this in a container
 python submit.py
 ```
 ## Tips
+- You need to download yourself `raw_records` before submission!
 - Unless you are working on AmBe, put `mem_per_cpu = 45000` (MB) should be enough. Otherwise please do `55000`.
 - In `package` you can put either `wfsim` or `fuse`. They are both supported but of course `fuse` is preferred. Please make sure you have the master branch `wfsim` to avoid any photon timing bug.
 - When deciding `generator_name`, take a look in `saltax/saltax/instructions/README.md`.
