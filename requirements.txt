@@ -1,6 +1,6 @@
 strax
 straxen
-wfsim
+git+https://github.com/XENONnT/repository.git@8180bda7a18d7e6c4f4217cfb314154d016fcd10#egg=wfsim
 scipy
 numpy
 pandas

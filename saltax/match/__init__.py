@@ -1,4 +1,4 @@
-__version__ = "0.0.2"
+__version__ = "0.1.0"
 from . import match
 from .match import *
 from . import visual
