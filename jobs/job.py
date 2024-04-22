@@ -38,7 +38,7 @@ delete_records = config.getboolean("job", "delete_records")
 if package == "wfsim":
     context_function = saltax.contexts.sxenonnt
 elif package == "fuse":
-    scontext_function = saltax.contexts.fxenonnt
+    context_function = saltax.contexts.fxenonnt
 else:
     raise ValueError("Invalid package name %s" % package)
 
