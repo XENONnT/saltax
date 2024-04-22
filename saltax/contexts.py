@@ -191,7 +191,6 @@ def xenonnt_salted_fuse(
     else:
         context_options = FXNT_COMMON_OPTS.copy()
     context_config = dict(
-        detector="XENONnT",
         check_raw_record_overlaps=True,
         **FXNT_COMMON_CONFIG,
     )
