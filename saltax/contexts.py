@@ -128,7 +128,7 @@ def xenonnt_salted_fuse(
     output_folder="./fuse_data",
     cut_list=cutax.BasicCuts,
     corrections_version=DEFAULT_XEDOCS_VERSION,
-    simulation_config_file="fuse_config_nt_sr1_dev.json",
+    simu_config_version="sr1_dev",
     run_id_specific_config={
         "gain_model_mc": "gain_model",
         "electron_lifetime_liquid": "elife",
@@ -152,8 +152,7 @@ def xenonnt_salted_fuse(
     :param corrections_version: XENONnT documentation version to use,
         defaults to DEFAULT_XEDOCS_VERSION
     :param cut_list: Cut list to use, defaults to cutax.BasicCuts
-    :param simulation_config_file: File containing simulation
-        configuration
+    :param simu_config_version: simulation configuration version to use, defaults to "sr1_dev"
     :param run_id_specific_config: Mapping of run_id specific config
     :param run_without_proper_corrections: Whether to run without proper
         corrections, defaults to False
@@ -174,7 +173,7 @@ def xenonnt_salted_fuse(
             "corrections for testing or just trying out fuse, "
             "set run_without_proper_corrections to True"
         )
-    if simulation_config_file is None:
+    if simu_config_version is None:
         raise ValueError("Specify a simulation configuration file")
 
     if run_without_proper_corrections:
@@ -204,6 +203,7 @@ def xenonnt_salted_fuse(
     if corrections_version is not None:
         st.apply_xedocs_configs(version=corrections_version)
 
+    simulation_config_file = "fuse_config_nt_{:s}.json".format(simu_config_version)
     fuse.context.set_simulation_config_file(st, simulation_config_file)
 
     local_versions = st.config
@@ -422,7 +422,7 @@ def fxenonnt(
     output_folder="./fuse_data",
     cut_list=cutax.BasicCuts,
     corrections_version=DEFAULT_XEDOCS_VERSION,
-    simulation_config_file="fuse_config_nt_sr1_dev.json",
+    simu_config_version="sr1_dev",
     run_id_specific_config={
         "gain_model_mc": "gain_model",
         "electron_lifetime_liquid": "elife",
@@ -477,7 +477,7 @@ def fxenonnt(
         output_folder=output_folder,
         corrections_version=corrections_version,
         cut_list=cut_list,
-        simulation_config_file=simulation_config_file,
+        simu_config_version=simu_config_version,
         run_id_specific_config=run_id_specific_config,
         run_without_proper_corrections=run_without_proper_corrections,
         generator_name=generator_name,
