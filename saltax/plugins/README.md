@@ -6,6 +6,7 @@ Modified `straxen` [data structure](https://straxen.readthedocs.io/en/latest/ref
 - `records.py`: Modified `records`, which combines `raw_reords` and `raw_records_simu` together. The latter one's channel starts at constant variable `SCHANNEL_STARTS_AT`.
 - `peaklets.py`: Modified `peaklets`, which build peaks as there are `2*n_tpc_pmts` channels, but sum up per-channel information (`area_per_channel` and top-bottom specific fields) as if there are only `n_tpc_pmts`.
 ## Data Structure
-<img width="521" alt="image" src="https://github.com/FaroutYLq/saltax/assets/47046530/9c3ef86c-a171-4082-914a-98f6eee14a58">
+<img width="1700" alt="image" src="https://github.com/FaroutYLq/saltax/assets/47046530/5042d5cd-d42f-4a56-8904-b4911c5efe1c">
+
 
 Here the numbers are marking number of channels in the plugin.
