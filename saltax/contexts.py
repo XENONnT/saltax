@@ -479,6 +479,7 @@ def fxenonnt(
 
     return xenonnt_salted_fuse(
         runid=runid,
+        saltax_mode=saltax_mode,
         output_folder=output_folder,
         corrections_version=corrections_version,
         auto_register_cuts=auto_register_cuts,
