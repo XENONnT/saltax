@@ -40,7 +40,7 @@ FUSED_PLUGINS = [
 ]
 FUSE_DONT_REGISTER = [
     fuse.plugins.micro_physics.microphysics_summary.MicroPhysicsSummary,
-    fuse.plugins.pmt_and_daq.pmt_response_and_daq.PMTResponseAndDAQ
+    fuse.plugins.pmt_and_daq.pmt_response_and_daq.PMTResponseAndDAQ,
 ]
 
 # ~Infinite raw_records file size to avoid downchunking
@@ -76,7 +76,7 @@ FXNT_COMMON_OPTS_REGISTER = [
     saltax.SChunkCsvInput,
     saltax.SPeaklets,
     saltax.SPulseProcessing,
-    saltax.SPMTResponseAndDAQ
+    saltax.SPMTResponseAndDAQ,
 ] + FXNT_COMMON_OPTS_REGISTER
 FXNT_COMMON_OPTS_OVERRIDE = dict(
     register=FXNT_COMMON_OPTS_REGISTER,
@@ -188,12 +188,13 @@ def xenonnt_salted_fuse(
     else:
         context_options = FXNT_COMMON_OPTS.copy()
     context_config = dict(
-        detector='XENONnT',
+        detector="XENONnT",
         check_raw_record_overlaps=True,
         **FXNT_COMMON_CONFIG,
     )
-    st = strax.Context(storage=strax.DataDirectory(output_folder), 
-                       config=context_config, **context_options)
+    st = strax.Context(
+        storage=strax.DataDirectory(output_folder), config=context_config, **context_options
+    )
 
     for plugin_list in FUSED_PLUGINS:
         for plugin in plugin_list:
