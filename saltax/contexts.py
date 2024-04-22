@@ -127,6 +127,7 @@ def xenonnt_salted_fuse(
     saltax_mode="salt",
     output_folder="./fuse_data",
     cut_list=cutax.BasicCuts,
+    auto_register_cuts=True,
     corrections_version=DEFAULT_XEDOCS_VERSION,
     simu_config_version="sr1_dev",
     run_id_specific_config={
@@ -152,6 +153,8 @@ def xenonnt_salted_fuse(
     :param corrections_version: XENONnT documentation version to use,
         defaults to DEFAULT_XEDOCS_VERSION
     :param cut_list: Cut list to use, defaults to cutax.BasicCuts
+    :param auto_register_cuts: Whether to automatically register cuts,
+        defaults to True
     :param simu_config_version: simulation configuration version to use,
         defaults to "sr1_dev"
     :param run_id_specific_config: Mapping of run_id specific config
@@ -233,6 +236,8 @@ def xenonnt_salted_fuse(
     st.set_config(dict(saltax_mode=saltax_mode))
 
     # Register cuts plugins
+    if auto_register_cuts:
+        st.register_cuts()
     if cut_list is not None:
         st.register_cut_list(cut_list)
 
@@ -422,6 +427,7 @@ def fxenonnt(
     saltax_mode="salt",
     output_folder="./fuse_data",
     cut_list=cutax.BasicCuts,
+    auto_register_cuts=True,
     corrections_version=DEFAULT_XEDOCS_VERSION,
     simu_config_version="sr1_dev",
     run_id_specific_config={
@@ -449,6 +455,8 @@ def fxenonnt(
         with cutax latest
     :param cut_list: List of cuts to register, default is
         cutax.BasicCuts
+    :param auto_register_cuts: Whether to automatically register cuts,
+        defaults to True
     :param simu_config_version: fax config version to use, default is
         synced with cutax latest
     :param run_id_specific_config: Mapping of run_id specific config
@@ -474,6 +482,7 @@ def fxenonnt(
         runid=runid,
         output_folder=output_folder,
         corrections_version=corrections_version,
+        auto_register_cuts=auto_register_cuts,
         cut_list=cut_list,
         simu_config_version=simu_config_version,
         run_id_specific_config=run_id_specific_config,
