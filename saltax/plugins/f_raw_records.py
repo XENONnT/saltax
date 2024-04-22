@@ -203,10 +203,6 @@ class SCsvFileLoader:
         log.debug("Loading detector simulation instructions from a csv file in wfsim format!")
         df = pd.read_csv(self.input_file)
 
-        # Check if all needed columns are in place:
-        if not set(self.columns).issubset(df.columns):
-            log.warning("Not all needed columns provided!")
-
         return df
         
 
