@@ -13,7 +13,7 @@ setuptools.setup(
     author="Lanqing Yuan",
     description="Salting analysis framework for XENONnT.",
     long_description=readme,
-    version="0.1.0",
+    version="0.1.1",
     install_requires=requires,
     setup_requires=["pytest-runner"],
     tests_require=requires + ["pytest", "hypothesis", "boltons"],
