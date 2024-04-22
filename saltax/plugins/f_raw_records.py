@@ -88,14 +88,14 @@ class SChunkCsvInput(FuseBasePlugin):
         
     def compute(self, raw_records, start, end):
         try:
-            chunk_data = self.csv_file_reader.output_chunk(start, end)
+            chunk_data, source_done = self.csv_file_reader.output_chunk(start, end)
             chunk_data["time"] = chunk_data["t"]
             chunk_data["endtime"] = chunk_data["time"]
             chunk_data = chunk_data.to_records(index=False)
             data = np.zeros(len(chunk_data), dtype=self.dtype)
             strax.copy_to_buffer(chunk_data, data, "_bring_data_into_correct_format")
 
-            #self.source_done = True
+            self.source_done = source_done
 
             # Stick rigorously with raw_records time range
             return self.chunk(
@@ -196,6 +196,7 @@ class SCsvFileLoader:
         if np.any(mask_next):
             source_done = False
         else:
+            log.debug("This is the last chunk! No more instructions available!")
             source_done = True
 
         mask = (instructions["t"] >= chunk_start + self.ns_no_instruction_after_chunk_start)
