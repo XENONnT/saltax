@@ -272,7 +272,7 @@ def xenonnt_salted_wfsim(
     corrections_version=DEFAULT_XEDOCS_VERSION,
     cut_list=cutax.BasicCuts,
     auto_register_cuts=True,
-    faxconf_version="sr0_v4",
+    simu_config_version="sr0_v4",
     cmt_version="global_v9",
     cmt_run_id="026000",
     generator_name="flat",
@@ -293,7 +293,7 @@ def xenonnt_salted_wfsim(
     :param cut_list: Cut list to use, defaults to cutax.BasicCuts
     :param auto_register_cuts: Whether to automatically register cuts,
         defaults to True
-    :param faxconf_version: (for simulation) fax configuration version
+    :param simu_config_version: (for simulation) fax configuration version
         to use, defaults to "sr0_v4"
     :param cmt_version: (for simulation) CMT version to use, defaults to
         "global_v9"
@@ -327,7 +327,7 @@ def xenonnt_salted_wfsim(
             print(f"Instructions saved to {instr_file_name}")
 
     # Based on cutax.xenonnt_sim_base()
-    fax_conf = "fax_config_nt_{:s}.json".format(faxconf_version)
+    fax_conf = "fax_config_nt_{:s}.json".format(simu_config_version)
 
     # Based on straxen.contexts.xenonnt_online()
     if kwargs is not None:
@@ -494,7 +494,7 @@ def sxenonnt(
     corrections_version=DEFAULT_XEDOCS_VERSION,
     cut_list=cutax.BasicCuts,
     auto_register_cuts=True,
-    faxconf_version="sr0_v4",
+    simu_config_version="sr0_v4",
     cmt_version="global_v9",
     cmt_run_id="026000",
     generator_name="flat",
@@ -517,7 +517,7 @@ def sxenonnt(
         cutax.BasicCuts
     :param auto_register_cuts: Whether to auto register cuts, default
         True
-    :param faxconf_version: fax config version to use, default is synced
+    :param simu_config_version: fax config version to use, default is synced
         with cutax latest
     :param cmt_version: cmt version to use, default is synced with cutax
         latest
@@ -545,7 +545,7 @@ def sxenonnt(
         corrections_version=corrections_version,
         cut_list=cut_list,
         auto_register_cuts=auto_register_cuts,
-        faxconf_version=faxconf_version,
+        simu_config_version=simu_config_version,
         cmt_version=cmt_version,
         cmt_run_id=cmt_run_id,
         generator_name=generator_name,
