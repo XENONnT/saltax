@@ -152,7 +152,8 @@ def xenonnt_salted_fuse(
     :param corrections_version: XENONnT documentation version to use,
         defaults to DEFAULT_XEDOCS_VERSION
     :param cut_list: Cut list to use, defaults to cutax.BasicCuts
-    :param simu_config_version: simulation configuration version to use, defaults to "sr1_dev"
+    :param simu_config_version: simulation configuration version to use,
+        defaults to "sr1_dev"
     :param run_id_specific_config: Mapping of run_id specific config
     :param run_without_proper_corrections: Whether to run without proper
         corrections, defaults to False
@@ -293,8 +294,8 @@ def xenonnt_salted_wfsim(
     :param cut_list: Cut list to use, defaults to cutax.BasicCuts
     :param auto_register_cuts: Whether to automatically register cuts,
         defaults to True
-    :param simu_config_version: (for simulation) fax configuration version
-        to use, defaults to "sr0_v4"
+    :param simu_config_version: (for simulation) fax configuration
+        version to use, defaults to "sr0_v4"
     :param cmt_version: (for simulation) CMT version to use, defaults to
         "global_v9"
     :param cmt_run_id: (for simulation) CMT run ID to use, defaults to
@@ -448,15 +449,13 @@ def fxenonnt(
         with cutax latest
     :param cut_list: List of cuts to register, default is
         cutax.BasicCuts
-    :param simu_config_version: fax config version to use, default is synced
-        with cutax latest
-    :param run_id_specific_config: Mapping of run_id specific config    
+    :param simu_config_version: fax config version to use, default is
+        synced with cutax latest
+    :param run_id_specific_config: Mapping of run_id specific config
     :param run_without_proper_corrections: Whether to run without proper
         corrections, defaults to False
-    :param generator_name: Instruction mode to use,
-        defaults to 'flat'
-    :param recoil: NEST recoil type, defaults to 8
-        (beta ER)
+    :param generator_name: Instruction mode to use, defaults to 'flat'
+    :param recoil: NEST recoil type, defaults to 8 (beta ER)
     :param simu_mode: 's1', 's2', or 'all'. Defaults to 'all'
     :param kwargs: Extra options to pass to strax.Context or generator,
         and rate for generator
@@ -516,8 +515,8 @@ def sxenonnt(
         cutax.BasicCuts
     :param auto_register_cuts: Whether to auto register cuts, default
         True
-    :param simu_config_version: fax config version to use, default is synced
-        with cutax latest
+    :param simu_config_version: fax config version to use, default is
+        synced with cutax latest
     :param cmt_version: cmt version to use, default is synced with cutax
         latest
     :param cmt_run_id: cmt run id to use, default is synced with cutax
