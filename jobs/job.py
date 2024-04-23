@@ -103,7 +103,7 @@ def get_data_types(settings):
     to_process_dtypes = ["raw_records_simu", "records"] + to_process_dtypes if not settings['skip_records'] else to_process_dtypes
 
     # Decide whether to process microphysics_summary
-    to_process_dtypes = to_process_dtypes = ['microphysics_summary'] + to_process_dtypes if settings['package'] == "fuse" else to_process_dtypes
+    to_process_dtypes = ['microphysics_summary'] + to_process_dtypes if settings['package'] == "fuse" else to_process_dtypes
 
     return to_process_dtypes
 
