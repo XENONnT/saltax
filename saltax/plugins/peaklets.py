@@ -24,7 +24,7 @@ export, __all__ = strax.exporter()
         help="'data', 'simu', or 'salt'",
     ),
 )
-class SPeaklets(strax.Plugin):
+class SPeaklets(straxen.Peaklets):
     """
     Split records into:
      - peaklets
@@ -44,142 +44,6 @@ class SPeaklets(strax.Plugin):
     lone_hits includes the left and right hit extension, except the
     extension overlaps with any peaks or other hits.
     """
-
-    depends_on = ("records",)
-    provides = ("peaklets", "lone_hits")
-    data_kind = dict(peaklets="peaklets", lone_hits="lone_hits")
-    parallel = "process"
-    compressor = "zstd"
-
-    __version__ = "0.0.4"
-
-    peaklet_gap_threshold = straxen.URLConfig(
-        default=700, infer_type=False, help="No hits for this many ns triggers a new peak"
-    )
-
-    peak_left_extension = straxen.URLConfig(
-        default=30, infer_type=False, help="Include this many ns left of hits in peaks"
-    )
-
-    peak_right_extension = straxen.URLConfig(
-        default=200, infer_type=False, help="Include this many ns right of hits in peaks"
-    )
-
-    peak_min_pmts = straxen.URLConfig(
-        default=2,
-        infer_type=False,
-        help="Minimum number of contributing PMTs needed to define a peak",
-    )
-
-    peak_split_gof_threshold = straxen.URLConfig(
-        # See https://xe1t-wiki.lngs.infn.it/doku.php?id=
-        # xenon:xenonnt:analysis:strax_clustering_classification
-        # #natural_breaks_splitting
-        # for more information
-        default=(None, ((0.5, 1.0), (6.0, 0.4)), ((2.5, 1.0), (5.625, 0.4))),  # Reserved
-        infer_type=False,
-        help="Natural breaks goodness of fit/split threshold to split "
-        "a peak. Specify as tuples of (log10(area), threshold).",
-    )
-
-    peak_split_filter_wing_width = straxen.URLConfig(
-        default=70,
-        infer_type=False,
-        help="Wing width of moving average filter for " "low-split natural breaks",
-    )
-
-    peak_split_min_area = straxen.URLConfig(
-        default=40.0,
-        infer_type=False,
-        help="Minimum area to evaluate natural breaks criterion. " "Smaller peaks are not split.",
-    )
-
-    peak_split_iterations = straxen.URLConfig(
-        default=20, infer_type=False, help="Maximum number of recursive peak splits to do."
-    )
-
-    diagnose_sorting = straxen.URLConfig(
-        track=False,
-        default=False,
-        infer_type=False,
-        help="Enable runtime checks for sorting and disjointness",
-    )
-
-    gain_model = straxen.URLConfig(
-        infer_type=False, help="PMT gain model. Specify as URL or explicit value"
-    )
-
-    gain_model_mc = straxen.URLConfig(
-        infer_type=False, help="PMT gain model. Specify as URL or explicit value"
-    )
-
-    tight_coincidence_window_left = straxen.URLConfig(
-        default=50,
-        infer_type=False,
-        help="Time range left of peak center to call a hit a tight coincidence (ns)",
-    )
-
-    tight_coincidence_window_right = straxen.URLConfig(
-        default=50,
-        infer_type=False,
-        help="Time range right of peak center to call a hit a tight coincidence (ns)",
-    )
-
-    n_tpc_pmts = straxen.URLConfig(type=int, help="Number of TPC PMTs")
-
-    n_top_pmts = straxen.URLConfig(type=int, help="Number of top TPC array PMTs")
-
-    sum_waveform_top_array = straxen.URLConfig(
-        default=True, type=bool, help="Digitize the sum waveform of the top array separately"
-    )
-
-    saturation_correction_on = straxen.URLConfig(
-        default=True, infer_type=False, help="On off switch for saturation correction"
-    )
-
-    saturation_reference_length = straxen.URLConfig(
-        default=100,
-        infer_type=False,
-        help="Maximum number of reference sample used " "to correct saturated samples",
-    )
-
-    saturation_min_reference_length = straxen.URLConfig(
-        default=20,
-        infer_type=False,
-        help="Minimum number of reference sample used " "to correct saturated samples",
-    )
-
-    peaklet_max_duration = straxen.URLConfig(
-        default=int(10e6), infer_type=False, help="Maximum duration [ns] of a peaklet"
-    )
-
-    channel_map = straxen.URLConfig(
-        track=False,
-        type=immutabledict,
-        help="immutabledict mapping subdetector to (min, max) " "channel number.",
-    )
-
-    hit_min_amplitude = straxen.URLConfig(
-        track=True,
-        infer_type=False,
-        default="cmt://hit_thresholds_tpc?version=ONLINE&run_id=plugin.run_id",
-        help="Minimum hit amplitude in ADC counts above baseline. "
-        "Specify as a tuple of length n_tpc_pmts, or a number,"
-        'or a string like "pmt_commissioning_initial" which means calling'
-        "hitfinder_thresholds.py"
-        "or a tuple like (correction=str, version=str, nT=boolean),"
-        "which means we are using cmt.",
-    )
-
-    def infer_dtype(self):
-        return dict(
-            peaklets=strax.peak_dtype(
-                n_channels=self.n_tpc_pmts,
-                digitize_top=self.sum_waveform_top_array,
-            ),
-            lone_hits=strax.hit_dtype,
-        )
-
     def setup(self):
         if self.peak_min_pmts > 2:
             # Can fix by re-splitting,
@@ -421,53 +285,6 @@ class SPeaklets(strax.Plugin):
         assert np.all(is_still_lone_hit), "Some lone_hits are in peaklets!?"
 
         return dict(peaklets=peaklets, lone_hits=lone_hits)
-
-    def natural_breaks_threshold(self, peaks):
-        """
-        Pasted from https://github.com/XENONnT/straxen/blob/5f232eb2c1ab39e11fb14d4e6ee2db369ed2c2ec/straxen/plugins/peaklets/peaklets.py#L332-L348
-        """
-        rise_time = -peaks["area_decile_from_midpoint"][:, 1]
-
-        # This is ~1 for an clean S2, ~0 for a clean S1,
-        # and transitions gradually in between.
-        f_s2 = 8 * np.log10(rise_time.clip(1, 1e5) / 100)
-        f_s2 = 1 / (1 + np.exp(-f_s2))
-
-        log_area = np.log10(peaks["area"].clip(1, 1e7))
-        thresholds = self.peak_split_gof_threshold
-        return f_s2 * np.interp(log_area, *np.transpose(thresholds[2])) + (1 - f_s2) * np.interp(
-            log_area, *np.transpose(thresholds[1])
-        )
-
-    @staticmethod
-    def clip_peaklet_times(peaklets, start, end):
-        straxen.plugins.peaklets.Peaklets.clip_peaklet_times(peaklets, start, end)
-
-    @staticmethod
-    def create_outside_peaks_region(peaklets, start, end):
-        """Creates time intervals which are outside peaks.
-
-        :param peaklets: Peaklets for which intervals should be
-            computed.
-        :param start: Chunk start
-        :param end: Chunk end
-        :return: array of strax.time_fields dtype.
-        """
-        outside_peaks = straxen.plugins.peaklets.Peaklets.create_outside_peaks_region(
-            peaklets, start, end
-        )
-        return outside_peaks
-
-    @staticmethod
-    def add_hit_features(hitlets, hit_max_times, peaklets):
-        """Create hits timing features :param hitlets_max: hitlets with only
-        max height time.
-
-        :param peaklets: Peaklets for which intervals should be
-            computed.
-        :return: array of peaklet_timing dtype.
-        """
-        straxen.plugins.peaklets.Peaklets.add_hit_features(hitlets, hit_max_times, peaklets)
 
 
 @numba.jit(nopython=True, nogil=True, cache=False)
