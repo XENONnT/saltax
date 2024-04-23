@@ -310,7 +310,7 @@ def xenonnt_salted_wfsim(
         (beta ER)
     :param simu_mode: 's1', 's2', or 'all'. Defaults to 'all'
     :param kwargs: Extra options to pass to strax.Context or generator,
-        and rate for generator
+        and rate/en_range etc for generator
     :return: strax context
     """
     # Get salt generator
@@ -465,7 +465,7 @@ def fxenonnt(
     :param recoil: NEST recoil type, defaults to 8 (beta ER)
     :param simu_mode: 's1', 's2', or 'all'. Defaults to 'all'
     :param kwargs: Extra options to pass to strax.Context or generator,
-        and rate for generator
+        and rate/en_range etc for generator
     :return: strax context
     """
     assert saltax_mode in SALTAX_MODES, "saltax_mode must be one of %s" % (SALTAX_MODES)
