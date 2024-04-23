@@ -1,61 +1,18 @@
-import saltax
-import strax
-import straxen
 import configparser
-from datetime import datetime
+import time
 import sys
 import gc
 import os
+import saltax
+import strax
+import straxen
+from functools import wraps
+import logging
 
-straxen.print_versions()
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
-now = datetime.now()
-_, runid = sys.argv
-runid = int(runid)
-strrunid = str(runid).zfill(6)
 
-config = configparser.ConfigParser()
-config.read("config.ini")
-output_folder = str(config.get("job", "output_folder"))
-saltax_mode = config.get("job", "saltax_mode")
-package = config.get("job", "package")
-simu_config_version = config.get("job", "simu_config_version")
-generator_name = config.get("job", "generator_name")
-recoil = config.getint("job", "recoil")
-simu_mode = config.get("job", "simu_mode")
-_rate = config.get("job", "rate", fallback=None)
-if _rate is not None and _rate.strip():  # Check if rate_value is not just whitespace
-    rate = float(_rate)
-else:
-    rate = None
-_en_range = config.get("job", "en_range", fallback=None)
-if _en_range is not None and _en_range.strip():  # Check if en_range is not just whitespace
-    convert_to_tuple = lambda s: tuple(float(x) if "." in x else int(x) for x in s.split(","))
-    __en_range = convert_to_tuple(_en_range)
-else:
-    __en_range = None
-if (__en_range is not None) and generator_name != "flat":
-    en_range = None
-    print("You specified en_range = %s, but generator_name = %s. " % (__en_range, generator_name))
-    print("en_range will be ignored and be replaced by None. ")
-else:
-    en_range = __en_range
-process_data = config.getboolean("job", "process_data")
-process_simu = config.getboolean("job", "process_simu")
-skip_records = config.getboolean("job", "skip_records")
-storage_to_patch = config.get("job", "storage_to_patch").split(",")
-delete_records = config.getboolean("job", "delete_records")
-
-# Determine context for processing
-if package == "wfsim":
-    context_function = saltax.contexts.sxenonnt
-elif package == "fuse":
-    context_function = saltax.contexts.fxenonnt
-else:
-    raise ValueError("Invalid package name %s" % package)
-
-# Determine whether to process events type plugins or just peak types
-to_process_dtypes_ev = [
+TO_PROCESS_DTYPES_EV = [
     "peaklets",
     "peaklet_classification",
     "merged_s2s",
@@ -73,7 +30,7 @@ to_process_dtypes_ev = [
     "veto_intervals",
     "cuts_basic",
 ]
-to_process_dtypes_se = [
+TO_PROCESS_DTYPES_SE = [
     "peaklets",
     "peaklet_classification",
     "merged_s2s",
@@ -84,197 +41,173 @@ to_process_dtypes_se = [
     "peak_shadow",
     "peak_ambience",
 ]
-if "se" in generator_name:
-    to_process_dtypes = to_process_dtypes_se
-    print("We use a single electron generator, so we will process:")
-else:
-    to_process_dtypes = to_process_dtypes_ev
-    print("Not a single electron generator, so we will process:")
-print(to_process_dtypes)
-print("====================")
 
-if not skip_records:
-    to_process_dtypes = ["records"] + to_process_dtypes
 
-print("Used time:", datetime.now() - now)
-now = datetime.now()
+def print_versions():
+    """Print the versions of saltax, strax, and straxen."""
+    logging.info(straxen.print_versions(["saltax", "strax", "straxen", "fuse", "nestpy", "wfsim"]))
 
-print("====================")
-print("Finished importing and config loading, now start to load context.")
-print("Now starting %s context for run %d" % (saltax_mode, runid))
-if en_range is None:
+
+def load_config():
+    """Load the configuration file and return the settings."""
+    config = configparser.ConfigParser()
+    config.read("config.ini")
+    settings = {
+        "output_folder": config.get("job", "output_folder"),
+        "saltax_mode": config.get("job", "saltax_mode"),
+        "package": config.get("job", "package"),
+        "simu_config_version": config.get("job", "simu_config_version"),
+        "generator_name": config.get("job", "generator_name"),
+        "recoil": config.getint("job", "recoil"),
+        "simu_mode": config.get("job", "simu_mode"),
+        "rate": float(config.get("job", "rate", fallback=0)) or None,
+        "en_range": parse_en_range(config.get("job", "en_range", fallback="")),
+        "process_data": config.getboolean("job", "process_data"),
+        "process_simu": config.getboolean("job", "process_simu"),
+        "skip_records": config.getboolean("job", "skip_records"),
+        "storage_to_patch": config.get("job", "storage_to_patch").split(","),
+        "delete_records": config.getboolean("job", "delete_records"),
+    }
+    return settings
+
+
+def parse_en_range(en_range_str):
+    """Parse the energy range string and return a tuple of floats."""
+    if en_range_str.strip():
+        return tuple(float(x) if "." in x else int(x) for x in en_range_str.split(","))
+    return None
+
+
+def create_context(settings, runid):
+    """Create the context for the given settings and runid, and patch storage
+    if needed."""
+    context_function = get_context_function(settings["package"])
     st = context_function(
         runid=runid,
-        saltax_mode=saltax_mode,
-        output_folder=output_folder,
-        simu_config_version=simu_config_version,
-        generator_name=generator_name,
-        recoil=recoil,
-        simu_mode=simu_mode,
-        rate=rate,
+        saltax_mode=settings["saltax_mode"],
+        output_folder=settings["output_folder"],
+        simu_config_version=settings["simu_config_version"],
+        generator_name=settings["generator_name"],
+        recoil=settings["recoil"],
+        simu_mode=settings["simu_mode"],
+        rate=settings["rate"] if settings["rate"] else None,
+        en_range=settings["en_range"] if settings["en_range"] else None,
     )
-else:
-    st = context_function(
-        runid=runid,
-        saltax_mode=saltax_mode,
-        output_folder=output_folder,
-        simu_config_version=simu_config_version,
-        generator_name=generator_name,
-        recoil=recoil,
-        simu_mode=simu_mode,
-        rate=rate,
-        en_range=en_range,
+    for d in settings["storage_to_patch"]:
+        if d:
+            st.storage.append(strax.DataDirectory(d, readonly=True))
+    return st
+
+
+def get_context_function(package):
+    """Return the context function for the given package."""
+    if package == "wfsim":
+        return saltax.contexts.sxenonnt
+    elif package == "fuse":
+        return saltax.contexts.fxenonnt
+    raise ValueError("Invalid package name %s" % package)
+
+
+def get_data_types(settings):
+    """Return the data types to process based on the generators."""
+    # Decide if it is event level study or not
+    if settings["generator_name"] == "se" or settings["generator_name"] == "se_bootstrapped":
+        to_process_dtypes = TO_PROCESS_DTYPES_SE
+    else:
+        to_process_dtypes = TO_PROCESS_DTYPES_EV
+
+    # Decide whether to skip records
+    to_process_dtypes = (
+        ["raw_records_simu", "records"] + to_process_dtypes
+        if not settings["skip_records"]
+        else to_process_dtypes
     )
-if len(storage_to_patch) and storage_to_patch[0] != "":
-    for d in storage_to_patch:
-        st.storage.append(strax.DataDirectory(d, readonly=True))
 
-if package == "fuse":
-    print("Making microphysics_summary.")
-    st.make(strrunid, "microphysics_summary", progress_bar=True)
-    print("Done with microphysics_summary.")
-    gc.collect()
-print("Making raw_records.")
-st.make(strrunid, "raw_records_simu", progress_bar=True)
-print("Done with raw_records.")
-gc.collect()
-for dt in to_process_dtypes:
-    print("Making %s. " % dt)
-    try:
-        st.make(strrunid, dt, save=(dt), progress_bar=True)
-        print("Done with %s. " % dt)
-    except NotImplementedError as e:
-        print("The cut_basics for run %d is not implemented. " % runid)
-    gc.collect()
+    # Decide whether to process microphysics_summary
+    to_process_dtypes = (
+        ["microphysics_summary"] + to_process_dtypes
+        if settings["package"] == "fuse"
+        else to_process_dtypes
+    )
 
-print("Used time:", datetime.now() - now)
-now = datetime.now()
+    return to_process_dtypes
 
-print(
-    "Finished making all the computation for run %d in \
-	saltax mode salt. "
-    % (runid)
-)
 
-if saltax_mode == "salt":
-    if process_data:
-        print("====================")
-        print(
-            "Since you specified saltax_mode = salt, \
-          	   we will also compute simulation-only and data-only."
-        )
-        print("Now starting data-only context for run %d" % (runid))
-        if en_range is None:
-            st = context_function(
-                runid=runid,
-                saltax_mode="data",
-                output_folder=output_folder,
-                simu_config_version=simu_config_version,
-                generator_name=generator_name,
-                recoil=recoil,
-                simu_mode=simu_mode,
-                rate=rate,
-            )
-        else:
-            st = context_function(
-                runid=runid,
-                saltax_mode="data",
-                output_folder=output_folder,
-                simu_config_version=simu_config_version,
-                generator_name=generator_name,
-                recoil=recoil,
-                simu_mode=simu_mode,
-                rate=rate,
-                en_range=en_range,
-            )
-        if len(storage_to_patch) and storage_to_patch[0] != "":
-            for d in storage_to_patch:
-                st.storage.append(strax.DataDirectory(d, readonly=True))
-
-        for dt in to_process_dtypes:
-            print("Making %s. " % dt)
-            try:
-                st.make(strrunid, dt, save=(dt), progress_bar=True)
-                print("Done with %s. " % dt)
-            except NotImplementedError as e:
-                print("The cut_basics for run %d is not implemented. " % runid)
-            gc.collect()
-
-        print("Used time:", datetime.now() - now)
-        now = datetime.now()
-
-        print(
-            "Finished making all the computation for run %d in \
-			saltax mode %s. "
-            % (runid, "data")
-        )
-        print("====================")
-    else:
-        print("You specified process_data = False, so we will not process data.")
-
-    if process_simu:
-        print("====================")
-        print("Now starting simu-only context for run %d" % (runid))
-        if en_range is None:
-            st = context_function(
-                runid=runid,
-                saltax_mode="simu",
-                output_folder=output_folder,
-                simu_config_version=simu_config_version,
-                generator_name=generator_name,
-                recoil=recoil,
-                simu_mode=simu_mode,
-                rate=rate,
-            )
-        else:
-            st = context_function(
-                runid=runid,
-                saltax_mode="simu",
-                output_folder=output_folder,
-                simu_config_version=simu_config_version,
-                generator_name=generator_name,
-                recoil=recoil,
-                simu_mode=simu_mode,
-                rate=rate,
-                en_range=en_range,
-            )
-        if len(storage_to_patch) and storage_to_patch[0] != "":
-            for d in storage_to_patch:
-                st.storage.append(strax.DataDirectory(d, readonly=True))
-
-        for dt in to_process_dtypes:
-            print("Making %s. " % dt)
-
-            try:
-                st.make(strrunid, dt, save=(dt), progress_bar=True)
-                print("Done with %s. " % dt)
-            except NotImplementedError as e:
-                print("The cut_basics for run %d is not implemented. " % runid)
-            gc.collect()
-        # Manually make pema plugin after
-        # st.make(strrunid, "match_acceptance_extended", progress_bar=True)
-
-        print("Used time:", datetime.now() - now)
-        now = datetime.now()
-
-        print(
-            "Finished making all the computation for run %d in \
-			saltax mode %s. "
-            % (runid, "simu")
-        )
-        print("====================")
-    else:
-        print("You specified process_simu = False, so we will not process simu.")
-
-if delete_records:
-    print("Deleting records.")
-    records_name = str(st.key_for(strrunid, "records"))
-    records_path = os.path.join(output_folder, records_name)
-    if os.path.exists(records_path):
-        os.rmdir(records_path)
+def process_data_types(st, strrunid, data_types):
+    """Process the data types for the given context and runid."""
+    for dt in data_types:
+        logging.info(f"Making {dt}.")
+        try:
+            st.make(strrunid, dt, save=(dt), progress_bar=True)
+            logging.info(f"Done with {dt}.")
+        except NotImplementedError as e:
+            logging.error(f"Error for data type {dt}: {str(e)}")
         gc.collect()
-        print("Deleted records for run %d in saltax mode salt. " % (runid))
-print("====================")
 
 
-print("Finished all. Exiting.")
+def delete_records_if_needed(settings, runid, st):
+    """Delete records if needed."""
+    if settings["delete_records"]:
+        records_name = str(st.key_for(runid, "records"))
+        records_path = os.path.join(settings["output_folder"], records_name)
+        if os.path.exists(records_path):
+            os.rmdir(records_path)
+            gc.collect()
+            logging.info("Deleted records for run %d in saltax mode salt. " % (runid))
+
+
+def timeit(func):
+    """Decorator to measure the execution time of a function."""
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        start_time = time.time()
+        result = func(*args, **kwargs)
+        elapsed_time = time.time() - start_time
+        logging.info(f"Total elapsed time for {func.__name__}: {elapsed_time:.2f} seconds.")
+        return result
+
+    return wrapper
+
+
+@timeit
+def main():
+    print_versions()
+    _, runid = sys.argv
+    runid = int(runid)
+    settings = load_config()
+
+    logging.info("Loading context...")
+    st = create_context(settings, runid)
+    data_types = get_data_types(settings)
+    process_data_types(st, str(runid).zfill(6), data_types)
+
+    # Process data-only mode if required
+    if settings["process_data"]:
+        logging.info("====================")
+        logging.info("Now starting data-only context for run %d" % runid)
+        settings_temp = settings.copy()
+        settings_temp["saltax_mode"] = "data"
+        st_data = create_context(settings_temp, runid)
+        process_data_types(st_data, str(runid).zfill(6), data_types)
+        logging.info("Finished processing for data-only mode.")
+
+    if settings["process_simu"]:
+        logging.info("====================")
+        logging.info("Now starting simu-only context for run %d" % runid)
+        settings_temp = settings.copy()
+        settings_temp["saltax_mode"] = "simu"
+        st_simu = create_context(settings_temp, runid)
+        process_data_types(st_simu, str(runid).zfill(6), data_types)
+        logging.info("Finished processing for simu-only mode.")
+
+    # Delete records if needed
+    delete_records_if_needed(settings, runid, st)
+
+    logging.info("====================")
+    logging.info("Finished all computations for run %d." % runid)
+    logging.info("Exiting.")
+
+
+if __name__ == "__main__":
+    main()
