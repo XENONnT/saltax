@@ -1,11 +1,12 @@
 import configparser
-from datetime import datetime
+import time
 import sys
 import gc
 import os
 import saltax
 import strax
 import straxen
+from functools import wraps
 
 
 TO_PROCESS_DTYPES_EV = [
@@ -126,9 +127,20 @@ def delete_records_if_needed(settings, runid, st):
             gc.collect()
             print("Deleted records for run %d in saltax mode salt. " % (runid))
 
+def timeit(func):
+    """Decorator to measure the execution time of a function."""
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        start_time = time.time()
+        result = func(*args, **kwargs)
+        elapsed_time = time.time() - start_time
+        print(f"Total elapsed time for {func.__name__}: {elapsed_time:.2f} seconds.")
+        return result
+    return wrapper
+
+@timeit
 def main():
     print_versions()
-    start_time = datetime.now()
     _, runid = sys.argv
     runid = int(runid)
     settings = load_config()
@@ -142,17 +154,18 @@ def main():
     if settings['process_data']:
         print("====================")
         print("Now starting data-only context for run %d" % runid)
-        settings['saltax_mode'] = 'data'
-        st_data = create_context(settings, runid)
+        settings_temp = settings.copy()
+        settings_temp['saltax_mode'] = 'data'
+        st_data = create_context(settings_temp, runid)
         process_data_types(st_data, str(runid).zfill(6), data_types)
         print("Finished processing for data-only mode.")
 
-    # Process simu-only mode if required
     if settings['process_simu']:
         print("====================")
         print("Now starting simu-only context for run %d" % runid)
-        settings['saltax_mode'] = 'simu'
-        st_simu = create_context(settings, runid)
+        settings_temp = settings.copy()
+        settings_temp['saltax_mode'] = 'simu'
+        st_simu = create_context(settings_temp, runid)
         process_data_types(st_simu, str(runid).zfill(6), data_types)
         print("Finished processing for simu-only mode.")
 
@@ -161,7 +174,6 @@ def main():
 
     print("====================")
     print("Finished all computations for run %d." % runid)
-    print("Total elapsed time:", datetime.now() - start_time)
     print("Exiting.")
 
 if __name__ == "__main__":
