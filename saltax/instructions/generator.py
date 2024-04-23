@@ -385,7 +385,7 @@ def generator_flat(
     """Generate instructions for a run with flat energy spectrum.
 
     :param runid: run number in integer
-    :param en_range: (en_min, en_max) in keV, default: (0, 30.0)
+    :param en_range: (en_min, en_max) in keV, default: (0.2, 15.0)
     :param recoil: NEST recoil type, default: 8 (beta ER)
     :param n_tot: total number of events to generate, default: None i.e.
         generate events until end_time
