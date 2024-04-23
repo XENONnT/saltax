@@ -44,6 +44,12 @@ class SPeaklets(straxen.Peaklets):
     extension overlaps with any peaks or other hits.
     """
 
+    __version__ = "0.0.4"
+
+    gain_model_mc = straxen.URLConfig(
+        infer_type=False, help="PMT gain model. Specify as URL or explicit value"
+    )
+
     def setup(self):
         if self.peak_min_pmts > 2:
             # Can fix by re-splitting,
