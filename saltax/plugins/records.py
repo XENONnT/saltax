@@ -1,4 +1,3 @@
-from immutabledict import immutabledict
 from straxen.plugins.records.records import count_pulses
 import numpy as np
 import strax
@@ -11,7 +10,7 @@ __all__ += ["NO_PULSE_COUNTS"]
 
 
 @export
-class SPulseProcessing(strax.Plugin):
+class SPulseProcessing(straxen.PulseProcessing):
     """
     Split raw_records into:
      - (tpc) records
@@ -31,132 +30,8 @@ class SPulseProcessing(strax.Plugin):
     overlap with any other pulse), or mean values of baseline and
     baseline rms channel.
     """
-
     __version__ = "0.0.2"
-
-    parallel = "process"
-    rechunk_on_save = immutabledict(records=False, veto_regions=True, pulse_counts=True)
-    compressor = "zstd"
-
     depends_on = ("raw_records", "raw_records_simu")
-
-    provides = ("records", "veto_regions", "pulse_counts")
-    data_kind = {k: k for k in provides}
-    save_when = immutabledict(
-        records=strax.SaveWhen.TARGET,
-        veto_regions=strax.SaveWhen.TARGET,
-        pulse_counts=strax.SaveWhen.ALWAYS,
-    )
-
-    hev_gain_model = straxen.URLConfig(
-        default=None, infer_type=False, help="PMT gain model used in the software high-energy veto."
-    )
-
-    baseline_samples = straxen.URLConfig(
-        default=40,
-        infer_type=False,
-        help="Number of samples to use at the start of the pulse to determine " "the baseline",
-    )
-
-    # Tail veto options
-    tail_veto_threshold = straxen.URLConfig(
-        default=0,
-        infer_type=False,
-        help=(
-            "Minimum peakarea in PE to trigger tail veto."
-            "Set to None, 0 or False to disable veto."
-        ),
-    )
-
-    tail_veto_duration = straxen.URLConfig(
-        default=int(3e6), infer_type=False, help="Time in ns to veto after large peaks"
-    )
-
-    tail_veto_resolution = straxen.URLConfig(
-        default=int(1e3),
-        infer_type=False,
-        help="Time resolution in ns for pass-veto waveform summation",
-    )
-
-    tail_veto_pass_fraction = straxen.URLConfig(
-        default=0.05, infer_type=False, help="Pass veto if maximum amplitude above max * fraction"
-    )
-
-    tail_veto_pass_extend = straxen.URLConfig(
-        default=3,
-        infer_type=False,
-        help="Extend pass veto by this many samples (tail_veto_resolution!)",
-    )
-
-    max_veto_value = straxen.URLConfig(
-        default=None,
-        infer_type=False,
-        help="Optionally pass a HE peak that exceeds this absolute area. "
-        "(if performing a hard veto, can keep a few statistics.)",
-    )
-
-    # PMT pulse processing options
-    pmt_pulse_filter = straxen.URLConfig(
-        default=None, infer_type=False, help="Linear filter to apply to pulses, will be normalized."
-    )
-
-    save_outside_hits = straxen.URLConfig(
-        default=(3, 20),
-        infer_type=False,
-        help="Save (left, right) samples besides hits; cut the rest",
-    )
-
-    n_tpc_pmts = straxen.URLConfig(type=int, help="Number of TPC PMTs")
-
-    check_raw_record_overlaps = straxen.URLConfig(
-        default=True,
-        track=False,
-        infer_type=False,
-        help="Crash if any of the pulses in raw_records overlap with others " "in the same channel",
-    )
-
-    allow_sloppy_chunking = straxen.URLConfig(
-        default=False,
-        track=False,
-        infer_type=False,
-        help=(
-            "Use a default baseline for incorrectly chunked fragments. "
-            "This is a kludge for improperly converted XENON1T data."
-        ),
-    )
-
-    hit_min_amplitude = straxen.URLConfig(
-        track=True,
-        infer_type=False,
-        default="cmt://hit_thresholds_tpc?version=ONLINE&run_id=plugin.run_id",
-        help="Minimum hit amplitude in ADC counts above baseline. "
-        "Specify as a tuple of length n_tpc_pmts, or a number,"
-        'or a string like "pmt_commissioning_initial" which means calling'
-        "hitfinder_thresholds.py"
-        "or a tuple like (correction=str, version=str, nT=boolean),"
-        "which means we are using cmt.",
-    )
-
-    def infer_dtype(self):
-        # Get record_length from the plugin making raw_records
-        self.record_length = strax.record_length_from_dtype(
-            self.deps["raw_records"].dtype_for("raw_records")
-        )
-
-        dtype = dict()
-        for p in self.provides:
-            if "records" in p:
-                dtype[p] = strax.record_dtype(self.record_length)
-        dtype["veto_regions"] = strax.hit_dtype
-        dtype["pulse_counts"] = straxen.pulse_count_dtype(self.n_tpc_pmts)
-
-        return dtype
-
-    def setup(self):
-        self.hev_enabled = self.hev_gain_model is not None and self.tail_veto_threshold
-        if self.hev_enabled:
-            self.to_pe = self.hev_gain_model
-        self.hit_thresholds = self.hit_min_amplitude
 
     def compute(self, raw_records, raw_records_simu, start, end):
         if self.check_raw_record_overlaps:

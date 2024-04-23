@@ -3,7 +3,6 @@ import numpy as np
 import strax
 from strax.processing.peak_building import _build_hit_waveform
 from strax import utils
-from immutabledict import immutabledict
 from strax.processing.general import _touching_windows
 from strax.dtypes import DIGITAL_SUM_WAVEFORM_CHANNEL
 from .records import SCHANNEL_STARTS_AT
