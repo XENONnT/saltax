@@ -165,7 +165,7 @@ def get_run_start_end(runid):
 
 
 def instr_file_name(
-    recoil, generator_name, mode, runid=None, en_range=None, rate=1e9 / SALT_TIME_INTERVAL, base_dir=BASE_DIR
+    recoil, generator_name, mode, runid=None, en_range=(0,0), rate=1e9 / SALT_TIME_INTERVAL, base_dir=BASE_DIR
 ):
     """Generate the instruction file name based on the runid, recoil,
     generator_name, mode, and rate.
@@ -182,12 +182,13 @@ def instr_file_name(
         default: BASE_DIR
     :return: instruction file name
     """
-    if runid is None:
-        return "Data-loading only, no instruction file needed."
     if en_range is not None:
         en_range = str(en_range[0]) + "_" + str(en_range[1])
-
+    else:
+        raise RuntimeError("en_range must be specified, and it can even be placeholder (0,0)")
     # FIXME: this will shoot errors if we are on OSG rather than midway
+    if runid is None:
+        return "Data-loading only, no instruction file needed."
     else:
         if base_dir[-1] != "/":
             base_dir += "/"
@@ -202,7 +203,7 @@ def instr_file_name(
             + "-"
             + generator_name
             + "-"
-            + en_range
+            
             + "-"
             + mode
             + "-"
