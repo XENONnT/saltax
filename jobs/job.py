@@ -30,7 +30,7 @@ else:
     rate = None
 _en_range = config.get("job", "en_range", fallback=None)
 if _en_range is not None and _en_range.strip():  # Check if en_range is not just whitespace
-    convert_to_tuple = lambda s: tuple(float(x) if '.' in x else int(x) for x in s.split(','))
+    convert_to_tuple = lambda s: tuple(float(x) if "." in x else int(x) for x in s.split(","))
     __en_range = convert_to_tuple(_en_range)
 else:
     __en_range = None
