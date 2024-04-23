@@ -1,6 +1,6 @@
 strax
 straxen
-wfsim
+wfsim>=1.2.2
 scipy
 numpy
 pandas
