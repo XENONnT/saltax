@@ -40,7 +40,10 @@ TO_PROCESS_DTYPES_SE = [
 ]
 
 def print_versions():
-    straxen.print_versions()
+    """
+    Print the versions of saltax, strax, and straxen.
+    """
+    print(straxen.print_versions(['saltax', 'strax', 'straxen', 'fuse', 'nestpy', 'wfsim']))
 
 def load_config():
     config = configparser.ConfigParser()
