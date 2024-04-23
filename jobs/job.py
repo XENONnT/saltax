@@ -70,6 +70,7 @@ def load_config():
     }
     return settings
 
+
 def print_settings(settings):
     """Print the settings in a table format."""
     logging.info("====================================")
@@ -77,7 +78,7 @@ def print_settings(settings):
     for k, v in settings.items():
         logging.info(f"{k}: {v}")
     logging.info("====================================")
-    
+
 
 def parse_en_range(en_range_str):
     """Parse the energy range string and return a tuple of floats."""
