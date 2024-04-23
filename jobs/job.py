@@ -175,7 +175,7 @@ def main():
     print_versions()
     _, runid = sys.argv
     runid = int(runid)
-    
+
     # Process the saltax desired mode
     logging.info("Loading context...")
     settings = load_config()
