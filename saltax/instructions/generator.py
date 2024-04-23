@@ -215,6 +215,7 @@ def generator_se(
     r_range=R_RANGE,
     z_range=Z_RANGE,
     time_mode="uniform",
+    **kwargs
 ):
     """Generate instructions for a run with single electron.
 
@@ -252,7 +253,7 @@ def generator_se(
     return instr
 
 
-def generator_se_bootstrapped(runid, xyt_files_at=SE_INSTRUCTIONS_DIR):
+def generator_se_bootstrapped(runid, xyt_files_at=SE_INSTRUCTIONS_DIR, **kwargs):
     """Generate instructions for a run with single electron.
 
     We will use XYT information from bootstrapped data single electrons
@@ -310,6 +311,7 @@ def generator_ambe(
     rate=1e9 / SALT_TIME_INTERVAL,
     time_mode="uniform",
     ambe_instructions_file=AMBE_INSTRUCTIONS_FILE,
+    **kwargs
 ):
     """Generate instructions for a run with AmBe source.
 
@@ -378,6 +380,7 @@ def generator_flat(
     z_range=Z_RANGE,
     mode="all",
     time_mode="uniform",
+    **kwargs
 ):
     """Generate instructions for a run with flat energy spectrum.
 
