@@ -31,9 +31,15 @@ else:
 _en_range = config.get("job", "en_range", fallback=None)
 if _en_range is not None and _en_range.strip():  # Check if en_range is not just whitespace
     convert_to_tuple = lambda s: tuple(float(x) if '.' in x else int(x) for x in s.split(','))
-    en_range = convert_to_tuple(_en_range)
+    __en_range = convert_to_tuple(_en_range)
 else:
+    __en_range = None
+if (__en_range is not None) and generator_name != "flat":
     en_range = None
+    print("You specified en_range = %s, but generator_name = %s. " % (__en_range, generator_name))
+    print("en_range will be ignored and be replaced by None. ")
+else:
+    en_range = __en_range
 process_data = config.getboolean("job", "process_data")
 process_simu = config.getboolean("job", "process_simu")
 skip_records = config.getboolean("job", "skip_records")
@@ -96,7 +102,7 @@ now = datetime.now()
 print("====================")
 print("Finished importing and config loading, now start to load context.")
 print("Now starting %s context for run %d" % (saltax_mode, runid))
-if rate is None:
+if en_range is None:
     st = context_function(
         runid=runid,
         saltax_mode=saltax_mode,
@@ -105,6 +111,7 @@ if rate is None:
         generator_name=generator_name,
         recoil=recoil,
         simu_mode=simu_mode,
+        rate=rate,
     )
 else:
     st = context_function(
@@ -116,6 +123,7 @@ else:
         recoil=recoil,
         simu_mode=simu_mode,
         rate=rate,
+        en_range=en_range,
     )
 if len(storage_to_patch) and storage_to_patch[0] != "":
     for d in storage_to_patch:
@@ -156,7 +164,7 @@ if saltax_mode == "salt":
           	   we will also compute simulation-only and data-only."
         )
         print("Now starting data-only context for run %d" % (runid))
-        if rate is None:
+        if en_range is None:
             st = context_function(
                 runid=runid,
                 saltax_mode="data",
@@ -165,6 +173,7 @@ if saltax_mode == "salt":
                 generator_name=generator_name,
                 recoil=recoil,
                 simu_mode=simu_mode,
+                rate=rate,
             )
         else:
             st = context_function(
@@ -176,6 +185,7 @@ if saltax_mode == "salt":
                 recoil=recoil,
                 simu_mode=simu_mode,
                 rate=rate,
+                en_range=en_range,
             )
         if len(storage_to_patch) and storage_to_patch[0] != "":
             for d in storage_to_patch:
@@ -205,7 +215,7 @@ if saltax_mode == "salt":
     if process_simu:
         print("====================")
         print("Now starting simu-only context for run %d" % (runid))
-        if rate is None:
+        if en_range is None:
             st = context_function(
                 runid=runid,
                 saltax_mode="simu",
@@ -214,6 +224,7 @@ if saltax_mode == "salt":
                 generator_name=generator_name,
                 recoil=recoil,
                 simu_mode=simu_mode,
+                rate=rate,
             )
         else:
             st = context_function(
@@ -225,6 +236,7 @@ if saltax_mode == "salt":
                 recoil=recoil,
                 simu_mode=simu_mode,
                 rate=rate,
+                en_range=en_range,
             )
         if len(storage_to_patch) and storage_to_patch[0] != "":
             for d in storage_to_patch:
