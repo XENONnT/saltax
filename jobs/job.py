@@ -70,6 +70,14 @@ def load_config():
     }
     return settings
 
+def print_settings(settings):
+    """Print the settings in a table format."""
+    logging.info("====================================")
+    logging.info("Settings:")
+    for k, v in settings.items():
+        logging.info(f"{k}: {v}")
+    logging.info("====================================")
+    
 
 def parse_en_range(en_range_str):
     """Parse the energy range string and return a tuple of floats."""
@@ -181,6 +189,7 @@ def main():
     settings = load_config()
     st = create_context(settings, runid)
     data_types = get_data_types(settings)
+    print_settings(settings)
     process_data_types(st, str(runid).zfill(6), data_types)
 
     # Process data-only mode if required
@@ -190,6 +199,7 @@ def main():
         settings_temp = settings.copy()
         settings_temp["saltax_mode"] = "data"
         st_data = create_context(settings_temp, runid)
+        print_settings(settings_temp)
         process_data_types(st_data, str(runid).zfill(6), data_types)
         logging.info("Finished processing for data-only mode.")
 
@@ -200,6 +210,7 @@ def main():
         settings_temp = settings.copy()
         settings_temp["saltax_mode"] = "simu"
         st_simu = create_context(settings_temp, runid)
+        print_settings(settings_temp)
         process_data_types(st_simu, str(runid).zfill(6), data_types)
         logging.info("Finished processing for simu-only mode.")
 
