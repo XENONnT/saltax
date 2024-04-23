@@ -12,7 +12,7 @@ import pickle
 from tqdm import tqdm
 
 
-DEFAULT_EN_RANGE = (0.2,15.0)  # in unit of keV
+DEFAULT_EN_RANGE = (0.2, 15.0)  # in unit of keV
 SALT_TIME_INTERVAL = 2e7  # in unit of ns. The number should be way bigger then full drift time
 Z_RANGE = (-148.15, 0)  # in unit of cm
 R_RANGE = (0, 66.4)  # in unit of cm
@@ -166,7 +166,13 @@ def get_run_start_end(runid):
 
 
 def instr_file_name(
-    recoil, generator_name, mode, runid=None, en_range=DEFAULT_EN_RANGE, rate=1e9 / SALT_TIME_INTERVAL, base_dir=BASE_DIR
+    recoil,
+    generator_name,
+    mode,
+    runid=None,
+    en_range=DEFAULT_EN_RANGE,
+    rate=1e9 / SALT_TIME_INTERVAL,
+    base_dir=BASE_DIR,
 ):
     """Generate the instruction file name based on the runid, recoil,
     generator_name, mode, and rate.
