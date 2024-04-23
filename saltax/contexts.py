@@ -112,6 +112,9 @@ SALTAX_MODES = ["data", "simu", "salt"]
 def validate_runid(runid):
     """
     Validate runid in RunDB to see if you can use it for computation.
+
+    :param runid: run number in integer
+    :return: None
     """
     try:
         doc = xent_collection().find_one({"number": runid})
