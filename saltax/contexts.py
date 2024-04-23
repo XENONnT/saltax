@@ -46,9 +46,6 @@ FUSE_DONT_REGISTER = [
 # ~Infinite raw_records file size to avoid downchunking
 MAX_RAW_RECORDS_FILE_SIZE_MB = 1e9
 
-# fuse placeholder parameters
-CORRECTION_RUN_ID_DEFAULT = "046477"
-
 # straxen XENONnT options/configuration
 XNT_COMMON_OPTS = straxen.contexts.xnt_common_opts.copy()
 XNT_COMMON_CONFIG = straxen.contexts.xnt_common_config.copy()
@@ -166,11 +163,6 @@ def xenonnt_salted_fuse(
     :param kwargs: Extra options to pass to strax.Context or generator
     :return: strax context
     """
-    # Manually assign a correction_run_id if runid is None
-    if runid is None:
-        corrections_run_id = CORRECTION_RUN_ID_DEFAULT
-    else:
-        corrections_run_id = runid
     if (corrections_version is None) & (not run_without_proper_corrections):
         raise ValueError(
             "Specify a corrections_version. If you want to run without proper "
@@ -208,15 +200,6 @@ def xenonnt_salted_fuse(
 
     simulation_config_file = "fuse_config_nt_{:s}.json".format(simu_config_version)
     fuse.context.set_simulation_config_file(st, simulation_config_file)
-
-    local_versions = st.config
-    for config_name, url_config in local_versions.items():
-        if isinstance(url_config, str):
-            if "run_id" in url_config:
-                local_versions[config_name] = straxen.URLConfig.format_url_kwargs(
-                    url_config, run_id=corrections_run_id
-                )
-    st.config = local_versions
 
     # Update some run specific config
     for mc_config, processing_config in run_id_specific_config.items():
