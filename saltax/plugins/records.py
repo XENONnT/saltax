@@ -30,6 +30,7 @@ class SPulseProcessing(straxen.PulseProcessing):
     overlap with any other pulse), or mean values of baseline and
     baseline rms channel.
     """
+
     __version__ = "0.0.2"
     depends_on = ("raw_records", "raw_records_simu")
 

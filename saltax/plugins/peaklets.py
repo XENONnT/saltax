@@ -43,6 +43,7 @@ class SPeaklets(straxen.Peaklets):
     lone_hits includes the left and right hit extension, except the
     extension overlaps with any peaks or other hits.
     """
+
     def setup(self):
         if self.peak_min_pmts > 2:
             # Can fix by re-splitting,
