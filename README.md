@@ -7,7 +7,16 @@ cd saltax
 pip install ./ --user
 ```
 ## Tutorial
-Please check notebooks in `notebooks/`
+Please check notebooks in `notebooks/`.
 
 ## Computing
-Please see folder `jobs/` for slurm job submission
+Please see folder `jobs/` for slurm job submission. Below you can see a benchmark from a 26seconds Ar37 run, sprinkled 50Hz flat beta band. You can roughly estimate the overhead by scaling it, neglecting the rate dependence in overhead.
+
+| Step                  | Overhead [sec] (salt) | Overhead [sec] (simu) |
+| :-------------------: | :-------------------: | :-------------------: |
+| `microphysics_summary`| 19                    |                       |
+| `raw_records_simu`    | 210                   |                       |
+| `records`             | 15                    |                       |
+| `peaklets`            | 68                    | 9                     |
+| `peak_basics`         | 3                     | 1                     |
+| `event_info`          | 63                    | 11                    |
