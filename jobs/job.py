@@ -175,15 +175,16 @@ def main():
     print_versions()
     _, runid = sys.argv
     runid = int(runid)
-    settings = load_config()
-
+    
+    # Process the saltax desired mode
     logging.info("Loading context...")
+    settings = load_config()
     st = create_context(settings, runid)
     data_types = get_data_types(settings)
     process_data_types(st, str(runid).zfill(6), data_types)
 
     # Process data-only mode if required
-    if settings["process_data"]:
+    if settings["process_data"] and settings["saltax_mode"] == "salt":
         logging.info("====================")
         logging.info("Now starting data-only context for run %d" % runid)
         settings_temp = settings.copy()
@@ -192,7 +193,8 @@ def main():
         process_data_types(st_data, str(runid).zfill(6), data_types)
         logging.info("Finished processing for data-only mode.")
 
-    if settings["process_simu"]:
+    # Process simu-only mode if required
+    if settings["process_simu"] and settings["saltax_mode"] == "salt":
         logging.info("====================")
         logging.info("Now starting simu-only context for run %d" % runid)
         settings_temp = settings.copy()

@@ -223,7 +223,7 @@ def xenonnt_salted_fuse(
         if processing_config in st.config:
             st.config[mc_config] = st.config[processing_config]
         else:
-            print(f"Warning! {processing_config} not in context config, skipping...")
+            log.warning(f"Warning! {processing_config} not in context config, skipping...")
 
     # No blinding in simulations
     st.config["event_info_function"] = "disabled"
@@ -252,12 +252,12 @@ def xenonnt_salted_fuse(
         # Try to load instruction from file and generate if not found
         try:
             instr = pd.read_csv(instr_file_name)
-            print("Loaded instructions from file", instr_file_name)
+            log.info("Loaded instructions from file", instr_file_name)
         except:
-            print(f"Instruction file {instr_file_name} not found. Generating instructions...")
+            log.info(f"Instruction file {instr_file_name} not found. Generating instructions...")
             instr = generator_func(runid=runid, **kwargs)
             pd.DataFrame(instr).to_csv(instr_file_name, index=False)
-            print(f"Instructions saved to {instr_file_name}")
+            log.info(f"Instructions saved to {instr_file_name}")
 
         # Load instructions into config
         st.set_config(
@@ -324,12 +324,12 @@ def xenonnt_salted_wfsim(
     if runid is not None:
         try:
             instr = pd.read_csv(instr_file_name)
-            print("Loaded instructions from file", instr_file_name)
+            log.info("Loaded instructions from file", instr_file_name)
         except:
-            print(f"Instruction file {instr_file_name} not found. Generating instructions...")
+            log.info(f"Instruction file {instr_file_name} not found. Generating instructions...")
             instr = generator_func(runid=runid, **kwargs)
             pd.DataFrame(instr).to_csv(instr_file_name, index=False)
-            print(f"Instructions saved to {instr_file_name}")
+            log.info(f"Instructions saved to {instr_file_name}")
 
     # Based on cutax.xenonnt_sim_base()
     fax_conf = "fax_config_nt_{:s}.json".format(simu_config_version)
@@ -470,12 +470,12 @@ def fxenonnt(
     """
     assert saltax_mode in SALTAX_MODES, "saltax_mode must be one of %s" % (SALTAX_MODES)
     if runid is None:
-        print(
+        log.warning(
             "Since you specified runid=None, this context will not be able to compute raw_records_simu."
         )
-        print("Welcome to data-loading only mode!")
+        log.warning("Welcome to data-loading only mode!")
     else:
-        print("Welcome to computation mode which only works for run %s!" % (runid))
+        log.warning("Welcome to computation mode which only works for run %s!" % (runid))
 
     return xenonnt_salted_fuse(
         runid=runid,
@@ -539,12 +539,12 @@ def sxenonnt(
     """
     assert saltax_mode in SALTAX_MODES, "saltax_mode must be one of %s" % (SALTAX_MODES)
     if runid is None:
-        print(
+        log.warning(
             "Since you specified runid=None, this context will not be able to compute raw_records_simu."
         )
-        print("Welcome to data-loading only mode!")
+        log.warning("Welcome to data-loading only mode!")
     else:
-        print("Welcome to computation mode which only works for run %s!" % (runid))
+        log.warning("Welcome to computation mode which only works for run %s!" % (runid))
 
     return xenonnt_salted_wfsim(
         runid=runid,
