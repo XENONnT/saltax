@@ -16,6 +16,7 @@ python submit.py
 - In `package` you can put either `wfsim` or `fuse`. They are both supported but of course `fuse` is preferred. Please make sure you have the master branch `wfsim` to avoid any photon timing bug.
 - When deciding `generator_name`, take a look in `saltax/saltax/instructions/README.md`.
 - In `recoil`, put NESTID. (`8` is `beta`, `7` is `gamma`, `0` is `WIMP`).
+- In en_range, only specify it when you are using a flat spectrum generator. Otherwise keep in mind that it will be treaed as None no matter what you put. Also keep in mind that it is recoil energy, rather than observable energy, so the quenching need to be considered for NR case.
 - Make sure you put `output_folder` to be your own scratch. We will have very huge output because of `records` and `raw_records_simu`.
 - `rate` is in unit of Hz. Be cautious to put anything above 300Hz, since you will start to have time gap between sprinkled event less than the Full Drift Time.
 - `simu_mode = all` means you want to simulate both S1 and S2. Otherwise you specify `s1` or `s2`.
