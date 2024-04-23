@@ -165,7 +165,7 @@ def get_run_start_end(runid):
 
 
 def instr_file_name(
-    recoil, generator_name, mode, runid=None, rate=1e9 / SALT_TIME_INTERVAL, base_dir=BASE_DIR
+    recoil, generator_name, mode, runid=None, en_range=None, rate=1e9 / SALT_TIME_INTERVAL, base_dir=BASE_DIR
 ):
     """Generate the instruction file name based on the runid, recoil,
     generator_name, mode, and rate.
@@ -176,6 +176,7 @@ def instr_file_name(
     :param runid: run number in integer, default: None, which means we
         are loading data and instruction doesn't matter (strax lineage
         unaffected)
+    :param en_range: (en_min, en_max) in keV, default: None
     :param rate: rate of events in Hz
     :param base_dir: base directory to save the instruction file,
         default: BASE_DIR
@@ -183,6 +184,8 @@ def instr_file_name(
     """
     if runid is None:
         return "Data-loading only, no instruction file needed."
+    if en_range is not None:
+        en_range = str(en_range[0]) + "_" + str(en_range[1])
 
     # FIXME: this will shoot errors if we are on OSG rather than midway
     else:
@@ -198,6 +201,8 @@ def instr_file_name(
             + str(recoil)
             + "-"
             + generator_name
+            + "-"
+            + en_range
             + "-"
             + mode
             + "-"
