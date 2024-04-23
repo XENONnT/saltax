@@ -43,6 +43,7 @@ class SPeaklets(straxen.Peaklets):
     lone_hits includes the left and right hit extension, except the
     extension overlaps with any peaks or other hits.
     """
+
     __version__ = "0.0.4"
 
     gain_model_mc = straxen.URLConfig(
