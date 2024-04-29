@@ -9,7 +9,7 @@ import pandas as pd
 from utilix import xent_collection
 
 
-logging.basicConfig(handlers=[logging.StreamHandler()])
+logging.basicConfig(level=logging.INFO, handlers=[logging.StreamHandler()])
 log = logging.getLogger("fuse.context")
 
 
