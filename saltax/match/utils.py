@@ -670,7 +670,6 @@ def get_cut_eff(
         bins = np.linspace(-145, -13, n_bins)
     else:
         raise NotImplementedError
-        
 
     result_dict = {}
     for cut in all_cut_list:
@@ -692,19 +691,25 @@ def get_cut_eff(
         result_dict["all_cuts"][i] = len(selected_events_all_cut) / len(selected_events)
         result_dict["all_cuts_upper"][i] = interval.high
         result_dict["all_cuts_lower"][i] = interval.low
-        
+
         for cut_oi in all_cut_list:
-            if indv_cut_type == 'n_minus_1':
-                selected_events_cut_oi = selected_events[apply_n_minus_1_cuts(selected_events, cut_oi, all_cut_list)]
+            if indv_cut_type == "n_minus_1":
+                selected_events_cut_oi = selected_events[
+                    apply_n_minus_1_cuts(selected_events, cut_oi, all_cut_list)
+                ]
                 # Efficiency curves with Clopper-Pearson uncertainty estimation
-                interval = binomtest(len(selected_events_all_cut), len(selected_events_cut_oi)).proportion_ci()
-                result_dict[cut_oi][i] = len(selected_events_all_cut)/len(selected_events_cut_oi)
-                result_dict[cut_oi+'_upper'][i] = interval.high
-                result_dict[cut_oi+'_lower'][i] = interval.low
-            elif indv_cut_type == 'single':
+                interval = binomtest(
+                    len(selected_events_all_cut), len(selected_events_cut_oi)
+                ).proportion_ci()
+                result_dict[cut_oi][i] = len(selected_events_all_cut) / len(selected_events_cut_oi)
+                result_dict[cut_oi + "_upper"][i] = interval.high
+                result_dict[cut_oi + "_lower"][i] = interval.low
+            elif indv_cut_type == "single":
                 selected_events_cut_oi = selected_events[apply_single_cut(selected_events, cut_oi)]
                 # Efficiency curves with Clopper-Pearson uncertainty estimation
-                interval = binomtest(len(selected_events_cut_oi), len(selected_events)).proportion_ci()
+                interval = binomtest(
+                    len(selected_events_cut_oi), len(selected_events)
+                ).proportion_ci()
                 result_dict[cut_oi][i] = len(selected_events_cut_oi) / len(selected_events)
                 result_dict[cut_oi + "_upper"][i] = interval.high
                 result_dict[cut_oi + "_lower"][i] = interval.low
