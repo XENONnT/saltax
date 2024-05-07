@@ -702,8 +702,8 @@ def get_cut_eff(
         for cut_oi in all_cut_list:
             selected_events_cut_oi = selected_events[cut_func(selected_events, cut_oi)]
             # Efficiency curves with Clopper-Pearson uncertainty estimation
-            interval = binomtest(len(selected_events_cut_oi), len(selected_events)).proportion_ci()
-            result_dict[cut_oi][i] = len(selected_events_cut_oi) / len(selected_events)
+            interval = binomtest(len(selected_events_all_cut), len(selected_events_cut_oi)).proportion_ci()
+            result_dict[cut_oi][i] = len(selected_events_all_cut) / len(selected_events_cut_oi)
             result_dict[cut_oi + "_upper"][i] = interval.high
             result_dict[cut_oi + "_lower"][i] = interval.low
 
