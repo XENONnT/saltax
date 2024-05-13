@@ -983,6 +983,68 @@ def show_area_bias(
     plt.show()
 
 
+def show_eff2d(
+    events,
+    events_selected,
+    coord=("s1_area", "s2_area"),
+    bins=(np.linspace(0, 100, 101), np.linspace(500, 7000, 101)),
+    title="Matching Acceptance",
+    vmin_vmax=(0, 1),  # New parameter to set color bar range
+    min_counts=100
+):
+    """Show the acceptance in 2D coordinates.
+
+    :param events: events before some selection
+    :param events_selected: events after some selection
+    :param coord: coordinates to be compared, default to ('s1_area',
+        's2_area')
+    :param bins: bins for the coordinates, default to
+        (np.linspace(0,100,101), np.linspace(500,7000,101))
+    :param title: title of the plot, default to "Matching Acceptance"
+    :param vmin_vmax: range of color bar, default to (0,1)
+    :param min_counts: minimum number of counts in a bin to be
+        considered, default to 100
+    :return: efficiency, xedges, yedges
+    """
+    label_dict = {
+        "e_ces": "Simulated CES [keV]",
+        "s1_area": "Simulated S1 Area [PE]",
+        "s2_area": "Simulated S2 Area [PE]",
+        "z": "Z [cm]",
+    }
+
+    # Count the number of events in each bin
+    counts, xedges, yedges = np.histogram2d(
+        events[coord[0]], events[coord[1]], bins=bins
+    )
+    counts_selected, xedges, yedges = np.histogram2d(
+        events_selected[coord[0]], events_selected[coord[1]], bins=bins
+    )
+
+    # Compute efficiency
+    eff = counts_selected / counts
+    eff[np.isnan(eff)] = 0
+    eff[counts < min_counts] = 0
+
+    # Plot
+    plt.figure(dpi=150)
+    plt.imshow(
+        eff.T,
+        origin="lower",
+        extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]],
+        aspect="auto",
+        cmap="viridis",
+        vmin=vmin_vmax[0],  # Set minimum value for color scale
+        vmax=vmin_vmax[1]   # Set maximum value for color scale
+    )
+    plt.colorbar(label="Efficiency")
+    plt.xlabel(label_dict[coord[0]])
+    plt.ylabel(label_dict[coord[1]])
+    plt.title(title)
+    plt.show()
+    return eff, xedges, yedges
+
+
 def show_eff1d(
     events_simu,
     events_simu_matched_to_salt,
