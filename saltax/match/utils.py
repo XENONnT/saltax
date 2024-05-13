@@ -731,12 +731,13 @@ def get_cut_eff(
             alpha=0.3,
         )
         for cut_oi in all_cut_list:
-            plt.plot(result_dict[coord], result_dict[cut_oi], color=next(color_cycle), label=cut_oi)
+            this_color = next(color_cycle)
+            plt.plot(result_dict[coord], result_dict[cut_oi], color=this_color, label=cut_oi)
             plt.fill_between(
                 result_dict[coord],
                 result_dict[cut_oi + "_lower"],
                 result_dict[cut_oi + "_upper"],
-                color=next(color_cycle),
+                color=this_color,
                 alpha=0.3,
             )
         plt.xlabel(coord + coord_units[coord])
