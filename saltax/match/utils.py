@@ -667,7 +667,7 @@ def get_cut_eff(
     elif coord == "cs2" or coord == "s2_area":
         bins = np.linspace(500, 5000, n_bins)
     elif coord == "z":
-        bins = np.linspace(-145, -13, n_bins)
+        bins = np.linspace(-134, -13, n_bins)
     else:
         raise NotImplementedError
 
