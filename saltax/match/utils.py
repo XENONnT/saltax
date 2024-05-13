@@ -665,7 +665,7 @@ def get_cut_eff(
     if coord == "cs1" or coord == "s1_area":
         bins = np.linspace(0, 100, n_bins)
     elif coord == "cs2" or coord == "s2_area":
-        bins = np.linspace(500, 5000, n_bins)
+        bins = np.linspace(500, 7000, n_bins)
     elif coord == "z":
         bins = np.linspace(-134, -13, n_bins)
     else:
@@ -853,7 +853,7 @@ def compare_bands(salt, simu, title, coords=["z", "s2_range_50p_area"], n_bins=1
     BINS = {
         "z": np.linspace(-134, -13, n_bins),
         "s1_area": np.linspace(0, 100, n_bins),
-        "s2_area": np.linspace(500, 5000, n_bins),
+        "s2_area": np.linspace(500, 7000, n_bins),
         "s1_range_50p_area": np.linspace(0, 300, n_bins),
         "s1_range_90p_area": np.linspace(0, 1000, n_bins),
         "s1_rise_time": np.linspace(0, 150, n_bins),
@@ -909,7 +909,7 @@ def show_area_bias(
     BINS = {
         "z": np.linspace(-134, -13, n_bins),
         "s1_area": np.linspace(0, 100, n_bins),
-        "s2_area": np.linspace(500, 5000, n_bins),
+        "s2_area": np.linspace(500, 7000, n_bins),
         "s1_range_50p_area": np.linspace(0, 300, n_bins),
         "s1_range_90p_area": np.linspace(0, 1000, n_bins),
         "s1_rise_time": np.linspace(0, 150, n_bins),
