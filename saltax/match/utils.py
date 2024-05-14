@@ -983,6 +983,18 @@ def show_area_bias(
     plt.title(title)
     plt.show()
 
+    result_dict = {}
+    result_dict['coord'] = coord
+    result_dict['s1s2'] = s1s2
+    result_dict['bins_mid'] = bins_mid
+    result_dict['bias_med'] = bias_med
+    result_dict['bias_1sig_u'] = bias_1sig_u
+    result_dict['bias_1sig_l'] = bias_1sig_l
+    result_dict['bias_2sig_u'] = bias_2sig_u
+    result_dict['bias_2sig_l'] = bias_2sig_l
+
+    return result_dict
+
 
 def show_eff2d(
     events,
