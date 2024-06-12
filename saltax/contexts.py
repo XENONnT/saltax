@@ -49,7 +49,6 @@ MAX_RAW_RECORDS_FILE_SIZE_MB = 1e9
 # straxen XENONnT options/configuration
 XNT_COMMON_OPTS = straxen.contexts.xnt_common_opts.copy()
 XNT_COMMON_CONFIG = straxen.contexts.xnt_common_config.copy()
-XNT_SIMULATION_CONFIG = straxen.contexts.xnt_simulation_config.copy()
 
 # wfsim based saltax options overrides
 SXNT_COMMON_OPTS_REGISTER = XNT_COMMON_OPTS["register"].copy()
