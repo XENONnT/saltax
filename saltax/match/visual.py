@@ -209,7 +209,7 @@ def plot_event_wf(
         alpha=0.2,
         label="Simulated S2 Range",
     )
-    ax1.axspan(
+    ax1.axvspan(
         simu_event_timerange_i[0],
         simu_event_timerange_i[1],
         color="tab:grey",
@@ -231,7 +231,7 @@ def plot_event_wf(
             alpha=0.2,
             label="Sprinkled S2 Range",
         )
-        ax1.axspan(
+        ax1.axvspan(
             salt_event_timerange_i[0],
             salt_event_timerange_i[1],
             color="grey",
@@ -281,7 +281,7 @@ def plot_event_wf(
         alpha=0.2,
         label="Simulated S2 Range",
     )
-    ax2.axspan(
+    ax2.axvspan(
         simu_event_timerange_i[0],
         simu_event_timerange_i[1],
         color="tab:grey",
@@ -303,7 +303,7 @@ def plot_event_wf(
             alpha=0.2,
             label="Sprinkled S2 Range",
         )
-        ax2.axspan(
+        ax2.axvspan(
             salt_event_timerange_i[0],
             salt_event_timerange_i[1],
             color="grey",
