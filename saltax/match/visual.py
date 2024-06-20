@@ -212,7 +212,7 @@ def plot_event_wf(
     ax1.axvspan(
         simu_event_timerange_i[0],
         simu_event_timerange_i[1],
-        color="tab:grey",
+        color="tab:brown",
         alpha=0.2,
         label="Simulated Event",
     )
@@ -284,7 +284,7 @@ def plot_event_wf(
     ax2.axvspan(
         simu_event_timerange_i[0],
         simu_event_timerange_i[1],
-        color="tab:grey",
+        color="tab:brown",
         alpha=0.2,
         label="Simulated Event",
     )
