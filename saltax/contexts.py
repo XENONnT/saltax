@@ -246,7 +246,7 @@ def xenonnt_salted_fuse(
             log.info("Loaded instructions from file", instr_file_name)
         except:
             log.info(f"Instruction file {instr_file_name} not found. Generating instructions...")
-            instr = generator_func(runid=runid, **kwargs)
+            instr = generator_func(runid=runid, recoil=recoil, **kwargs)
             pd.DataFrame(instr).to_csv(instr_file_name, index=False)
             log.info(f"Instructions saved to {instr_file_name}")
 
