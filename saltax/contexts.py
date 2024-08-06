@@ -260,6 +260,7 @@ def xenonnt_salted_fuse(
         st.set_config(
             {
                 "input_file": instr_file_name,
+                "input_type": saltax.generator.AMBE_INSTRUCTIONS_TYPE if generator_name=="ambe" else "wfsim",
                 "raw_records_file_size_target": MAX_RAW_RECORDS_FILE_SIZE_MB,
             }
         )

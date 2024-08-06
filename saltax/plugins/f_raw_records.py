@@ -60,7 +60,12 @@ class SChunkCsvInput(FuseBasePlugin):
     input_file = straxen.URLConfig(
         track=False,
         infer_type=False,
-        help="CSV file (in wfsim format) to read.",
+        help="CSV file (format as in input_type) to read.",
+    )
+    input_type = straxen.URLConfig(
+        track=False,
+        infer_type=False,
+        help="Input type of CSV file ('fuse' or 'wfsim').",
     )
     ns_no_instruction_after_chunk_start = straxen.URLConfig(
         default=5e7,
@@ -81,6 +86,7 @@ class SChunkCsvInput(FuseBasePlugin):
         super().setup()
         self.csv_file_reader = SCsvFileLoader(
             input_file=self.input_file,
+            input_type=self.input_type,
             random_number_generator=self.rng,
             ns_no_instruction_before_chunk_end=self.ns_no_instruction_before_chunk_end,
             ns_no_instruction_after_chunk_start=self.ns_no_instruction_after_chunk_start,
@@ -120,18 +126,20 @@ class SChunkCsvInput(FuseBasePlugin):
 
 
 class SCsvFileLoader:
-    """Class to load a CSV file (in wfsim format) with detector simulation
+    """Class to load a CSV file (in wfsim or fuse format) with detector simulation
     instructions."""
 
     def __init__(
         self,
         input_file,
+        input_type,
         random_number_generator,
         ns_no_instruction_before_chunk_end=NS_NO_INSTRUCTION_BEFORE_CHUNK_END,
         ns_no_instruction_after_chunk_start=NS_NO_INSTRUCTION_AFTER_CHUNK_START,
         debug=False,
     ):
         self.input_file = input_file
+        self.input_type = input_type
         self.rng = random_number_generator
         self.ns_no_instruction_before_chunk_end = ns_no_instruction_before_chunk_end
         self.ns_no_instruction_after_chunk_start = ns_no_instruction_after_chunk_start
@@ -170,22 +178,28 @@ class SCsvFileLoader:
         ]
 
         # Translator to translate the wfsim instructions to the fuse format
-        self.translator = InstrTranslator(input_format="wfsim", output_format="fuse")
+        if self.input_type == "wfsim":
+            self.translator = InstrTranslator(input_format="wfsim", output_format="fuse")
+        elif self.input_type == "fuse":
+            print(f"No translator defined as input is already {self.input_type} type")
+        else:
+            raise ValueError(f"Input type {self.input_type} is not defined and should not be possible")
 
     def output_chunk(self, chunk_start, chunk_end):
-        """Load the simulation instructions from the csv file in wfsim format
-        and then translate them to the fuse format.
+        """Load the simulation instructions from the csv file
+        and then translate them to the fuse format if neccessary.
 
         Truncate the instructions to the chunk time range.
         """
-        # Load the csv file in wfsim format
-        log.debug("Loaded detector simulation instructions from a csv file in wfsim format!")
+        # Load the csv file
+        log.debug(f"Loaded detector simulation instructions from a csv file in {self.input_type} format!")
         instructions = self._load_csv_file()
 
-        # Translate the wfsim instructions to the fuse format
-        log.debug("Translating the wfsim instructions to the fuse format!")
-        instructions = self.translator.translate(instructions)
-        log.debug("Instructions translated to the fuse format!")
+        if self.input_type == "wfsim":
+            # Translate the wfsim instructions to the fuse format
+            log.debug("Translating the wfsim instructions to the fuse format!")
+            instructions = self.translator.translate(instructions)
+            log.debug("Instructions translated to the fuse format!")
 
         # truncate instructions to the chunk time range
         log.debug("Truncating instructions to the chunk time range!")
@@ -211,7 +225,7 @@ class SCsvFileLoader:
 
     def _load_csv_file(self):
         """Load the simulation instructions from a csv file in wfsim format."""
-        log.debug("Loading detector simulation instructions from a csv file in wfsim format!")
+        log.debug(f"Loading detector simulation instructions from a csv file in {self.input_type} format!")
         df = pd.read_csv(self.input_file)
 
         return df
