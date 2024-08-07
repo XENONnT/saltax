@@ -665,16 +665,9 @@ def get_cut_eff(
     if coord == "cs1" or coord == "s1_area":
         bins = np.linspace(0, 100, n_bins)
     elif coord == "cs2" or coord == "s2_area":
-        bins = np.linspace(500, 5000, n_bins)
+        bins = np.linspace(200, 3000, n_bins)
     elif coord == "z":
-        bins = np.linspace(-145, -13, n_bins)
-    else:
-        raise NotImplementedError
-
-    if indv_cut_type == "n_minus_1":
-        cut_func = apply_n_minus_1_cuts
-    elif indv_cut_type == "single":
-        cut_func = apply_single_cut
+        bins = np.linspace(-134, -13, n_bins)
     else:
         raise NotImplementedError
 
@@ -698,13 +691,30 @@ def get_cut_eff(
         result_dict["all_cuts"][i] = len(selected_events_all_cut) / len(selected_events)
         result_dict["all_cuts_upper"][i] = interval.high
         result_dict["all_cuts_lower"][i] = interval.low
+
         for cut_oi in all_cut_list:
-            selected_events_cut_oi = selected_events[apply_single_cut(selected_events, cut_oi)]
-            # Efficiency curves with Clopper-Pearson uncertainty estimation
-            interval = binomtest(len(selected_events_cut_oi), len(selected_events)).proportion_ci()
-            result_dict[cut_oi][i] = len(selected_events_cut_oi) / len(selected_events)
-            result_dict[cut_oi + "_upper"][i] = interval.high
-            result_dict[cut_oi + "_lower"][i] = interval.low
+            if indv_cut_type == "n_minus_1":
+                selected_events_cut_oi = selected_events[
+                    apply_n_minus_1_cuts(selected_events, cut_oi, all_cut_list)
+                ]
+                # Efficiency curves with Clopper-Pearson uncertainty estimation
+                interval = binomtest(
+                    len(selected_events_all_cut), len(selected_events_cut_oi)
+                ).proportion_ci()
+                result_dict[cut_oi][i] = len(selected_events_all_cut) / len(selected_events_cut_oi)
+                result_dict[cut_oi + "_upper"][i] = interval.high
+                result_dict[cut_oi + "_lower"][i] = interval.low
+            elif indv_cut_type == "single":
+                selected_events_cut_oi = selected_events[apply_single_cut(selected_events, cut_oi)]
+                # Efficiency curves with Clopper-Pearson uncertainty estimation
+                interval = binomtest(
+                    len(selected_events_cut_oi), len(selected_events)
+                ).proportion_ci()
+                result_dict[cut_oi][i] = len(selected_events_cut_oi) / len(selected_events)
+                result_dict[cut_oi + "_upper"][i] = interval.high
+                result_dict[cut_oi + "_lower"][i] = interval.low
+            else:
+                raise NotImplementedError
 
     if plot:
         colors = plt.cm.rainbow(
@@ -721,12 +731,13 @@ def get_cut_eff(
             alpha=0.3,
         )
         for cut_oi in all_cut_list:
-            plt.plot(result_dict[coord], result_dict[cut_oi], color=next(color_cycle), label=cut_oi)
+            this_color = next(color_cycle)
+            plt.plot(result_dict[coord], result_dict[cut_oi], color=this_color, label=cut_oi)
             plt.fill_between(
                 result_dict[coord],
                 result_dict[cut_oi + "_lower"],
                 result_dict[cut_oi + "_upper"],
-                color=next(color_cycle),
+                color=this_color,
                 alpha=0.3,
             )
         plt.xlabel(coord + coord_units[coord])
@@ -842,7 +853,7 @@ def compare_bands(salt, simu, title, coords=["z", "s2_range_50p_area"], n_bins=1
     BINS = {
         "z": np.linspace(-134, -13, n_bins),
         "s1_area": np.linspace(0, 100, n_bins),
-        "s2_area": np.linspace(500, 5000, n_bins),
+        "s2_area": np.linspace(500, 7000, n_bins),
         "s1_range_50p_area": np.linspace(0, 300, n_bins),
         "s1_range_90p_area": np.linspace(0, 1000, n_bins),
         "s1_rise_time": np.linspace(0, 150, n_bins),
@@ -898,7 +909,7 @@ def show_area_bias(
     BINS = {
         "z": np.linspace(-134, -13, n_bins),
         "s1_area": np.linspace(0, 100, n_bins),
-        "s2_area": np.linspace(500, 5000, n_bins),
+        "s2_area": np.linspace(200, 7000, n_bins),
         "s1_range_50p_area": np.linspace(0, 300, n_bins),
         "s1_range_90p_area": np.linspace(0, 1000, n_bins),
         "s1_rise_time": np.linspace(0, 150, n_bins),
@@ -971,6 +982,80 @@ def show_area_bias(
         plt.ylim(ylim)
     plt.title(title)
     plt.show()
+
+    result_dict = {}
+    result_dict['coord'] = coord
+    result_dict['s1s2'] = s1s2
+    result_dict['bins_mid'] = bins_mid
+    result_dict['bias_med'] = bias_med
+    result_dict['bias_1sig_u'] = bias_1sig_u
+    result_dict['bias_1sig_l'] = bias_1sig_l
+    result_dict['bias_2sig_u'] = bias_2sig_u
+    result_dict['bias_2sig_l'] = bias_2sig_l
+
+    return result_dict
+
+
+def show_eff2d(
+    events,
+    events_selected,
+    coord=("s1_area", "s2_area"),
+    bins=(np.linspace(0, 100, 101), np.linspace(500, 7000, 101)),
+    title="Matching Acceptance",
+    vmin_vmax=(0, 1),  # New parameter to set color bar range
+    min_counts=100
+):
+    """Show the acceptance in 2D coordinates.
+
+    :param events: events before some selection
+    :param events_selected: events after some selection
+    :param coord: coordinates to be compared, default to ('s1_area',
+        's2_area')
+    :param bins: bins for the coordinates, default to
+        (np.linspace(0,100,101), np.linspace(500,7000,101))
+    :param title: title of the plot, default to "Matching Acceptance"
+    :param vmin_vmax: range of color bar, default to (0,1)
+    :param min_counts: minimum number of counts in a bin to be
+        considered, default to 100
+    :return: efficiency, xedges, yedges
+    """
+    label_dict = {
+        "e_ces": "Simulated CES [keV]",
+        "s1_area": "Simulated S1 Area [PE]",
+        "s2_area": "Simulated S2 Area [PE]",
+        "z": "Z [cm]",
+    }
+
+    # Count the number of events in each bin
+    counts, xedges, yedges = np.histogram2d(
+        events[coord[0]], events[coord[1]], bins=bins
+    )
+    counts_selected, xedges, yedges = np.histogram2d(
+        events_selected[coord[0]], events_selected[coord[1]], bins=bins
+    )
+
+    # Compute efficiency
+    eff = counts_selected / counts
+    eff[np.isnan(eff)] = 0
+    eff[counts < min_counts] = 0
+
+    # Plot
+    plt.figure(dpi=150)
+    plt.imshow(
+        eff.T,
+        origin="lower",
+        extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]],
+        aspect="auto",
+        cmap="viridis",
+        vmin=vmin_vmax[0],  # Set minimum value for color scale
+        vmax=vmin_vmax[1]   # Set maximum value for color scale
+    )
+    plt.colorbar(label="Efficiency")
+    plt.xlabel(label_dict[coord[0]])
+    plt.ylabel(label_dict[coord[1]])
+    plt.title(title)
+    plt.show()
+    return eff, xedges, yedges
 
 
 def show_eff1d(

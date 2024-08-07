@@ -12,7 +12,7 @@ from .s_raw_records import NS_NO_INSTRUCTION_BEFORE_CHUNK_END, NS_NO_INSTRUCTION
 
 export, __all__ = strax.exporter()
 
-logging.basicConfig(handlers=[logging.StreamHandler()])
+logging.basicConfig(level=logging.INFO, handlers=[logging.StreamHandler()])
 log = logging.getLogger("fuse.detector_physics.csv_input")
 
 

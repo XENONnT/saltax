@@ -10,6 +10,15 @@ Update `config.ini` and run this in a container
 ```
 python submit.py
 ```
+
+## Logging
+When submitting jobs, you might want to have a bit more information for debugging. To do that, please do this before job submission:
+- Copy the default xenon config to your home or somewhere safe `/project2/lgrandi/xenonnt/xenon.config`
+- Keep everything else the same, and then modify the logging level there by `logging_level=debug` (or `info` should also work). See [here](https://github.com/XENONnT/utilix/blob/b94ef41851e437efa35ae9dc82c6fcdfca77b88c/utilix/config.py#L95) for details.
+- Then export the config by `export XENON_CONFIG=<YOUR_DIR_TO_NEW_CONFIG>`.
+- Submit jobs as usual.
+
+
 ## Tips
 - You need to download yourself `raw_records` and `raw_records_aqmon` before submission!
 - Unless you are working on AmBe, put `mem_per_cpu = 45000` (MB) should be enough. Otherwise please do `55000`.

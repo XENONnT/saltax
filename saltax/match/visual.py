@@ -66,6 +66,14 @@ def plot_event_wf(
             int((events_salt["s2_time"][ind] - extended_simu_event_timerange_ns[0]) / 10),
             int((events_salt["s2_endtime"][ind] - extended_simu_event_timerange_ns[0]) / 10),
         )
+    simu_event_timerange_i = (
+        int((events_simu["time"][ind] - extended_simu_event_timerange_ns[0]) / 10),
+        int((events_simu["endtime"][ind] - extended_simu_event_timerange_ns[0]) / 10),
+    )
+    salt_event_timerange_i = (
+        int((events_salt["time"][ind] - extended_simu_event_timerange_ns[0]) / 10),
+        int((events_salt["endtime"][ind] - extended_simu_event_timerange_ns[0]) / 10),
+    )
 
     # Get peaks and lone hits for the event
     # Make sure the data is stored before loading
@@ -201,6 +209,13 @@ def plot_event_wf(
         alpha=0.2,
         label="Simulated S2 Range",
     )
+    ax1.axvspan(
+        simu_event_timerange_i[0],
+        simu_event_timerange_i[1],
+        color="tab:brown",
+        alpha=0.2,
+        label="Simulated Event",
+    )
     if events_salt is not None:
         ax1.axvspan(
             matched_salt_s1_timerange_i[0],
@@ -215,6 +230,13 @@ def plot_event_wf(
             color="r",
             alpha=0.2,
             label="Sprinkled S2 Range",
+        )
+        ax1.axvspan(
+            salt_event_timerange_i[0],
+            salt_event_timerange_i[1],
+            color="grey",
+            alpha=0.1,
+            label="Matched Sprinkled Event",
         )
     ax1.legend()
     if events_salt is not None:
@@ -259,6 +281,13 @@ def plot_event_wf(
         alpha=0.2,
         label="Simulated S2 Range",
     )
+    ax2.axvspan(
+        simu_event_timerange_i[0],
+        simu_event_timerange_i[1],
+        color="tab:brown",
+        alpha=0.2,
+        label="Simulated Event",
+    )
     if events_salt is not None:
         ax2.axvspan(
             matched_salt_s1_timerange_i[0],
@@ -273,6 +302,13 @@ def plot_event_wf(
             color="r",
             alpha=0.2,
             label="Sprinkled S2 Range",
+        )
+        ax2.axvspan(
+            salt_event_timerange_i[0],
+            salt_event_timerange_i[1],
+            color="grey",
+            alpha=0.1,
+            label="Matched Sprinkled Event",
         )
     ax2.legend()
     ax2.set_ylim(ylim)

@@ -9,7 +9,7 @@ import pandas as pd
 from utilix import xent_collection
 
 
-logging.basicConfig(handlers=[logging.StreamHandler()])
+logging.basicConfig(level=logging.INFO, handlers=[logging.StreamHandler()])
 log = logging.getLogger("fuse.context")
 
 
@@ -49,7 +49,6 @@ MAX_RAW_RECORDS_FILE_SIZE_MB = 1e9
 # straxen XENONnT options/configuration
 XNT_COMMON_OPTS = straxen.contexts.xnt_common_opts.copy()
 XNT_COMMON_CONFIG = straxen.contexts.xnt_common_config.copy()
-XNT_SIMULATION_CONFIG = straxen.contexts.xnt_simulation_config.copy()
 
 # wfsim based saltax options overrides
 SXNT_COMMON_OPTS_REGISTER = XNT_COMMON_OPTS["register"].copy()
@@ -138,7 +137,6 @@ def xenonnt_salted_fuse(
     saltax_mode="salt",
     output_folder="./fuse_data",
     cut_list=cutax.BasicCuts,
-    auto_register_cuts=True,
     corrections_version=DEFAULT_XEDOCS_VERSION,
     simu_config_version="sr1_dev",
     run_id_specific_config={
@@ -164,8 +162,6 @@ def xenonnt_salted_fuse(
     :param corrections_version: XENONnT documentation version to use,
         defaults to DEFAULT_XEDOCS_VERSION
     :param cut_list: Cut list to use, defaults to cutax.BasicCuts
-    :param auto_register_cuts: Whether to automatically register cuts,
-        defaults to True
     :param simu_config_version: simulation configuration version to use,
         defaults to "sr1_dev"
     :param run_id_specific_config: Mapping of run_id specific config
@@ -232,8 +228,6 @@ def xenonnt_salted_fuse(
     st.set_config(dict(saltax_mode=saltax_mode))
 
     # Register cuts plugins
-    if auto_register_cuts:
-        st.register_cuts()
     if cut_list is not None:
         st.register_cut_list(cut_list)
 
@@ -253,7 +247,7 @@ def xenonnt_salted_fuse(
             log.info("Loaded instructions from file", instr_file_name)
         except:
             log.info(f"Instruction file {instr_file_name} not found. Generating instructions...")
-            instr = generator_func(runid=runid, **kwargs)
+            instr = generator_func(runid=runid, recoil=recoil, **kwargs)
             pd.DataFrame(instr).to_csv(instr_file_name, index=False)
             log.info(f"Instructions saved to {instr_file_name}")
 
@@ -275,7 +269,6 @@ def xenonnt_salted_wfsim(
     output_folder="./strax_data",
     corrections_version=DEFAULT_XEDOCS_VERSION,
     cut_list=cutax.BasicCuts,
-    auto_register_cuts=True,
     simu_config_version="sr0_v4",
     cmt_version="global_v9",
     cmt_run_id="026000",
@@ -295,8 +288,6 @@ def xenonnt_salted_wfsim(
     :param corrections_version: XENONnT documentation version to use,
         defaults to DEFAULT_XEDOCS_VERSION
     :param cut_list: Cut list to use, defaults to cutax.BasicCuts
-    :param auto_register_cuts: Whether to automatically register cuts,
-        defaults to True
     :param simu_config_version: (for simulation) fax configuration
         version to use, defaults to "sr0_v4"
     :param cmt_version: (for simulation) CMT version to use, defaults to
@@ -365,8 +356,6 @@ def xenonnt_salted_wfsim(
             "g2": "bodega://g2?bodega_version=v5",
         }
     )
-    if auto_register_cuts:
-        st.register_cuts()
     if cut_list is not None:
         st.register_cut_list(cut_list)
 
@@ -425,7 +414,6 @@ def fxenonnt(
     saltax_mode="salt",
     output_folder="./fuse_data",
     cut_list=cutax.BasicCuts,
-    auto_register_cuts=True,
     corrections_version=DEFAULT_XEDOCS_VERSION,
     simu_config_version="sr1_dev",
     run_id_specific_config={
@@ -453,8 +441,6 @@ def fxenonnt(
         with cutax latest
     :param cut_list: List of cuts to register, default is
         cutax.BasicCuts
-    :param auto_register_cuts: Whether to automatically register cuts,
-        defaults to True
     :param simu_config_version: fax config version to use, default is
         synced with cutax latest
     :param run_id_specific_config: Mapping of run_id specific config
@@ -482,7 +468,6 @@ def fxenonnt(
         saltax_mode=saltax_mode,
         output_folder=output_folder,
         corrections_version=corrections_version,
-        auto_register_cuts=auto_register_cuts,
         cut_list=cut_list,
         simu_config_version=simu_config_version,
         run_id_specific_config=run_id_specific_config,
@@ -500,7 +485,6 @@ def sxenonnt(
     output_folder="./strax_data",
     corrections_version=DEFAULT_XEDOCS_VERSION,
     cut_list=cutax.BasicCuts,
-    auto_register_cuts=True,
     simu_config_version="sr0_v4",
     cmt_version="global_v9",
     cmt_run_id="026000",
@@ -522,8 +506,6 @@ def sxenonnt(
         with cutax latest
     :param cut_list: List of cuts to register, default is
         cutax.BasicCuts
-    :param auto_register_cuts: Whether to auto register cuts, default
-        True
     :param simu_config_version: fax config version to use, default is
         synced with cutax latest
     :param cmt_version: cmt version to use, default is synced with cutax
@@ -552,7 +534,6 @@ def sxenonnt(
         output_folder=output_folder,
         corrections_version=corrections_version,
         cut_list=cut_list,
-        auto_register_cuts=auto_register_cuts,
         simu_config_version=simu_config_version,
         cmt_version=cmt_version,
         cmt_run_id=cmt_run_id,

@@ -12,7 +12,7 @@ from wfsim.strax_interface import (
 )
 
 export, __all__ = strax.exporter()
-logging.basicConfig(handlers=[logging.StreamHandler()])
+logging.basicConfig(level=logging.INFO, handlers=[logging.StreamHandler()])
 log = logging.getLogger("wfsim.interface")
 log.setLevel("WARNING")
 
