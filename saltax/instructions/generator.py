@@ -24,7 +24,9 @@ FIELD_MAP = straxen.InterpolatingMap(
     method="RegularGridInterpolator",
 )
 SE_INSTRUCTIONS_DIR = "/project/lgrandi/yuanlq/salt/se_instructions/"
+#AMBE_INSTRUCTIONS_FILE = "/project/lgrandi/yuanlq/salt/ambe_instructions/minghao_aptinput.csv"
 AMBE_INSTRUCTIONS_FILE = "/project2/lgrandi/jjakob/AmBeSprinkling/AmBe_fuse_input.csv"
+#AMBE_INSTRUCTIONS_TYPE = "wfsim" 
 AMBE_INSTRUCTIONS_TYPE = "fuse"
 # BASE_DIR = "/project2/lgrandi/yuanlq/shared/saltax_instr/"
 BASE_DIR = os.path.abspath(__file__)[:-12] + "../../generated/"
@@ -205,6 +207,8 @@ def instr_file_name(
         default: BASE_DIR
     :return: instruction file name
     """
+    if generator_name=="ambe":
+        generator_name += ("_" + AMBE_INSTRUCTIONS_TYPE)
     if en_range is not None:
         en_range = str(en_range[0]) + "_" + str(en_range[1])
     else:
@@ -236,7 +240,7 @@ def instr_file_name(
 
         return filename
 
-def fill_fuse_instruction_i(i, selected_ambe,times_offset):
+def fill_fuse_instruction_i(i, cluster_i, selected_ambe,times_offset):
     instr_i = np.zeros(len(selected_ambe), dtype=FUSE_DTYPE)
     instr_i["t"] = times_offset[i] + selected_ambe["t"]
     instr_i["eventid"] = i + 1
@@ -249,7 +253,10 @@ def fill_fuse_instruction_i(i, selected_ambe,times_offset):
     instr_i["e_field"] = selected_ambe["e_field"]
     instr_i["ed"] = selected_ambe["ed"]
     instr_i["nestid"] = selected_ambe["nestid"]
-    instr_i["cluster_id"] = selected_ambe["cluster_id"]
+    instr_i["cluster_id"] = cluster_i + np.arange(1, 1 + len(selected_ambe))#selected_ambe["cluster_id"]
+
+    # Filter out 0 amplitudes
+    instr_i = instr_i[(instr_i["photons"] > 0) | (instr_i["electrons"] > 0)]
 
     return instr_i
 
@@ -267,7 +274,7 @@ def fill_wfsim_instruction_i(i, selected_ambe,times_offset):
     instr_i["n_excitons"] = selected_ambe["n_excitons"]
     
     # Filter out 0 amplitudes
-    instr_i = instr_i[instr_i["amp"] > 0] # probably not a good idea to do that here if there is ever an instruction that is all zero
+    instr_i = instr_i[instr_i["amp"] > 0] # should also work if all amp's are zero
     
     return instr_i
 
@@ -406,6 +413,7 @@ def generator_ambe(
     # assign instructions
     if instructions_type == 'fuse':
         instr = np.zeros(0, dtype=FUSE_DTYPE)
+        cluster_id = 0
     if instructions_type == 'wfsim':
         instr = np.zeros(0, dtype=wfsim.instruction_dtype)
 
@@ -417,7 +425,8 @@ def generator_ambe(
 
         # instruction for i-th event
         if instructions_type == 'fuse':
-            instr_i = fill_fuse_instruction_i(i, selected_ambe, times_offset)
+            instr_i = fill_fuse_instruction_i(i, cluster_id, selected_ambe, times_offset)
+            cluster_id += len(selected_ambe)
         elif instructions_type == 'wfsim':
             instr_i = fill_wfsim_instruction_i(i, selected_ambe, times_offset)
         else:

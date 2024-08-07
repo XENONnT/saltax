@@ -192,23 +192,25 @@ class SCsvFileLoader:
         Truncate the instructions to the chunk time range.
         """
         # Load the csv file
-        log.debug(f"Loaded detector simulation instructions from a csv file in {self.input_type} format!")
+        log.warning(f"Loaded detector simulation instructions from a csv file in {self.input_type} format!")
         instructions = self._load_csv_file()
-
+        print(f"Loaded detector simulation instructions from a csv file in {self.input_type} format!")
+        
         if self.input_type == "wfsim":
             # Translate the wfsim instructions to the fuse format
-            log.debug("Translating the wfsim instructions to the fuse format!")
+            log.warning("Translating the wfsim instructions to the fuse format!")
             instructions = self.translator.translate(instructions)
-            log.debug("Instructions translated to the fuse format!")
+            log.warning("Instructions translated to the fuse format!")
 
         # truncate instructions to the chunk time range
-        log.debug("Truncating instructions to the chunk time range!")
+        log.warning("Truncating instructions to the chunk time range!")
         log.debug(
             "We will further truncate the instructions to the range [%d, %d]",
             chunk_start + self.ns_no_instruction_after_chunk_start,
             chunk_end - self.ns_no_instruction_before_chunk_end,
         )
 
+        log.warning(f"We have the following list of keys: {list(instructions.keys())}")
         # See if we have any instructions after the chunk end
         mask_next = instructions["t"] > chunk_end
         if np.any(mask_next):
@@ -225,7 +227,7 @@ class SCsvFileLoader:
 
     def _load_csv_file(self):
         """Load the simulation instructions from a csv file in wfsim format."""
-        log.debug(f"Loading detector simulation instructions from a csv file in {self.input_type} format!")
+        log.warning(f"Loading detector simulation instructions from {self.input_file} in {self.input_type} format!")
         df = pd.read_csv(self.input_file)
 
         return df

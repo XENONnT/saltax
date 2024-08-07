@@ -244,6 +244,7 @@ def xenonnt_salted_fuse(
     instr_file_name = saltax.instr_file_name(
         runid=runid, recoil=recoil, generator_name=generator_name, mode=simu_mode, **kwargs
     )
+    
     # If runid is not None, then we need to either load instruction or generate it
     if runid is not None:
         # Try to load instruction from file and generate if not found
