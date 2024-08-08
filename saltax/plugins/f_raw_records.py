@@ -105,7 +105,7 @@ class SChunkCsvInput(FuseBasePlugin):
             self.source_done = source_done
 
             # Stick rigorously with raw_records time range
-            return self.chunk(start=start, end=end, data=data, data_type="geant4_interactions")
+            return self.chunk(start=start, end=end, data=data)#, data_type="geant4_interactions")
 
         except StopIteration:
             raise RuntimeError("Bug in chunk building!")
