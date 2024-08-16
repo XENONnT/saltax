@@ -243,7 +243,7 @@ def instr_file_name(
 def fill_fuse_instruction_i(i, cluster_i, selected_ambe,times_offset):
     instr_i = np.zeros(len(selected_ambe), dtype=FUSE_DTYPE)
     instr_i["t"] = times_offset[i] + selected_ambe["t"]
-    instr_i["eventid"] = i + 1
+    instr_i["eventid"] = selected_ambe["eventid"]
     instr_i["x"] = selected_ambe["x"]
     instr_i["y"] = selected_ambe["y"]
     instr_i["z"] = selected_ambe["z"]
@@ -253,7 +253,7 @@ def fill_fuse_instruction_i(i, cluster_i, selected_ambe,times_offset):
     instr_i["e_field"] = selected_ambe["e_field"]
     instr_i["ed"] = selected_ambe["ed"]
     instr_i["nestid"] = selected_ambe["nestid"]
-    instr_i["cluster_id"] = cluster_i + np.arange(1, 1 + len(selected_ambe))#selected_ambe["cluster_id"]
+    instr_i["cluster_id"] = cluster_i + np.arange(1, 1 + len(selected_ambe))
 
     # Filter out 0 amplitudes
     instr_i = instr_i[(instr_i["photons"] > 0) | (instr_i["electrons"] > 0)]
@@ -413,6 +413,8 @@ def generator_ambe(
     # assign instructions
     if instructions_type == 'fuse':
         instr = np.zeros(0, dtype=FUSE_DTYPE)
+        # Sort here just to be sure. Should be irrelevant as long as cluster_id is strictly increasing with time in fill_fuse_instruction_i
+        ambe_event_numbers = np.sort(ambe_event_numbers)
         cluster_id = 0
     if instructions_type == 'wfsim':
         instr = np.zeros(0, dtype=wfsim.instruction_dtype)
@@ -430,7 +432,7 @@ def generator_ambe(
         elif instructions_type == 'wfsim':
             instr_i = fill_wfsim_instruction_i(i, selected_ambe, times_offset)
         else:
-            raise ValueError(f'Instruction type {instructions_type} is not known.')
+            raise ValueError(f'Instruction type {instructions_type} is not known. Must be either "fuse" or "wfsim".')
 
         # concatenate instr
         instr = np.concatenate((instr, instr_i))

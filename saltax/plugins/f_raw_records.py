@@ -101,7 +101,6 @@ class SChunkCsvInput(FuseBasePlugin):
             chunk_data = chunk_data.to_records(index=False)
             data = np.zeros(len(chunk_data), dtype=self.dtype)
             strax.copy_to_buffer(chunk_data, data, "_bring_data_into_correct_format")
-
             self.source_done = source_done
 
             # Stick rigorously with raw_records time range
@@ -194,7 +193,6 @@ class SCsvFileLoader:
         # Load the csv file
         log.warning(f"Loaded detector simulation instructions from a csv file in {self.input_type} format!")
         instructions = self._load_csv_file()
-        print(f"Loaded detector simulation instructions from a csv file in {self.input_type} format!")
         
         if self.input_type == "wfsim":
             # Translate the wfsim instructions to the fuse format
@@ -210,7 +208,6 @@ class SCsvFileLoader:
             chunk_end - self.ns_no_instruction_before_chunk_end,
         )
 
-        log.warning(f"We have the following list of keys: {list(instructions.keys())}")
         # See if we have any instructions after the chunk end
         mask_next = instructions["t"] > chunk_end
         if np.any(mask_next):
