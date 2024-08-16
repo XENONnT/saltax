@@ -238,6 +238,7 @@ def xenonnt_salted_fuse(
     instr_file_name = saltax.instr_file_name(
         runid=runid, recoil=recoil, generator_name=generator_name, mode=simu_mode, **kwargs
     )
+    
     # If runid is not None, then we need to either load instruction or generate it
     if runid is not None:
         # Try to load instruction from file and generate if not found
@@ -254,6 +255,7 @@ def xenonnt_salted_fuse(
         st.set_config(
             {
                 "input_file": instr_file_name,
+                "input_type": saltax.generator.AMBE_INSTRUCTIONS_TYPE if generator_name=="ambe" else "wfsim",
                 "raw_records_file_size_target": MAX_RAW_RECORDS_FILE_SIZE_MB,
             }
         )

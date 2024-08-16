@@ -24,10 +24,27 @@ FIELD_MAP = straxen.InterpolatingMap(
     method="RegularGridInterpolator",
 )
 SE_INSTRUCTIONS_DIR = "/project/lgrandi/yuanlq/salt/se_instructions/"
-AMBE_INSTRUCTIONS_FILE = "/project/lgrandi/yuanlq/salt/ambe_instructions/minghao_aptinput.csv"
 YBE_INSTRUCTIONS_FILE = "/project2/lgrandi/ghusheng/ybe_instrutions/ybe_wfsim_instructions_6806_events_time_modified.csv"
-# BASE_DIR = "/project2/lgrandi/yuanlq/shared/saltax_instr/"
+#AMBE_INSTRUCTIONS_FILE = "/project/lgrandi/yuanlq/salt/ambe_instructions/minghao_aptinput.csv"
+AMBE_INSTRUCTIONS_FILE = "/project2/lgrandi/jjakob/AmBeSprinkling/AmBe_fuse_input.csv"
+#AMBE_INSTRUCTIONS_TYPE = "wfsim" 
+AMBE_INSTRUCTIONS_TYPE = "fuse"
 BASE_DIR = os.path.abspath(__file__)[:-12] + "../../generated/"
+
+FUSE_DTYPE = [
+            (("x position of the cluster [cm]", "x"), np.float32),
+            (("y position of the cluster [cm]", "y"), np.float32),
+            (("z position of the cluster [cm]", "z"), np.float32),
+            (("Number of photons at interaction position", "photons"), np.int32),
+            (("Number of electrons at interaction position", "electrons"), np.int32),
+            (("Number of excitons at interaction position", "excitons"), np.int32),
+            (("Electric field value at the cluster position [V/cm]", "e_field"), np.float32),
+            (("Energy of the cluster [keV]", "ed"), np.float32),
+            (("NEST interaction type", "nestid"), np.int8),
+            (("ID of the cluster", "cluster_id"), np.int32),
+            (("Time of the interaction", "t"), np.int64),
+            (("Geant4 event ID", "eventid"), np.int32),
+        ]
 
 
 def generate_vertex(r_range=R_RANGE, z_range=Z_RANGE, size=1):
@@ -190,6 +207,8 @@ def instr_file_name(
         default: BASE_DIR
     :return: instruction file name
     """
+    if generator_name=="ambe":
+        generator_name += ("_" + AMBE_INSTRUCTIONS_TYPE)
     if en_range is not None:
         en_range = str(en_range[0]) + "_" + str(en_range[1])
     else:
@@ -221,6 +240,43 @@ def instr_file_name(
 
         return filename
 
+def fill_fuse_instruction_i(i, cluster_i, selected_ambe,times_offset):
+    instr_i = np.zeros(len(selected_ambe), dtype=FUSE_DTYPE)
+    instr_i["t"] = times_offset[i] + selected_ambe["t"]
+    instr_i["eventid"] = selected_ambe["eventid"]
+    instr_i["x"] = selected_ambe["x"]
+    instr_i["y"] = selected_ambe["y"]
+    instr_i["z"] = selected_ambe["z"]
+    instr_i["photons"] = selected_ambe["photons"]
+    instr_i["electrons"] = selected_ambe["electrons"]
+    instr_i["excitons"] = selected_ambe["excitons"]
+    instr_i["e_field"] = selected_ambe["e_field"]
+    instr_i["ed"] = selected_ambe["ed"]
+    instr_i["nestid"] = selected_ambe["nestid"]
+    instr_i["cluster_id"] = cluster_i + np.arange(1, 1 + len(selected_ambe))
+
+    # Filter out 0 amplitudes
+    instr_i = instr_i[(instr_i["photons"] > 0) | (instr_i["electrons"] > 0)]
+
+    return instr_i
+
+def fill_wfsim_instruction_i(i, selected_ambe,times_offset):
+    instr_i = np.zeros(len(selected_ambe), dtype=wfsim.instruction_dtype)
+    instr_i["time"] = times_offset[i] + selected_ambe["time"]
+    instr_i["event_number"] = i + 1
+    instr_i["type"] = selected_ambe["type"]
+    instr_i["x"] = selected_ambe["x"]
+    instr_i["y"] = selected_ambe["y"]
+    instr_i["z"] = selected_ambe["z"]
+    instr_i["recoil"] = selected_ambe["recoil"]
+    instr_i["e_dep"] = selected_ambe["e_dep"]
+    instr_i["amp"] = selected_ambe["amp"]
+    instr_i["n_excitons"] = selected_ambe["n_excitons"]
+    
+    # Filter out 0 amplitudes
+    instr_i = instr_i[instr_i["amp"] > 0] # should also work if all amp's are zero
+    
+    return instr_i
 
 def generator_se(
     runid,
@@ -325,6 +381,7 @@ def generator_ambe(
     rate=1e9 / SALT_TIME_INTERVAL,
     time_mode="uniform",
     ambe_instructions_file=AMBE_INSTRUCTIONS_FILE,
+    instructions_type=AMBE_INSTRUCTIONS_TYPE,
     **kwargs
 ):
     """Generate instructions for a run with AmBe source.
@@ -354,30 +411,31 @@ def generator_ambe(
     )
 
     # assign instructions
-    instr = np.zeros(0, dtype=wfsim.instruction_dtype)
+    if instructions_type == 'fuse':
+        instr = np.zeros(0, dtype=FUSE_DTYPE)
+        # Sort here just to be sure. Should be irrelevant as long as cluster_id is strictly increasing with time in fill_fuse_instruction_i
+        ambe_event_numbers = np.sort(ambe_event_numbers)
+        cluster_id = 0
+    if instructions_type == 'wfsim':
+        instr = np.zeros(0, dtype=wfsim.instruction_dtype)
+
     for i in tqdm(range(n_tot)):
         # bootstrapped ambe instruction
         selected_ambe = ambe_instructions[
             ambe_instructions["event_number"] == ambe_event_numbers[i]
         ]
+
         # instruction for i-th event
-        instr_i = np.zeros(len(selected_ambe), dtype=wfsim.instruction_dtype)
-        instr_i["time"] = times_offset[i] + selected_ambe["time"]
-        instr_i["event_number"] = i + 1
-        instr_i["type"] = selected_ambe["type"]
-        instr_i["x"] = selected_ambe["x"]
-        instr_i["y"] = selected_ambe["y"]
-        instr_i["z"] = selected_ambe["z"]
-        instr_i["recoil"] = selected_ambe["recoil"]
-        instr_i["e_dep"] = selected_ambe["e_dep"]
-        instr_i["amp"] = selected_ambe["amp"]
-        instr_i["n_excitons"] = selected_ambe["n_excitons"]
+        if instructions_type == 'fuse':
+            instr_i = fill_fuse_instruction_i(i, cluster_id, selected_ambe, times_offset)
+            cluster_id += len(selected_ambe)
+        elif instructions_type == 'wfsim':
+            instr_i = fill_wfsim_instruction_i(i, selected_ambe, times_offset)
+        else:
+            raise ValueError(f'Instruction type {instructions_type} is not known. Must be either "fuse" or "wfsim".')
 
         # concatenate instr
         instr = np.concatenate((instr, instr_i))
-
-    # Filter out 0 amplitudes
-    instr = instr[instr["amp"] > 0]
 
     return instr
 
