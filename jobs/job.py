@@ -99,6 +99,7 @@ def create_context(settings, runid):
         generator_name=settings["generator_name"],
         recoil=settings["recoil"],
         simu_mode=settings["simu_mode"],
+        auto_register_cuts=False,
         rate=settings["rate"] if settings["rate"] else None,
         en_range=settings["en_range"] if settings["en_range"] else None,
     )
