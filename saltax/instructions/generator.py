@@ -326,6 +326,7 @@ def generator_ambe(
     rate=1e9 / SALT_TIME_INTERVAL,
     time_mode="uniform",
     ambe_instructions_file=AMBE_INSTRUCTIONS_FILE,
+    fmap=FIELD_MAP,
     **kwargs
 ):
     """Generate instructions for a run with AmBe source.
@@ -341,6 +342,7 @@ def generator_ambe(
     :param time_mode: 'uniform' or 'realistic', default: 'uniform'
     :param ambe_instructions_file: file containing ambe instructions,
         default: AMBE_INSTRUCTIONS_FILE
+    :param fmap: field map, default: FIELD_MAP, defined above
     :return: instructions in numpy array
     """
     # determine time offsets to shift ambe instructions
@@ -373,6 +375,8 @@ def generator_ambe(
         instr_i["e_dep"] = selected_ambe["e_dep"]
         instr_i["amp"] = selected_ambe["amp"]
         instr_i["n_excitons"] = selected_ambe["n_excitons"]
+        instr_i["local_field"] = fmap(np.array([np.sqrt(selected_ambe["x"]**2 + selected_ambe["y"]**2), 
+                                                selected_ambe["z"]]).T).repeat(2)
 
         # concatenate instr
         instr = np.concatenate((instr, instr_i))
@@ -389,6 +393,7 @@ def generator_ybe(
     rate=1e9 / SALT_TIME_INTERVAL,
     time_mode="uniform",
     ybe_instructions_file=YBE_INSTRUCTIONS_FILE,
+    fmap=FIELD_MAP,
     **kwargs
 ):
     """Generate instructions for a run with YBe source.
@@ -404,6 +409,7 @@ def generator_ybe(
     :param time_mode: 'uniform' or 'realistic', default: 'uniform'
     :param ybe_instructions_file: file containing ybe instructions,
         default: YBE_INSTRUCTIONS_FILE
+    :param fmap: field map, default: FIELD_MAP, defined above
     :return: instructions in numpy array
     """
     # determine time offsets to shift ybe instructions
@@ -434,6 +440,8 @@ def generator_ybe(
         instr_i["e_dep"] = selected_ybe["e_dep"]
         instr_i["amp"] = selected_ybe["amp"]
         instr_i["n_excitons"] = selected_ybe["n_excitons"]
+        instr_i["local_field"] = fmap(np.array([np.sqrt(selected_ybe["x"]**2 + selected_ybe["y"]**2), 
+                                                selected_ybe["z"]]).T).repeat(2)
 
         # concatenate instr
         instr = np.concatenate((instr, instr_i))
