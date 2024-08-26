@@ -645,6 +645,7 @@ def get_cut_eff(
     indv_cut_type="n_minus_1",
     title="N-1 Cut Acceptance Measured in SR1 AmBe",
     bbox_to_anchor=(0.5, 1.50),
+    bin_range=None
 ):
     """Get the acceptance with corresponding Clopper-Pearson uncertainty of
     each cut, as a function of a coordinate.
@@ -662,14 +663,17 @@ def get_cut_eff(
     :return: a dictionary of acceptance values
     """
     coord_units = {"s1_area": "[PE]", "s2_area": "[PE]", "cs1": "[PE]", "cs2": "[PE]", "z": "[cm]"}
-    if coord == "cs1" or coord == "s1_area":
-        bins = np.linspace(0, 100, n_bins)
-    elif coord == "cs2" or coord == "s2_area":
-        bins = np.linspace(200, 3000, n_bins)
-    elif coord == "z":
-        bins = np.linspace(-134, -13, n_bins)
+    if bin_range is not None:
+        bins = np.linspace(bin_range[0], bin_range[1], n_bins)
     else:
-        raise NotImplementedError
+        if coord == "cs1" or coord == "s1_area":
+            bins = np.linspace(0, 100, n_bins)
+        elif coord == "cs2" or coord == "s2_area":
+            bins = np.linspace(200, 3000, n_bins)
+        elif coord == "z":
+            bins = np.linspace(-134, -13, n_bins)
+        else:
+            raise NotImplementedError
 
     result_dict = {}
     for cut in all_cut_list:
