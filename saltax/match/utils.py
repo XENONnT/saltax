@@ -660,6 +660,7 @@ def get_cut_eff(
     :param title: title of the plot
     :param bbox_to_anchor: position of the legend, default to (0.5,
         1.50)
+    :param bin_range: range of the coordinate, default to None
     :return: a dictionary of acceptance values
     """
     coord_units = {"s1_area": "[PE]", "s2_area": "[PE]", "cs1": "[PE]", "cs2": "[PE]", "z": "[cm]"}
@@ -893,7 +894,8 @@ def compare_bands(salt, simu, title, coords=["z", "s2_range_50p_area"], n_bins=1
 
 
 def show_area_bias(
-    salt, simu, title, fraction=False, coord="s1_area", s1s2="s1", n_bins=16, ylim=(-5, 20)
+    salt, simu, title, fraction=False, coord="s1_area", s1s2="s1", n_bins=16, ylim=(-5, 20,),
+    bin_range=None
 ):
     """Show the bias due to ambience interference VS a coordinate.
 
@@ -909,6 +911,7 @@ def show_area_bias(
     :param s1s2: s1 or s2, default to 's1'
     :param n_bins: number of bins for the coordinate, default to 16
     :param ylim: y-axis limits, default to (-5,20)
+    :param bin_range: range of the bins, default to None
     """
     BINS = {
         "z": np.linspace(-134, -13, n_bins),
@@ -930,7 +933,10 @@ def show_area_bias(
         "s2_range_50p_area": "[ns]",
         "s2_range_90p_area": "[ns]",
     }
-    bins = BINS[coord]
+    if bin_range is not None:
+        bins = np.linspace(bin_range[0], bin_range[1], n_bins)
+    else:
+        bins = BINS[coord]
     units_dict = UNITS_DICT
     if s1s2 == "s1":
         bias = salt["s1_area"] - simu["s1_area"]
