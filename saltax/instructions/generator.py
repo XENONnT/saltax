@@ -174,6 +174,7 @@ def instr_file_name(
     en_range=DEFAULT_EN_RANGE,
     rate=1e9 / SALT_TIME_INTERVAL,
     base_dir=BASE_DIR,
+    **kwargs
 ):
     """Generate the instruction file name based on the runid, recoil,
     generator_name, mode, and rate.
