@@ -424,6 +424,7 @@ def fxenonnt(
     generator_name="flat",
     recoil=8,
     simu_mode="all",
+    unblind=True,
     **kwargs,
 ):
     """United strax context for XENONnT data, simulation, or salted data. Based
@@ -447,6 +448,7 @@ def fxenonnt(
     :param generator_name: Instruction mode to use, defaults to 'flat'
     :param recoil: NEST recoil type, defaults to 8 (beta ER)
     :param simu_mode: 's1', 's2', or 'all'. Defaults to 'all'
+    :param unblind: Whether to bypass any kind of blinding, defaults to True
     :param kwargs: Extra options to pass to strax.Context or generator,
         and rate/en_range etc for generator
     :return: strax context
@@ -461,7 +463,7 @@ def fxenonnt(
         validate_runid(runid)
         log.warning("Welcome to computation mode which only works for run %s!" % (runid))
 
-    return xenonnt_salted_fuse(
+    st = xenonnt_salted_fuse(
         runid=runid,
         saltax_mode=saltax_mode,
         output_folder=output_folder,
@@ -475,6 +477,10 @@ def fxenonnt(
         simu_mode=simu_mode,
         **kwargs,
     )
+    if unblind:
+        st.set_config(dict(event_info_function="disabled"))
+
+    return st
 
 
 def sxenonnt(
@@ -489,6 +495,7 @@ def sxenonnt(
     generator_name="flat",
     recoil=7,
     simu_mode="all",
+    unblind=True,
     **kwargs,
 ):
     """United strax context for XENONnT data, simulation, or salted data. Based
@@ -514,6 +521,7 @@ def sxenonnt(
     :param recoil: (for simulation) NEST recoil type, defaults to 7
         (beta ER)
     :param simu_mode: 's1', 's2', or 'all'. Defaults to 'all'
+    :param unblind: Whether to bypass any kind of blinding, defaults to True
     :param kwargs: Additional kwargs to pass
     :return: strax context
     """
@@ -527,7 +535,7 @@ def sxenonnt(
         validate_runid(runid)
         log.warning("Welcome to computation mode which only works for run %s!" % (runid))
 
-    return xenonnt_salted_wfsim(
+    st = xenonnt_salted_wfsim(
         runid=runid,
         output_folder=output_folder,
         corrections_version=corrections_version,
@@ -541,3 +549,7 @@ def sxenonnt(
         saltax_mode=saltax_mode,
         **kwargs,
     )
+    if unblind:
+        st.set_config(dict(event_info_function="disabled"))
+    
+    return st
