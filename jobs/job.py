@@ -101,6 +101,7 @@ def create_context(settings, runid):
         simu_mode=settings["simu_mode"],
         rate=settings["rate"] if settings["rate"] else None,
         en_range=settings["en_range"] if settings["en_range"] else None,
+        unblind=True
     )
     for d in settings["storage_to_patch"]:
         if d:
