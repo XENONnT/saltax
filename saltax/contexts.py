@@ -15,7 +15,9 @@ log = logging.getLogger("fuse.context")
 
 # fuse plugins
 # Plugins to simulate microphysics
-MICROPHYSICS_PLUGINS = fuse.context.microphysics_plugins
+MICROPHYSICS_PLUGINS_DBSCAN_CLUSTERING = fuse.context.microphysics_plugins_dbscan_clustering
+MICROPHYSICS_PLUGINS_LINEAGE_CLUSTERING = fuse.context.microphysics_plugins_lineage_clustering
+REMAINING_MICROPHYSICS_PLUGINS = fuse.context.remaining_microphysics_plugins
 # Plugins to simulate S1 signals
 S1_SIMULATION_PLUGINS = fuse.context.s1_simulation_plugins
 # Plugins to simulate S2 signals
@@ -30,7 +32,9 @@ PMT_AND_DAQ_PLUGINS = fuse.context.pmt_and_daq_plugins
 TRUTH_INFORMATION_PLUGINS = fuse.context.truth_information_plugins
 # All plugins with fuse
 FUSED_PLUGINS = [
-    MICROPHYSICS_PLUGINS,
+    MICROPHYSICS_PLUGINS_DBSCAN_CLUSTERING,
+    MICROPHYSICS_PLUGINS_LINEAGE_CLUSTERING,
+    REMAINING_MICROPHYSICS_PLUGINS,
     S1_SIMULATION_PLUGINS,
     S2_SIMULATION_PLUGINS,
     DELAYED_ELECTRON_SIMULATION_PLUGINS,
