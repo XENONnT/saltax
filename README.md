@@ -6,7 +6,7 @@ Salting `wfsim` or `fuse` into `strax` data, followed by comparison and analysis
 ## Installation
 ```
 cd saltax
-pip install ./ --user
+pip install -e ./ --user
 ```
 ## Tutorial
 Please check notebooks in `notebooks/`.
