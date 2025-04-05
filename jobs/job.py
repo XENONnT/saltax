@@ -199,7 +199,7 @@ def main():
     st = create_context(settings, runid)
     data_types = get_data_types(settings)
     print_settings(settings)
-    '''
+    
     process_data_types(st, str(runid).zfill(6), data_types)
 
     # Process data-only mode if required
@@ -230,7 +230,7 @@ def main():
     logging.info("====================")
     logging.info("Finished all computations for run %d." % runid)
     logging.info("Exiting.")
-    '''
+    
 
 if __name__ == "__main__":
     main()
