@@ -1,10 +1,11 @@
 import numpy as np
 import time
 import os
+import sys
+sys.path.insert(0, '/home/gvolta/XENONnT/utilix')
 import utilix
 from utilix.batchq import *
 import configparser
-
 
 config = configparser.ConfigParser()
 config.read("config.ini")
