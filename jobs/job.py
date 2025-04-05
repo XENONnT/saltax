@@ -1,6 +1,13 @@
 import configparser
 import time
 import sys
+# sys.path.append('/home/gvolta/XENONnT/strax')
+# sys.path.append('/home/gvolta/XENONnT/straxen')
+# sys.path.append('/home/gvolta/XENONnT/cutax')
+sys.path.insert(0, '/home/gvolta/XENONnT/strax')
+sys.path.insert(0, '/home/gvolta/XENONnT/straxen')
+sys.path.insert(0, '/home/gvolta/XENONnT/cutax')
+
 import gc
 import os
 import saltax
@@ -192,8 +199,9 @@ def main():
     st = create_context(settings, runid)
     data_types = get_data_types(settings)
     print_settings(settings)
+    
     process_data_types(st, str(runid).zfill(6), data_types)
-
+'''
     # Process data-only mode if required
     if settings["process_data"] and settings["saltax_mode"] == "salt":
         logging.info("====================")
@@ -218,7 +226,7 @@ def main():
 
     # Delete records if needed
     delete_records_if_needed(settings, runid, st)
-
+'''    
     logging.info("====================")
     logging.info("Finished all computations for run %d." % runid)
     logging.info("Exiting.")
