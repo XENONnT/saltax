@@ -9,8 +9,6 @@ generated/
 
 # strax
 *strax_data/
-*resource_cache/
-*fuse_data/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
