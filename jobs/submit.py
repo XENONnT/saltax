@@ -1,8 +1,10 @@
 import numpy as np
 import time
 import os
+
 import sys
-sys.path.insert(0, '/home/gvolta/XENONnT/utilix')
+# sys.path.insert(0, '/home/gvolta/XENONnT/utilix')
+
 import utilix
 from utilix.batchq import *
 import configparser

@@ -1,12 +1,13 @@
 import configparser
 import time
 import sys
+import shutil
 # sys.path.append('/home/gvolta/XENONnT/strax')
 # sys.path.append('/home/gvolta/XENONnT/straxen')
 # sys.path.append('/home/gvolta/XENONnT/cutax')
-sys.path.insert(0, '/home/gvolta/XENONnT/strax')
-sys.path.insert(0, '/home/gvolta/XENONnT/straxen')
-sys.path.insert(0, '/home/gvolta/XENONnT/cutax')
+# sys.path.insert(0, '/home/gvolta/XENONnT/strax')
+# sys.path.insert(0, '/home/gvolta/XENONnT/straxen')
+# sys.path.insert(0, '/home/gvolta/XENONnT/cutax')
 
 import gc
 import os
@@ -168,9 +169,10 @@ def delete_records_if_needed(settings, runid, st):
         records_name = str(st.key_for(runid, "records"))
         records_path = os.path.join(settings["output_folder"], records_name)
         if os.path.exists(records_path):
-            os.rmdir(records_path)
+            # os.rmdir(records_path)
+            shutil.rmtree(records_path)
             gc.collect()
-            logging.info("Deleted records for run %d in saltax mode salt. " % (runid))
+            logging.info("Deleted records for run %s in saltax mode salt. " % (runid))
 
 
 def timeit(func):
@@ -225,7 +227,7 @@ def main():
         logging.info("Finished processing for simu-only mode.")
 
     # Delete records if needed
-    delete_records_if_needed(settings, runid, st)
+    delete_records_if_needed(settings, str(runid).zfill(6), st)
  
     logging.info("====================")
     logging.info("Finished all computations for run %d." % runid)
