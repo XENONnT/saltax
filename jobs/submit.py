@@ -3,7 +3,6 @@ import time
 import os
 
 import sys
-# sys.path.insert(0, '/home/gvolta/XENONnT/utilix')
 
 import utilix
 from utilix.batchq import *

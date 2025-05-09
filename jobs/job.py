@@ -2,12 +2,6 @@ import configparser
 import time
 import sys
 import shutil
-# sys.path.append('/home/gvolta/XENONnT/strax')
-# sys.path.append('/home/gvolta/XENONnT/straxen')
-# sys.path.append('/home/gvolta/XENONnT/cutax')
-# sys.path.insert(0, '/home/gvolta/XENONnT/strax')
-# sys.path.insert(0, '/home/gvolta/XENONnT/straxen')
-# sys.path.insert(0, '/home/gvolta/XENONnT/cutax')
 
 import gc
 import os
