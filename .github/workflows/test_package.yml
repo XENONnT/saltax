@@ -45,11 +45,14 @@ jobs:
           ref: master
           fetch-depth: 0
       - name: Install python dependencies
-        uses: py-actions/py-dependency-install@v2
-      - name: Install requirements
+     #   uses: py-actions/py-dependency-install@v2
+     # - name: Install requirements
         run: |
-          pip install -r extra_requirements/requirements-tests.txt
+          pip install --upgrade pip
+          pip install --use-pep517 -r extra_requirements/requirements-tests.txt
           pip install ./cutax
+      # pip install -r extra_requirements/requirements-tests.txt
+      # pip install ./cutax
       - name: Install saltax
         run: python setup.py develop
       - name: Install pytest and hypothesis
