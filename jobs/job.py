@@ -1,6 +1,8 @@
 import configparser
 import time
 import sys
+import shutil
+
 import gc
 import os
 import saltax
@@ -161,9 +163,10 @@ def delete_records_if_needed(settings, runid, st):
         records_name = str(st.key_for(runid, "records"))
         records_path = os.path.join(settings["output_folder"], records_name)
         if os.path.exists(records_path):
-            os.rmdir(records_path)
+            # os.rmdir(records_path)
+            shutil.rmtree(records_path)
             gc.collect()
-            logging.info("Deleted records for run %d in saltax mode salt. " % (runid))
+            logging.info("Deleted records for run %s in saltax mode salt. " % (runid))
 
 
 def timeit(func):
@@ -192,6 +195,7 @@ def main():
     st = create_context(settings, runid)
     data_types = get_data_types(settings)
     print_settings(settings)
+    
     process_data_types(st, str(runid).zfill(6), data_types)
 
     # Process data-only mode if required
@@ -217,12 +221,12 @@ def main():
         logging.info("Finished processing for simu-only mode.")
 
     # Delete records if needed
-    delete_records_if_needed(settings, runid, st)
-
+    delete_records_if_needed(settings, str(runid).zfill(6), st)
+ 
     logging.info("====================")
     logging.info("Finished all computations for run %d." % runid)
     logging.info("Exiting.")
-
+    
 
 if __name__ == "__main__":
     main()

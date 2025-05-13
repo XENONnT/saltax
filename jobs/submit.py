@@ -1,10 +1,12 @@
 import numpy as np
 import time
 import os
+
+import sys
+
 import utilix
 from utilix.batchq import *
 import configparser
-
 
 config = configparser.ConfigParser()
 config.read("config.ini")

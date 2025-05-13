@@ -233,6 +233,30 @@ def get_available_runs(
     print(available_runs)
     print("=============================")
 
+def add_run_id_field(array, run_id_value, field_name='run_id', field_dtype='U10'):
+    """
+    Add a new field to a structured NumPy array and set it to a given value.
+
+    Parameters:
+    - array: structured np.ndarray
+    - run_id_value: scalar value to assign to the new field
+    - field_name: name of the new field (default: 'run_id')
+    - field_dtype: dtype of the new field (default: 'U10')
+
+    Returns:
+    - New structured array with the added field and assigned value
+    """
+    new_dtype = array.dtype.descr + [(field_name, field_dtype)]
+    new_array = np.empty(array.shape, dtype=new_dtype)
+    
+    # Copy existing data
+    for name in array.dtype.names:
+        new_array[name] = array[name]
+    
+    # Assign the new field
+    new_array[field_name] = run_id_value
+    
+    return new_array
 
 def load_peaks(runs, st_salt, st_simu, plugins=("peak_basics", "peak_positions_mlp"), **kwargs):
     """Load peaks from the runs and find matching indices for salted and
@@ -353,8 +377,8 @@ def load_events(runs, st_salt, st_simu, plugins=("event_info", "cuts_basic"), **
         print("Loading run %s" % (run))
 
         # Load plugins for both salt and simu
-        events_simu_i = st_simu.get_array(run, plugins, progress_bar=False)
-        events_salt_i = st_salt.get_array(run, plugins, progress_bar=False)
+        events_simu_i = add_run_id_field(st_simu.get_array(run, plugins, progress_bar=False), run)
+        events_salt_i = add_run_id_field(st_salt.get_array(run, plugins, progress_bar=False), run) 
 
         # Get matching result
         (
