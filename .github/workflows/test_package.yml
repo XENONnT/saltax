@@ -10,6 +10,8 @@ on:
   release:
     types: [created]
   pull_request:
+    branches:
+      - main
   push:
     branches:
       - main
@@ -42,7 +44,7 @@ jobs:
           repository: XENONnT/cutax
           ssh-key: ${{ secrets.CUTAX_DEPLOY_KEY }}
           path: cutax
-          ref: master
+          ref: v1.19.5
           fetch-depth: 0
       - name: Install python dependencies
         uses: py-actions/py-dependency-install@v2
