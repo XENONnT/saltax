@@ -63,7 +63,7 @@ jobs:
         env:
           HAVE_ACCESS_TO_SECTETS: ${{ secrets.RUNDB_API_URL }}
         if: env.HAVE_ACCESS_TO_SECTETS != null
-        run: coverage run --source saltax setup.py test
+        run: coverage run --append --source=saltax -m pytest -v
       - name: Coverage report
         env:
           HAVE_ACCESS_TO_SECTETS: ${{ secrets.RUNDB_API_URL }}
