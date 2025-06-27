@@ -11,8 +11,8 @@ on:
     types: [created]
   pull_request:
   push:
-   branches:
-    - main
+    branches:
+      - main
 
 jobs:
   update:
@@ -48,7 +48,6 @@ jobs:
         uses: py-actions/py-dependency-install@v2
       - name: Install requirements
         run: |
-          pip install -r extra_requirements/requirements-tests.txt
           pip install ./cutax
       - name: Install saltax
         run: python setup.py develop
