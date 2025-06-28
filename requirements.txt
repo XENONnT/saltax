@@ -1,7 +1,0 @@
-strax<2.0.0
-straxen<3.0.0
-wfsim>=1.2.2
-scipy
-numpy
-pandas
-numba

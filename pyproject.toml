@@ -24,10 +24,12 @@ python = ">=3.9,<3.13"
 strax = "<2.0.0"
 straxen = "<3.0.0"
 wfsim = ">=1.2.2"
-scipy = "*"
+xenon-fuse = ">=1.4.3"
+tabulate = "*"
 numpy = "*"
-pandas = "*"
 numba = "*"
+pandas = "*"
+scipy = "*"
 
 [build-system]
 requires = ["poetry-core>=1.0.8", "setuptools>=61.0"]
