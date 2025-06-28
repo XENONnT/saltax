@@ -112,7 +112,7 @@ def create_context(settings, runid):
 def get_context_function(package):
     """Return the context function for the given package."""
     if package == "fuse":
-        return saltax.contexts.fxenonnt
+        return saltax.contexts.sxenonnt
     raise ValueError("Invalid package name %s" % package)
 
 
