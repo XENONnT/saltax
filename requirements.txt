@@ -1,9 +1,0 @@
-strax<2.0.0
-straxen<3.0.0
-wfsim>=1.2.2
-xenon-fuse>=1.4.3
-tabulate
-numpy
-numba
-pandas
-scipy
