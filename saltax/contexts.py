@@ -1,12 +1,14 @@
-import straxen
-import saltax
-import cutax
-import strax
-from immutabledict import immutabledict
-import fuse
 import logging
 import pandas as pd
+from immutabledict import immutabledict
+
 from utilix import xent_collection
+import strax
+import straxen
+import cutax
+import fuse
+import saltax
+from saltax.plugins.records import SCHANNEL_STARTS_AT
 
 
 logging.basicConfig(level=logging.INFO, handlers=[logging.StreamHandler()])
@@ -71,7 +73,6 @@ FXNT_COMMON_OPTS = XNT_COMMON_OPTS.copy()
 FXNT_COMMON_OPTS["register"] = FXNT_COMMON_OPTS_OVERRIDE["register"]
 
 # saltax configuration overrides
-SCHANNEL_STARTS_AT = 3000
 XNT_COMMON_CONFIG_OVERRIDE = dict(
     channel_map=immutabledict(
         # (Minimum channel, maximum channel)
