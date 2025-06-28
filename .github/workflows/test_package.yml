@@ -44,8 +44,6 @@ jobs:
           path: cutax
           ref: v1.19.5
           fetch-depth: 0
-      - name: Install python dependencies
-        uses: py-actions/py-dependency-install@v2
       - name: Install requirements
         run: |
           pip install git+https://github.com/XENONnT/base_environment@el7.sr1_wimp_unblind --force-reinstall
