@@ -6,7 +6,7 @@ from straxen.plugins.records.records import NO_PULSE_COUNTS
 
 SCHANNEL_STARTS_AT = 3000
 export, __all__ = strax.exporter()
-__all__ += ["NO_PULSE_COUNTS"]
+__all__.extend(["NO_PULSE_COUNTS"])
 
 
 @export
@@ -139,7 +139,7 @@ class SPulseProcessing(straxen.PulseProcessing):
 def shift_salt_channels(r, n_channel_shift=SCHANNEL_STARTS_AT):
     """Shifts the channel numbers of the SALT PMTs.
 
-    :param r: records (from wfsim)
+    :param r: records (from fuse)
     :param n_channel_shift: number of channels to shift, default is
         SCHANNEL_STARTS_AT
     :return: raw_records with shifted channel numbers
