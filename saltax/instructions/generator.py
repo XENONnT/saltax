@@ -252,7 +252,7 @@ def generator_se(
 
     instr = np.zeros(n_tot, dtype=ChunkCsvInput.needed_csv_input_fields())
     instr["eventid"] = instr["cluster_id"] = np.arange(1, n_tot + 1)
-    instr["time"] = times
+    instr["t"] = times
 
     # Generating unoformely distributed events for give R and Z range
     instr["x"], instr["y"], instr["z"] = generate_vertex(r_range=r_range, z_range=z_range, size=n_tot)
@@ -303,7 +303,7 @@ def generator_se_bootstrapped(runid, xyt_files_at=SE_INSTRUCTIONS_DIR, **kwargs)
     n_tot = len(ts)
     instr = np.zeros(n_tot, dtype=ChunkCsvInput.needed_csv_input_fields())
     instr["eventid"] = instr["cluster_id"] = np.arange(1, n_tot + 1)
-    instr["time"] = ts
+    instr["t"] = ts
     instr["x"] = xs
     instr["y"] = ys
     instr["z"] = -0.00001  # Just to avoid drift time
@@ -367,7 +367,7 @@ def generator_ambe(
         instr_i["x"] = selected_ambe["x"]
         instr_i["y"] = selected_ambe["y"]
         instr_i["z"] = selected_ambe["z"]
-        instr_i["recoil"] = selected_ambe["recoil"]
+        instr_i["nestid"] = selected_ambe["recoil"]
         instr_i["ed"] = selected_ambe["e_dep"]
         instr_i["photons"][selected_ambe["type"] == 1] = selected_ambe["amp"][selected_ambe["type"] == 1]
         instr_i["electrons"][selected_ambe["type"] == 2] = selected_ambe["amp"][selected_ambe["type"] == 2]
@@ -430,7 +430,7 @@ def generator_ybe(
         instr_i["x"] = selected_ybe["x"]
         instr_i["y"] = selected_ybe["y"]
         instr_i["z"] = selected_ybe["z"]
-        instr_i["recoil"] = selected_ybe["recoil"]
+        instr_i["nestid"] = selected_ybe["recoil"]
         instr_i["ed"] = selected_ybe["e_dep"]
         instr_i["photons"][selected_ybe["type"] == 1] = selected_ybe["amp"][selected_ybe["type"] == 1]
         instr_i["electrons"][selected_ybe["type"] == 2] = selected_ybe["amp"][selected_ybe["type"] == 2]
@@ -492,12 +492,12 @@ def generator_flat(
     instr["nestid"] = recoil
 
     # Getting local field from field map
-    instr["e_field"] = fmap(np.array([np.sqrt(x**2 + y**2), z]).T)
+    instr["e_field"] = fmap(np.array([np.sqrt(instr["x"]**2 + instr["y"]**2), instr["z"]]).T)
 
     # And generating quantas from nest
     for i in range(n_tot):
         y = nc.GetYields(
-            interaction=nestpy.INTERACTION_TYPE(instr["recoil"][i]),
+            interaction=nestpy.INTERACTION_TYPE(instr["nestid"][i]),
             energy=instr["ed"][i],
             drift_field=instr["e_field"][i],
         )
