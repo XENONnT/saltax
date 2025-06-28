@@ -51,7 +51,7 @@ jobs:
           pip install git+https://github.com/XENONnT/base_environment@el7.sr1_wimp_unblind --force-reinstall
           pip install ./cutax
       - name: Install saltax
-        run: python setup.py develop
+        run: pip install . --force-reinstall
       - name: Install pytest and hypothesis
         run: pip install pytest hypothesis pytest-cov coverage
       - name: Test package
