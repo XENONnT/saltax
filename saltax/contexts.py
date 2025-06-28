@@ -1,12 +1,14 @@
-import straxen
-import saltax
-import cutax
-import strax
-from immutabledict import immutabledict
-import fuse
 import logging
 import pandas as pd
+from immutabledict import immutabledict
+
 from utilix import xent_collection
+import strax
+import straxen
+import cutax
+import fuse
+import saltax
+from saltax.plugins.records import SCHANNEL_STARTS_AT
 
 
 logging.basicConfig(level=logging.INFO, handlers=[logging.StreamHandler()])
@@ -55,23 +57,22 @@ XNT_COMMON_OPTS = straxen.contexts.xnt_common_opts.copy()
 XNT_COMMON_CONFIG = straxen.contexts.xnt_common_config.copy()
 
 # fuse based saltax options overrides
-FXNT_COMMON_OPTS_REGISTER = XNT_COMMON_OPTS["register"].copy()
-FXNT_COMMON_OPTS_REGISTER.remove(straxen.Peaklets)
-FXNT_COMMON_OPTS_REGISTER.remove(straxen.PulseProcessing)
-FXNT_COMMON_OPTS_REGISTER = [
+SXNT_COMMON_OPTS_REGISTER = XNT_COMMON_OPTS["register"].copy()
+SXNT_COMMON_OPTS_REGISTER.remove(straxen.Peaklets)
+SXNT_COMMON_OPTS_REGISTER.remove(straxen.PulseProcessing)
+SXNT_COMMON_OPTS_REGISTER = [
     saltax.SChunkCsvInput,
     saltax.SPeaklets,
     saltax.SPulseProcessing,
     saltax.SPMTResponseAndDAQ,
-] + FXNT_COMMON_OPTS_REGISTER
-FXNT_COMMON_OPTS_OVERRIDE = dict(
-    register=FXNT_COMMON_OPTS_REGISTER,
+] + SXNT_COMMON_OPTS_REGISTER
+SXNT_COMMON_OPTS_OVERRIDE = dict(
+    register=SXNT_COMMON_OPTS_REGISTER,
 )
-FXNT_COMMON_OPTS = XNT_COMMON_OPTS.copy()
-FXNT_COMMON_OPTS["register"] = FXNT_COMMON_OPTS_OVERRIDE["register"]
+SXNT_COMMON_OPTS = XNT_COMMON_OPTS.copy()
+SXNT_COMMON_OPTS["register"] = SXNT_COMMON_OPTS_OVERRIDE["register"]
 
 # saltax configuration overrides
-SCHANNEL_STARTS_AT = 3000
 XNT_COMMON_CONFIG_OVERRIDE = dict(
     channel_map=immutabledict(
         # (Minimum channel, maximum channel)
@@ -89,8 +90,8 @@ XNT_COMMON_CONFIG_OVERRIDE = dict(
         nveto_blank=(2999, 2999),
     ),
 )
-FXNT_COMMON_CONFIG = XNT_COMMON_CONFIG.copy()
-FXNT_COMMON_CONFIG["channel_map"] = XNT_COMMON_CONFIG_OVERRIDE["channel_map"]
+SXNT_COMMON_CONFIG = XNT_COMMON_CONFIG.copy()
+SXNT_COMMON_CONFIG["channel_map"] = XNT_COMMON_CONFIG_OVERRIDE["channel_map"]
 DEFAULT_XEDOCS_VERSION = cutax.contexts.DEFAULT_XEDOCS_VERSION
 
 # saltax modes supported
@@ -178,12 +179,12 @@ def xenonnt_salted_fuse(
         )
 
     if kwargs is not None:
-        context_options = dict(**FXNT_COMMON_OPTS, **kwargs)
+        context_options = dict(**SXNT_COMMON_OPTS, **kwargs)
     else:
-        context_options = FXNT_COMMON_OPTS.copy()
+        context_options = SXNT_COMMON_OPTS.copy()
     context_config = dict(
         check_raw_record_overlaps=True,
-        **FXNT_COMMON_CONFIG,
+        **SXNT_COMMON_CONFIG,
     )
     st = strax.Context(
         storage=strax.DataDirectory(output_folder), config=context_config, **context_options
