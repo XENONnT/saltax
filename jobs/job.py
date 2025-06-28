@@ -45,7 +45,7 @@ TO_PROCESS_DTYPES_SE = [
 
 def print_versions():
     """Print the versions of saltax, strax, and straxen."""
-    logging.info(straxen.print_versions(["saltax", "strax", "straxen", "fuse", "nestpy", "wfsim"]))
+    logging.info(straxen.print_versions(["saltax", "strax", "straxen", "fuse", "nestpy"]))
 
 
 def load_config():
@@ -111,9 +111,7 @@ def create_context(settings, runid):
 
 def get_context_function(package):
     """Return the context function for the given package."""
-    if package == "wfsim":
-        return saltax.contexts.sxenonnt
-    elif package == "fuse":
+    if package == "fuse":
         return saltax.contexts.fxenonnt
     raise ValueError("Invalid package name %s" % package)
 

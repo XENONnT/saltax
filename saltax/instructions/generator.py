@@ -1,15 +1,16 @@
+import os
+import pytz
+import pickle
+import datetime
+from zoneinfo import ZoneInfo
+from tqdm import tqdm
 import numpy as np
 import pandas as pd
+
 import nestpy
-import wfsim
-import pytz
 import straxen
-from zoneinfo import ZoneInfo
 from utilix import xent_collection
-import datetime
-import os
-import pickle
-from tqdm import tqdm
+from fuse.plugins.detector_physics.csv_input import ChunkCsvInput
 
 
 DEFAULT_EN_RANGE = (0.2, 15.0)  # in unit of keV
@@ -249,21 +250,17 @@ def generator_se(
     times = generate_times(start_time, end_time, size=n_tot, rate=rate, time_mode=time_mode)
     n_tot = len(times)
 
-    instr = np.zeros(n_tot, dtype=wfsim.instruction_dtype)
-    instr["event_number"] = np.arange(1, n_tot + 1)
-    instr["type"][:] = 2
-    instr["time"][:] = times
+    instr = np.zeros(n_tot, dtype=ChunkCsvInput.needed_csv_input_fields())
+    instr["eventid"] = instr["cluster_id"] = np.arange(1, n_tot + 1)
+    instr["time"] = times
 
     # Generating unoformely distributed events for give R and Z range
-    x, y, z = generate_vertex(r_range=r_range, z_range=z_range, size=n_tot)
-    instr["x"][:] = x
-    instr["y"][:] = y
-    instr["z"][:] = z
+    instr["x"], instr["y"], instr["z"] = generate_vertex(r_range=r_range, z_range=z_range, size=n_tot)
 
-    # And generating quantas from nest
-    for i in range(0, n_tot):
-        instr["amp"][i] = 1
-        instr["n_excitons"][i] = 0
+    # And assigning quanta
+    instr["photons"] = 0
+    instr["electrons"] = 1
+    instr["excitons"] = 0
 
     return instr
 
@@ -304,18 +301,17 @@ def generator_se_bootstrapped(runid, xyt_files_at=SE_INSTRUCTIONS_DIR, **kwargs)
     xs, ys = constrain_radius(xs, ys)
 
     n_tot = len(ts)
-    instr = np.zeros(n_tot, dtype=wfsim.instruction_dtype)
-    instr["event_number"] = np.arange(1, n_tot + 1)
-    instr["type"][:] = 2
-    instr["time"][:] = ts
-    instr["x"][:] = xs
-    instr["y"][:] = ys
-    instr["z"][:] = -0.00001  # Just to avoid drift time
+    instr = np.zeros(n_tot, dtype=ChunkCsvInput.needed_csv_input_fields())
+    instr["eventid"] = instr["cluster_id"] = np.arange(1, n_tot + 1)
+    instr["time"] = ts
+    instr["x"] = xs
+    instr["y"] = ys
+    instr["z"] = -0.00001  # Just to avoid drift time
 
-    # And generating quantas from nest
-    for i in range(0, n_tot):
-        instr["amp"][i] = 1
-        instr["n_excitons"][i] = 0
+    # And assigning quanta
+    instr["photons"] = 0
+    instr["electrons"] = 1
+    instr["excitons"] = 0
 
     return instr
 
@@ -357,32 +353,30 @@ def generator_ambe(
     )
 
     # assign instructions
-    instr = np.zeros(0, dtype=wfsim.instruction_dtype)
+    instr = np.zeros(0, dtype=ChunkCsvInput.needed_csv_input_fields())
     for i in tqdm(range(n_tot)):
         # bootstrapped ambe instruction
         selected_ambe = ambe_instructions[
             ambe_instructions["event_number"] == ambe_event_numbers[i]
         ]
         # instruction for i-th event
-        instr_i = np.zeros(len(selected_ambe), dtype=wfsim.instruction_dtype)
-        instr_i["time"] = times_offset[i] + selected_ambe["time"]
-        instr_i["event_number"] = i + 1
-        instr_i["type"] = selected_ambe["type"]
+        instr_i = np.zeros(len(selected_ambe), dtype=ChunkCsvInput.needed_csv_input_fields())
+        instr_i["t"] = times_offset[i] + selected_ambe["t"]
+        instr_i["eventid"] = i + 1
+        instr_i["cluster_id"] = len(instr) + np.arange(len(selected_ambe))
         instr_i["x"] = selected_ambe["x"]
         instr_i["y"] = selected_ambe["y"]
         instr_i["z"] = selected_ambe["z"]
         instr_i["recoil"] = selected_ambe["recoil"]
-        instr_i["e_dep"] = selected_ambe["e_dep"]
-        instr_i["amp"] = selected_ambe["amp"]
-        instr_i["n_excitons"] = selected_ambe["n_excitons"]
-        instr_i["local_field"] = fmap(np.array([np.sqrt(selected_ambe["x"]**2 + selected_ambe["y"]**2), 
+        instr_i["ed"] = selected_ambe["e_dep"]
+        instr_i["photons"][selected_ambe["type"] == 1] = selected_ambe["amp"][selected_ambe["type"] == 1]
+        instr_i["electrons"][selected_ambe["type"] == 2] = selected_ambe["amp"][selected_ambe["type"] == 2]
+        instr_i["excitons"] = selected_ambe["n_excitons"]
+        instr_i["e_field"] = fmap(np.array([np.sqrt(selected_ambe["x"]**2 + selected_ambe["y"]**2), 
                                                 selected_ambe["z"]]).T).repeat(2)
 
         # concatenate instr
         instr = np.concatenate((instr, instr_i))
-
-    # Filter out 0 amplitudes
-    instr = instr[instr["amp"] > 0]
 
     return instr
 
@@ -424,30 +418,28 @@ def generator_ybe(
     )
 
     # assign instructions
-    instr = np.zeros(0, dtype=wfsim.instruction_dtype)
+    instr = np.zeros(0, dtype=ChunkCsvInput.needed_csv_input_fields())
     for i in tqdm(range(n_tot)):
         # bootstrapped ybe instruction
         selected_ybe = ybe_instructions[ybe_instructions["event_number"] == ybe_event_numbers[i]]
         # instruction for i-th event
-        instr_i = np.zeros(len(selected_ybe), dtype=wfsim.instruction_dtype)
-        instr_i["time"] = times_offset[i] + selected_ybe["time"]
-        instr_i["event_number"] = i + 1
-        instr_i["type"] = selected_ybe["type"]
+        instr_i = np.zeros(len(selected_ybe), dtype=ChunkCsvInput.needed_csv_input_fields())
+        instr_i["t"] = times_offset[i] + selected_ybe["time"]
+        instr_i["eventid"] = i + 1
+        instr_i["cluster_id"] = len(instr) + np.arange(len(selected_ybe))
         instr_i["x"] = selected_ybe["x"]
         instr_i["y"] = selected_ybe["y"]
         instr_i["z"] = selected_ybe["z"]
         instr_i["recoil"] = selected_ybe["recoil"]
-        instr_i["e_dep"] = selected_ybe["e_dep"]
-        instr_i["amp"] = selected_ybe["amp"]
-        instr_i["n_excitons"] = selected_ybe["n_excitons"]
-        instr_i["local_field"] = fmap(np.array([np.sqrt(selected_ybe["x"]**2 + selected_ybe["y"]**2), 
+        instr_i["ed"] = selected_ybe["e_dep"]
+        instr_i["photons"][selected_ybe["type"] == 1] = selected_ybe["amp"][selected_ybe["type"] == 1]
+        instr_i["electrons"][selected_ybe["type"] == 2] = selected_ybe["amp"][selected_ybe["type"] == 2]
+        instr_i["excitons"] = selected_ybe["n_excitons"]
+        instr_i["e_field"] = fmap(np.array([np.sqrt(selected_ybe["x"]**2 + selected_ybe["y"]**2), 
                                                 selected_ybe["z"]]).T).repeat(2)
 
         # concatenate instr
         instr = np.concatenate((instr, instr_i))
-
-    # Filter out 0 amplitudes
-    instr = instr[instr["amp"] > 0]
 
     return instr
 
@@ -488,48 +480,40 @@ def generator_flat(
     times = generate_times(start_time, end_time, size=n_tot, rate=rate, time_mode=time_mode)
     n_tot = len(times)
 
-    instr = np.zeros(2 * n_tot, dtype=wfsim.instruction_dtype)
-    instr["event_number"] = np.arange(1, n_tot + 1).repeat(2)
-    instr["type"][:] = np.tile([1, 2], n_tot)
-    instr["time"][:] = times.repeat(2)
+    instr = np.zeros(n_tot, dtype=ChunkCsvInput.needed_csv_input_fields())
+    instr["eventid"] = instr["cluster_id"] = np.arange(1, n_tot + 1)
+    instr["t"] = times
 
     # Generating unoformely distributed events for give R and Z range
-    x, y, z = generate_vertex(r_range=r_range, z_range=z_range, size=n_tot)
-    instr["x"][:] = x.repeat(2)
-    instr["y"][:] = y.repeat(2)
-    instr["z"][:] = z.repeat(2)
+    instr["x"], instr["y"], instr["z"] = generate_vertex(r_range=r_range, z_range=z_range, size=n_tot)
 
     # Making energy
-    ens = np.random.uniform(en_range[0], en_range[1], size=n_tot)
-    instr["recoil"][:] = recoil
-    instr["e_dep"][:] = ens.repeat(2)
+    instr["ed"] = np.random.uniform(en_range[0], en_range[1], size=n_tot)
+    instr["nestid"] = recoil
 
     # Getting local field from field map
-    instr["local_field"] = fmap(np.array([np.sqrt(x**2 + y**2), z]).T).repeat(2)
+    instr["e_field"] = fmap(np.array([np.sqrt(x**2 + y**2), z]).T)
 
     # And generating quantas from nest
-    for i in range(0, n_tot):
+    for i in range(n_tot):
         y = nc.GetYields(
-            interaction=nestpy.INTERACTION_TYPE(instr["recoil"][2 * i]),
-            energy=instr["e_dep"][2 * i],
-            drift_field=instr["local_field"][2 * i],
+            interaction=nestpy.INTERACTION_TYPE(instr["recoil"][i]),
+            energy=instr["ed"][i],
+            drift_field=instr["e_field"][i],
         )
         quantas = nc.GetQuanta(y)
-        instr["amp"][2 * i] = quantas.photons
-        instr["amp"][2 * i + 1] = quantas.electrons
-        instr["n_excitons"][2 * i : 2 * (i + 1)] = quantas.excitons
+        instr["photons"][i] = quantas.photons
+        instr["electrons"][i] = quantas.electrons
+        instr["excitons"][i] = quantas.excitons
 
     # Selecting event types
     if mode == "s1":
-        instr = instr[instr["type"] == 1]
+        instr["electrons"] = 0
     elif mode == "s2":
-        instr = instr[instr["type"] == 2]
+        instr["photons"] = 0
     elif mode == "all":
         pass
     else:
         raise RuntimeError("Unknown mode: ", mode)
-
-    # Filter out 0 amplitudes
-    instr = instr[instr["amp"] > 0]
 
     return instr

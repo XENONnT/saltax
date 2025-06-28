@@ -8,7 +8,9 @@ import straxen
 
 from fuse.plugin import FuseBasePlugin
 from fuse.plugins.pmt_and_daq.pmt_response_and_daq import PMTResponseAndDAQ
-from .s_raw_records import NS_NO_INSTRUCTION_BEFORE_CHUNK_END, NS_NO_INSTRUCTION_AFTER_CHUNK_START
+
+NS_NO_INSTRUCTION_AFTER_CHUNK_START = 5e7
+NS_NO_INSTRUCTION_BEFORE_CHUNK_END = 5e7
 
 export, __all__ = strax.exporter()
 
@@ -26,15 +28,15 @@ class SPMTResponseAndDAQ(PMTResponseAndDAQ):
 @export
 class SChunkCsvInput(FuseBasePlugin):
     """Plugin which reads a CSV file containing instructions for the detector
-    physics simulation (in wfsim format) and returns the data in chunks.
+    physics simulation and returns the data in chunks.
 
     Modified from csv_file_loader: https://github.com/XENONnT/fuse/blob/e538d32a5a0735757a77b1dce31d6f95a379bf4e/fuse/plugins/detector_physics/csv_input.py#L118
     Similar to the case event_rate=0 there: we don't reassign times.
     """
 
-    __version__ = "0.0.0"
+    __version__ = "0.0.1"
 
-    depends_on: Tuple = "raw_records"
+    depends_on = "raw_records"
     provides = "microphysics_summary"
     data_kind = "interactions_in_roi"
 
@@ -60,19 +62,21 @@ class SChunkCsvInput(FuseBasePlugin):
     input_file = straxen.URLConfig(
         track=False,
         infer_type=False,
-        help="CSV file (in wfsim format) to read.",
+        help="CSV file to read",
     )
+
     ns_no_instruction_after_chunk_start = straxen.URLConfig(
-        default=5e7,
+        default=NS_NO_INSTRUCTION_AFTER_CHUNK_START,
         track=False,
-        type=(int),
+        type=int,
         help="No instruction this amount of time after a chunk starts will be used, "
         "as a safeguard for not getting raw_records_simu out of raw_records chunk time range. ",
     )
+
     ns_no_instruction_before_chunk_end = straxen.URLConfig(
-        default=5e7,
+        default=NS_NO_INSTRUCTION_BEFORE_CHUNK_END,
         track=False,
-        type=(int),
+        type=int,
         help="No instruction this amount of time before a chunk ends will be used, "
         "as a safeguard for not getting raw_records_simu out of raw_records chunk time range. ",
     )
@@ -120,7 +124,7 @@ class SChunkCsvInput(FuseBasePlugin):
 
 
 class SCsvFileLoader:
-    """Class to load a CSV file (in wfsim format) with detector simulation
+    """Class to load a CSV file with detector simulation
     instructions."""
 
     def __init__(
@@ -169,23 +173,12 @@ class SCsvFileLoader:
             "cluster_id",
         ]
 
-        # Translator to translate the wfsim instructions to the fuse format
-        self.translator = InstrTranslator(input_format="wfsim", output_format="fuse")
-
     def output_chunk(self, chunk_start, chunk_end):
-        """Load the simulation instructions from the csv file in wfsim format
-        and then translate them to the fuse format.
+        """Load the simulation instructions from the csv file.
 
         Truncate the instructions to the chunk time range.
         """
-        # Load the csv file in wfsim format
-        log.debug("Loaded detector simulation instructions from a csv file in wfsim format!")
         instructions = self._load_csv_file()
-
-        # Translate the wfsim instructions to the fuse format
-        log.debug("Translating the wfsim instructions to the fuse format!")
-        instructions = self.translator.translate(instructions)
-        log.debug("Instructions translated to the fuse format!")
 
         # truncate instructions to the chunk time range
         log.debug("Truncating instructions to the chunk time range!")
@@ -210,113 +203,8 @@ class SCsvFileLoader:
         return instructions, source_done
 
     def _load_csv_file(self):
-        """Load the simulation instructions from a csv file in wfsim format."""
-        log.debug("Loading detector simulation instructions from a csv file in wfsim format!")
+        """Load the simulation instructions from a csv file."""
+        log.debug("Loading detector simulation instructions from a csv file!")
         df = pd.read_csv(self.input_file)
 
         return df
-
-
-class InstrTranslator:
-    """Class to translate instructions between wfsim and fuse formats."""
-
-    def __init__(self, input_format="wfsim", output_format="fuse"):
-        self.input_format = input_format
-        self.output_format = output_format
-
-        assert self.input_format in [
-            "wfsim",
-            "fuse",
-        ], "Unknown input format! Choose 'wfsim' or 'fuse'!"
-        assert self.output_format in [
-            "wfsim",
-            "fuse",
-        ], "Unknown output format! Choose 'wfsim' or 'fuse'!"
-
-        log.debug("Translating instructions from %s to %s", self.input_format, self.output_format)
-        self.translator = self.translator()
-
-    def translator(self):
-        if self.input_format == "wfsim" and self.output_format == "fuse":
-            return self.translate_wfsim_to_fuse
-        elif self.input_format == "fuse" and self.output_format == "wfsim":
-            return self.translate_fuse_to_wfsim
-        else:
-            raise NotImplementedError(
-                "Translation from {} to {} is not implemented yet!".format(
-                    self.input_format, self.output_format
-                )
-            )
-
-    def translate(self, instructions):
-        return self.translator(instructions)
-
-    def translate_wfsim_to_fuse(self, instructions):
-        """Translate the wfsim instructions to the fuse format."""
-        # Sort time for sanity
-        instructions = instructions.sort_values(by="time")
-
-        # Find cluster and events row by row
-        previous_time = 0
-        previous_event_number = -1
-        cluster_id = 0
-        event_id = 0
-        first_row = True
-        for row in instructions.itertuples():
-            new_cluster = False
-            new_event = False
-
-            # Check if we have a new cluster or event
-            if row.time > previous_time:
-                new_cluster = True
-            if row.event_number != previous_event_number:
-                new_event = True
-            if new_event and (not new_cluster):
-                raise ValueError("New event without new cluster at time %s!?" % (row.time))
-            previous_time = row.time
-            previous_event_number = row.event_number
-
-            # Update the previous event number
-            if new_event:
-                event_id += 1
-
-            # Update the cluster as a new row
-            if new_cluster:
-                cluster_id += 1
-                new_row = {
-                    "x": np.float32(row.x),
-                    "y": np.float32(row.y),
-                    "z": np.float32(row.z),
-                    "e_field": np.float32(row.local_field),
-                    "ed": np.float32(row.e_dep),
-                    "nestid": np.int8(row.recoil),
-                    "t": np.int64(row.time),
-                    "cluster_id": np.int32(cluster_id),
-                    "eventid": np.int32(event_id),
-                    "photons": np.int32(0),
-                    "electrons": np.int32(0),
-                    "excitons": np.int32(0),
-                }
-                last_row = new_row
-
-            # Assign the number of photons, excitons and electrons to the last row
-            if row.type == 1:
-                last_row["photons"] = np.int32(row.amp)
-                last_row["excitons"] = np.int32(row.n_excitons)
-            elif row.type == 2:
-                last_row["electrons"] = np.int32(row.amp)
-            else:
-                raise ValueError("Unknown type %s!" % (row.type))
-
-            # Concatenate the last row to the new instructions
-            if first_row:
-                rows = [last_row]
-                first_row = False
-            elif new_cluster:
-                rows.append(last_row)
-
-        return pd.DataFrame(rows)
-
-    def translate_fuse_to_wfsim(self, instructions):
-        """Translate the fuse instructions to the wfsim format."""
-        raise NotImplementedError("Not implemented yet!")

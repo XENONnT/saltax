@@ -139,7 +139,7 @@ class SPulseProcessing(straxen.PulseProcessing):
 def shift_salt_channels(r, n_channel_shift=SCHANNEL_STARTS_AT):
     """Shifts the channel numbers of the SALT PMTs.
 
-    :param r: records (from wfsim)
+    :param r: records (from fuse)
     :param n_channel_shift: number of channels to shift, default is
         SCHANNEL_STARTS_AT
     :return: raw_records with shifted channel numbers
