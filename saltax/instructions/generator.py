@@ -9,12 +9,14 @@ import pandas as pd
 
 import nestpy
 import straxen
+from straxen import units
 from utilix import xent_collection
 from fuse.plugins.detector_physics.csv_input import ChunkCsvInput
 
+from saltax.plugins.csv_input import SALT_TIME_INTERVAL
+
 
 DEFAULT_EN_RANGE = (0.2, 15.0)  # in unit of keV
-SALT_TIME_INTERVAL = 2e7  # in unit of ns. The number should be way bigger then full drift time
 Z_RANGE = (-148.15, 0)  # in unit of cm
 R_RANGE = (0, 66.4)  # in unit of cm
 DOWNLOADER = straxen.MongoDownloader()
@@ -24,11 +26,10 @@ FIELD_MAP = straxen.InterpolatingMap(
     straxen.get_resource(DOWNLOADER.download_single(FIELD_FILE), fmt="json.gz"),
     method="RegularGridInterpolator",
 )
-SE_INSTRUCTIONS_DIR = "/project/lgrandi/yuanlq/salt/se_instructions/"
+SE_INSTRUCTIONS_DIR = "/project/lgrandi/yuanlq/salt/se_instructions"
 AMBE_INSTRUCTIONS_FILE = "/project/lgrandi/yuanlq/salt/ambe_instructions/minghao_aptinput.csv"
 YBE_INSTRUCTIONS_FILE = "/project2/lgrandi/ghusheng/ybe_instrutions/ybe_wfsim_instructions_6806_events_time_modified.csv"
-# BASE_DIR = "/project2/lgrandi/yuanlq/shared/saltax_instr/"
-BASE_DIR = os.path.abspath(__file__)[:-12] + "../../generated/"
+BASE_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "generated")
 
 
 def generate_vertex(r_range=R_RANGE, z_range=Z_RANGE, size=1):
@@ -61,7 +62,7 @@ def constrain_radius(xs, ys, r_max=R_RANGE[-1] - 0.001):
 
 
 def generate_times(
-    start_time, end_time, size=None, rate=1e9 / SALT_TIME_INTERVAL, time_mode="uniform"
+    start_time, end_time, size=None, rate=units.s / SALT_TIME_INTERVAL, time_mode="uniform"
 ):
     """Generate an array of event times in the given time range.
 
@@ -74,7 +75,7 @@ def generate_times(
     :return: array of event times in ns
     """
     total_time_ns = end_time - start_time
-    estimated_size = int(total_time_ns * rate / 1e9)
+    estimated_size = int(total_time_ns * rate / units.s)
 
     assert time_mode in [
         "realistic",
@@ -86,20 +87,20 @@ def generate_times(
     # This one doesn't work for salting!!!
     if time_mode == "realistic":
         dt = np.random.exponential(1 / rate, size=estimated_size - 1)
-        times = np.append([0], dt.cumsum()) * 1e9
+        times = np.append([0], dt.cumsum()) * units.s
         times = times.round().astype(np.int64)
         times += start_time
 
     # Generating event times from uniform
     elif time_mode == "uniform":
         dt = (1 / rate) * np.ones(estimated_size - 1)
-        times = np.append([0], dt.cumsum()) * 1e9
+        times = np.append([0], dt.cumsum()) * units.s
         times = times.round().astype(np.int64)
         times += start_time
 
     # Removing events that are too close to the start or end of the run
-    times = times[times < (end_time - 1 / rate * 1e9)]
-    times = times[times > (start_time + 1 / rate * 1e9)]
+    times = times[times < (end_time - 1 / rate * units.s)]
+    times = times[times > (start_time + 1 / rate * units.s)]
 
     if size is None:
         return times
@@ -157,10 +158,10 @@ def get_run_start_end(runid):
 
     # Transform the datetime to unix time in ns
     unix_time_start_ns = int(
-        dt_start_transformed.timestamp() * 1e9 + dt_start_transformed.microsecond * 1000
+        dt_start_transformed.timestamp() * units.s + dt_start_transformed.microsecond * 1000
     )
     unix_time_end_ns = int(
-        dt_end_transformed.timestamp() * 1e9 + dt_end_transformed.microsecond * 1000
+        dt_end_transformed.timestamp() * units.s + dt_end_transformed.microsecond * 1000
     )
 
     return unix_time_start_ns, unix_time_end_ns
@@ -172,7 +173,7 @@ def instr_file_name(
     mode,
     runid=None,
     en_range=DEFAULT_EN_RANGE,
-    rate=1e9 / SALT_TIME_INTERVAL,
+    rate=units.s / SALT_TIME_INTERVAL,
     base_dir=BASE_DIR,
     **kwargs
 ):
@@ -199,25 +200,11 @@ def instr_file_name(
     if runid is None:
         return "Data-loading only, no instruction file needed."
     else:
-        if base_dir[-1] != "/":
-            base_dir += "/"
-
         rate = int(rate)
         runid = str(runid).zfill(6)
-        filename = (
-            BASE_DIR
-            + runid
-            + "-"
-            + str(recoil)
-            + "-"
-            + generator_name
-            + "-"
-            + en_range
-            + "-"
-            + mode
-            + "-"
-            + str(rate)
-            + ".csv"
+        filename = os.path.join(
+            base_dir,
+            "-".join([runid, str(recoil), generator_name, en_range, mode, str(rate)]) + ".csv",
         )
 
         return filename
@@ -226,7 +213,7 @@ def instr_file_name(
 def generator_se(
     runid,
     n_tot=None,
-    rate=1e9 / SALT_TIME_INTERVAL,
+    rate=units.s / SALT_TIME_INTERVAL,
     r_range=R_RANGE,
     z_range=Z_RANGE,
     time_mode="uniform",
@@ -237,7 +224,7 @@ def generator_se(
     :param runid: run number
     :param n_tot: total number of events to generate, default: None i.e.
         generate events until end_time
-    :param rate: rate of events in Hz, default: 1e9/SALT_TIME_INTERVAL
+    :param rate: rate of events in Hz, default: units.s / SALT_TIME_INTERVAL
     :param r_range: (r_min, r_max) in cm, default: R_RANGE, defined
         above
     :param z_range: (z_min, z_max) in cm, default: Z_RANGE, defined
@@ -275,17 +262,17 @@ def generator_se_bootstrapped(runid, xyt_files_at=SE_INSTRUCTIONS_DIR, **kwargs)
     """
     # load instructions
     runid = str(runid).zfill(6)
-    with open(xyt_files_at + "se_xs_dict.pkl", "rb") as f:
+    with open(os.path.join(xyt_files_at, "se_xs_dict.pkl"), "rb") as f:
         xs = pickle.load(f)[runid]
-    with open(xyt_files_at + "se_ys_dict.pkl", "rb") as f:
+    with open(os.path.join(xyt_files_at, "se_ys_dict.pkl"), "rb") as f:
         ys = pickle.load(f)[runid]
-    with open(xyt_files_at + "se_ts_dict.pkl", "rb") as f:
+    with open(os.path.join(xyt_files_at, "se_ts_dict.pkl"), "rb") as f:
         ts = pickle.load(f)[runid]
 
     # stay in runtime range
     start_time, end_time = get_run_start_end(runid)
-    mask_in_run = ts < (end_time - 1 / 20 * 1e9)  # empirical patch to stay in run
-    mask_in_run &= ts > (start_time + 1 / 20 * 1e9)  # empirical patch to stay in run
+    mask_in_run = ts < (end_time - 1 / 20 * units.s)  # empirical patch to stay in run
+    mask_in_run &= ts > (start_time + 1 / 20 * units.s)  # empirical patch to stay in run
     xs = xs[mask_in_run]
     ys = ys[mask_in_run]
     ts = ts[mask_in_run]
@@ -318,7 +305,7 @@ def generator_se_bootstrapped(runid, xyt_files_at=SE_INSTRUCTIONS_DIR, **kwargs)
 def generator_ambe(
     runid,
     n_tot=None,
-    rate=1e9 / SALT_TIME_INTERVAL,
+    rate=units.s / SALT_TIME_INTERVAL,
     time_mode="uniform",
     ambe_instructions_file=AMBE_INSTRUCTIONS_FILE,
     fmap=FIELD_MAP,
@@ -333,7 +320,7 @@ def generator_ambe(
     :param runid: run number
     :param n_tot: total number of events to generate, default: None i.e.
         generate events until end_time
-    :param rate: rate of events in Hz, default: 1e9/SALT_TIME_INTERVAL
+    :param rate: rate of events in Hz, default: units.s / SALT_TIME_INTERVAL
     :param time_mode: 'uniform' or 'realistic', default: 'uniform'
     :param ambe_instructions_file: file containing ambe instructions,
         default: AMBE_INSTRUCTIONS_FILE
@@ -383,7 +370,7 @@ def generator_ambe(
 def generator_ybe(
     runid,
     n_tot=None,
-    rate=1e9 / SALT_TIME_INTERVAL,
+    rate=units.s / SALT_TIME_INTERVAL,
     time_mode="uniform",
     ybe_instructions_file=YBE_INSTRUCTIONS_FILE,
     fmap=FIELD_MAP,
@@ -398,7 +385,7 @@ def generator_ybe(
     :param runid: run number
     :param n_tot: total number of events to generate, default: None i.e.
         generate events until end_time
-    :param rate: rate of events in Hz, default: 1e9/SALT_TIME_INTERVAL
+    :param rate: rate of events in Hz, default: units.s / SALT_TIME_INTERVAL
     :param time_mode: 'uniform' or 'realistic', default: 'uniform'
     :param ybe_instructions_file: file containing ybe instructions,
         default: YBE_INSTRUCTIONS_FILE
@@ -448,7 +435,7 @@ def generator_flat(
     en_range=DEFAULT_EN_RANGE,
     recoil=8,
     n_tot=None,
-    rate=1e9 / SALT_TIME_INTERVAL,
+    rate=units.s / SALT_TIME_INTERVAL,
     fmap=FIELD_MAP,
     nc=NC,
     r_range=R_RANGE,
@@ -464,7 +451,7 @@ def generator_flat(
     :param recoil: NEST recoil type, default: 8 (beta ER)
     :param n_tot: total number of events to generate, default: None i.e.
         generate events until end_time
-    :param rate: rate of events in Hz, default: 1e9/SALT_TIME_INTERVAL
+    :param rate: rate of events in Hz, default: units.s / SALT_TIME_INTERVAL
     :param fmap: field map, default: FIELD_MAP, defined above
     :param nc: NEST calculator, default: NC, defined above
     :param r_range: (r_min, r_max) in cm, default: R_RANGE, defined

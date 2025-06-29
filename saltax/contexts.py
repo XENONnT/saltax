@@ -17,7 +17,7 @@ copy._deepcopy_dispatch[types.ModuleType] = lambda mod, memo: mod
 
 
 logging.basicConfig(level=logging.INFO, handlers=[logging.StreamHandler()])
-log = logging.getLogger("fuse.context")
+log = logging.getLogger("saltax.contexts")
 
 
 # ~Infinite raw_records file size to avoid downchunking
@@ -108,7 +108,7 @@ def validate_runid(runid):
         doc = xent_collection().find_one({"number": int(runid)})
         if doc is None:
             raise ValueError(f"Run {runid} not found in RunDB")
-    except Exception as e:
+    except:
         raise ValueError(f"Run {runid} not found in RunDB: {e}")
 
 
@@ -230,6 +230,9 @@ def xenonnt_salted(
     instr_file_name = saltax.instr_file_name(
         runid=runid, recoil=recoil, generator_name=generator_name, mode=simu_mode, **kwargs
     )
+    if "rate" in kwargs:
+        st.set_config({"salt_rate": kwargs["rate"]})
+
     # If runid is not None, then we need to either load instruction or generate it
     if runid is not None:
         runid = str(runid).zfill(6)

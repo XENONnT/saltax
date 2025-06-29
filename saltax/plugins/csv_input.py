@@ -5,25 +5,20 @@ import numpy as np
 import pandas as pd
 import strax
 import straxen
+from straxen import units
 
 from fuse.plugin import FuseBasePlugin
 from fuse.plugins.detector_physics.csv_input import microphysics_summary_fields, ChunkCsvInput
 from fuse.plugins.pmt_and_daq.pmt_response_and_daq import PMTResponseAndDAQ
 
+SALT_TIME_INTERVAL = 2e7  # in unit of ns. The number should be way bigger then full drift time
 NS_NO_INSTRUCTION_AFTER_CHUNK_START = 5e7
 NS_NO_INSTRUCTION_BEFORE_CHUNK_END = 5e7
 
 export, __all__ = strax.exporter()
 
 logging.basicConfig(level=logging.INFO, handlers=[logging.StreamHandler()])
-log = logging.getLogger("fuse.detector_physics.csv_input")
-
-
-@export
-class SPMTResponseAndDAQ(PMTResponseAndDAQ):
-    __version__ = "0.0.0"
-    provides = "raw_records_simu"
-    data_kind = "raw_records_simu"
+log = logging.getLogger("saltax.plugins.csv_input")
 
 
 @export
@@ -43,8 +38,6 @@ class SChunkCsvInput(FuseBasePlugin):
 
     save_when = strax.SaveWhen.TARGET
 
-    # source_done = False
-
     def infer_dtype(self):
         return microphysics_summary_fields + strax.time_fields
 
@@ -53,6 +46,12 @@ class SChunkCsvInput(FuseBasePlugin):
         track=False,
         infer_type=False,
         help="CSV file to read",
+    )
+
+    salt_rate = straxen.URLConfig(
+        default=units.s / SALT_TIME_INTERVAL,
+        infer_type=False,
+        help="Rate of salting events",
     )
 
     ns_no_instruction_after_chunk_start = straxen.URLConfig(
