@@ -11,12 +11,14 @@ def test_context():
         runid=nt_test_run_id,
         context=nt_test_context,
         corrections_version=None,
+        run_without_proper_corrections=True,
         saltax_mode="salt",
     )
     st_simu = saltax.contexts.sxenonnt(
         runid=nt_test_run_id,
         context=nt_test_context,
         corrections_version=None,
+        run_without_proper_corrections=True,
         saltax_mode="simu",
     )
     dtypes = [
