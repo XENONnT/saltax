@@ -264,7 +264,7 @@ def load_peaks(runs, st_salt, st_simu, plugins=("peak_basics", "peak_positions_m
     len_simu_so_far = 0
     len_salt_so_far = 0
     for i, run in enumerate(runs):
-        print("Loading run %s" % (run))
+        print(f"Loading run {run}")
 
         # Load plugins for both salt and simu
         peaks_simu_i = st_simu.get_array(run, plugins, progress_bar=False)
@@ -350,7 +350,7 @@ def load_events(runs, st_salt, st_simu, plugins=("event_info", "cuts_basic"), **
     len_simu_so_far = 0
     len_salt_so_far = 0
     for i, run in enumerate(runs):
-        print("Loading run %s" % (run))
+        print(f"Loading run {run}")
 
         # Load plugins for both salt and simu
         events_simu_i = st_simu.get_array(run, plugins, progress_bar=False)

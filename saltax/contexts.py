@@ -300,7 +300,7 @@ def sxenonnt(
         and rate/en_range etc for generator
     :return: strax context
     """
-    assert saltax_mode in SALTAX_MODES, "saltax_mode must be one of %s" % (SALTAX_MODES)
+    assert saltax_mode in SALTAX_MODES, f"saltax_mode must be one of {SALTAX_MODES}"
     if runid is None:
         log.warning(
             "Since you specified runid=None, this context will not be able to compute raw_records_simu."
@@ -308,7 +308,7 @@ def sxenonnt(
         log.warning("Welcome to data-loading only mode!")
     else:
         validate_runid(runid)
-        log.warning("Welcome to computation mode which only works for run %s!" % (runid))
+        log.warning(f"Welcome to computation mode which only works for run {runid}!")
 
     st = xenonnt_salted(
         runid=runid,

@@ -113,7 +113,7 @@ def get_context_function(package):
     """Return the context function for the given package."""
     if package == "fuse":
         return saltax.contexts.sxenonnt
-    raise ValueError("Invalid package name %s" % package)
+    raise ValueError(f"Invalid package name {package}")
 
 
 def get_data_types(settings):

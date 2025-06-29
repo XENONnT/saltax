@@ -59,13 +59,13 @@ class Submit(object):
         """Submit a single job."""
         jobname = JOB_TITLE + "_{:03}".format(loop_item)
         # Modify here for the script to run
-        jobstring = "python job.py %s" % (loop_item)
+        jobstring = f"python job.py {loop_item}"
         print(jobstring)
 
         # Modify here for the log name
         utilix.batchq.submit_job(
             jobstring=jobstring,
-            log="%s/%s.log" % (LOG_DIR, jobname),
+            log=f"{LOG_DIR}/{jobname}.log",
             partition=PARTITION,
             qos=QOS,
             account=ACCOUNT,
