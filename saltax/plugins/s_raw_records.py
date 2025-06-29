@@ -7,6 +7,7 @@ import strax
 import straxen
 
 from fuse.plugin import FuseBasePlugin
+from fuse.plugins.detector_physics.csv_input import microphysics_summary_fields
 from fuse.plugins.pmt_and_daq.pmt_response_and_daq import PMTResponseAndDAQ
 
 NS_NO_INSTRUCTION_AFTER_CHUNK_START = 5e7
@@ -44,19 +45,8 @@ class SChunkCsvInput(FuseBasePlugin):
 
     # source_done = False
 
-    dtype = [
-        (("x position of the cluster [cm]", "x"), np.float32),
-        (("y position of the cluster [cm]", "y"), np.float32),
-        (("z position of the cluster [cm]", "z"), np.float32),
-        (("Number of photons at interaction position", "photons"), np.int32),
-        (("Number of electrons at interaction position", "electrons"), np.int32),
-        (("Number of excitons at interaction position", "excitons"), np.int32),
-        (("Electric field value at the cluster position [V/cm]", "e_field"), np.float32),
-        (("Energy of the cluster [keV]", "ed"), np.float32),
-        (("NEST interaction type", "nestid"), np.int8),
-        (("ID of the cluster", "cluster_id"), np.int32),
-    ]
-    dtype = dtype + strax.time_fields
+    def infer_dtype(self):
+        return microphysics_summary_fields + strax.time_fields
 
     # Config options
     input_file = straxen.URLConfig(
@@ -103,7 +93,7 @@ class SChunkCsvInput(FuseBasePlugin):
             self.source_done = source_done
 
             # Stick rigorously with raw_records time range
-            return self.chunk(start=start, end=end, data=data, data_type="geant4_interactions")
+            return self.chunk(start=start, end=end, data=data)
 
         except StopIteration:
             raise RuntimeError("Bug in chunk building!")
@@ -141,37 +131,10 @@ class SCsvFileLoader:
         self.ns_no_instruction_after_chunk_start = ns_no_instruction_after_chunk_start
         self.debug = debug
 
-        self.dtype = [
-            (("x position of the cluster [cm]", "x"), np.float32),
-            (("y position of the cluster [cm]", "y"), np.float32),
-            (("z position of the cluster [cm]", "z"), np.float32),
-            (("Number of photons at interaction position", "photons"), np.int32),
-            (("Number of electrons at interaction position", "electrons"), np.int32),
-            (("Number of excitons at interaction position", "excitons"), np.int32),
-            (("Electric field value at the cluster position [V/cm]", "e_field"), np.float32),
-            (("Energy of the cluster [keV]", "ed"), np.float32),
-            (("NEST interaction type", "nestid"), np.int8),
-            (("ID of the cluster", "cluster_id"), np.int32),
-            (("Time of the interaction", "t"), np.int64),
-            (("Geant4 event ID", "eventid"), np.int32),
-        ]
-        self.dtype = self.dtype + strax.time_fields
-
         # The csv file needs to have these columns:
-        self.columns = [
-            "x",
-            "y",
-            "z",
-            "photons",
-            "electrons",
-            "excitons",
-            "e_field",
-            "ed",
-            "nestid",
-            "t",
-            "eventid",
-            "cluster_id",
-        ]
+        _fields = ChunkCsvInput.needed_csv_input_fields()
+        self.columns = list(np.dtype(_fields).names)
+        self.dtype = _fields + strax.time_fields
 
     def output_chunk(self, chunk_start, chunk_end):
         """Load the simulation instructions from the csv file.

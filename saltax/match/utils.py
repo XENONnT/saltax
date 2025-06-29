@@ -982,9 +982,9 @@ def show_area_bias(
     plt.plot(bins_mid, bias_2sig_l, color="tab:blue", linestyle="dashed", alpha=0.5, label="2Sig")
     plt.plot(bins_mid, bias_2sig_u, color="tab:blue", linestyle="dashed", alpha=0.5)
     if not fraction:
-        plt.ylabel("Change in %s Area [PE]" % (s1s2))
+        plt.ylabel(f"Change in {s1s2} Area [PE]")
     else:
-        plt.ylabel("Change in %s Area [%%]" % (s1s2))
+        plt.ylabel(f"Change in {s1s2} Area [%%]")
     plt.xlabel(coord + units_dict[coord])
     plt.xlim(bins[0], bins[-1])
     plt.legend()
