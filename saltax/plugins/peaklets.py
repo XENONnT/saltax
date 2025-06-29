@@ -15,6 +15,7 @@ from strax.processing.peak_building import _build_hit_waveform
 from straxen.plugins.peaklets.peaklets import hit_max_sample, get_tight_coin, drop_data_top_field
 from straxen.plugins.peaklets.peaklets import _peak_saturation_correction_inner
 
+from ..utils import replace_source
 from .records import SCHANNEL_STARTS_AT
 
 
@@ -98,10 +99,7 @@ news = [
         )
 """,
 ]
-assert len(olds) == len(news), "Number of old and new codes must match"
-for old, new in zip(olds, news):
-    assert old in src, f"Codes {old} not found in source"
-    src = src.replace(old, new)
+src = replace_source(src, olds, news)
 src = textwrap.dedent(src)
 namespace = {}
 exec(src, namespace)
@@ -148,10 +146,7 @@ news = [
     sum_waveform(peaks, hitlets, records, rlinks, to_pe, n_top_channels, peak_list)
 """,
 ]
-assert len(olds) == len(news), "Number of old and new codes must match"
-for old, new in zip(olds, news):
-    assert old in src, f"Codes {old} not found in source"
-    src = src.replace(old, new)
+src = replace_source(src, olds, news)
 exec(src)
 
 
@@ -172,10 +167,7 @@ news = [
             area_per_channel[hit["channel"]] += hit_area_pe
 """,
 ]
-assert len(olds) == len(news), "Number of old and new codes must match"
-for old, new in zip(olds, news):
-    assert old in src, f"Codes {old} not found in source"
-    src = src.replace(old, new)
+src = replace_source(src, olds, news)
 exec(src)
 
 
@@ -215,8 +207,5 @@ news = [
             area_per_channel[ch_shifted] += area_pe
 """,
 ]
-assert len(olds) == len(news), "Number of old and new codes must match"
-for old, new in zip(olds, news):
-    assert old in src, f"Codes {old} not found in source"
-    src = src.replace(old, new)
+src = replace_source(src, olds, news)
 exec(src)
