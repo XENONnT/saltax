@@ -11,7 +11,7 @@ from straxen.plugins.peaklets.peaklets import peak_saturation_correction
 
 from strax.processing.general import _touching_windows
 from strax.dtypes import peak_dtype, DIGITAL_SUM_WAVEFORM_CHANNEL
-from strax.processing.peak_building import _build_hit_waveform
+from strax.processing.peak_building import _build_hit_waveform, store_downsampled_waveform
 from straxen.plugins.peaklets.peaklets import hit_max_sample, get_tight_coin, drop_data_top_field
 from straxen.plugins.peaklets.peaklets import _peak_saturation_correction_inner
 
@@ -101,9 +101,8 @@ news = [
 ]
 src = replace_source(src, olds, news)
 src = textwrap.dedent(src)
-namespace = {}
-exec(src, namespace)
-SPeaklets._compute = namespace["compute"]
+exec(src, globals())
+SPeaklets._compute = compute
 
 
 src = inspect.getsource(peak_saturation_correction)

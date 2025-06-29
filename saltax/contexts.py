@@ -20,6 +20,9 @@ logging.basicConfig(level=logging.INFO, handlers=[logging.StreamHandler()])
 log = logging.getLogger("fuse.context")
 
 
+# ~Infinite raw_records file size to avoid downchunking
+MAX_RAW_RECORDS_FILE_SIZE_MB = 1e9
+
 # fuse plugins
 # Plugins to simulate microphysics
 MICROPHYSICS_PLUGINS_DBSCAN_CLUSTERING = fuse.context.microphysics_plugins_dbscan_clustering
@@ -53,9 +56,6 @@ FUSE_DONT_REGISTER = [
     fuse.plugins.micro_physics.microphysics_summary.MicroPhysicsSummary,
     fuse.plugins.pmt_and_daq.pmt_response_and_daq.PMTResponseAndDAQ,
 ]
-
-# ~Infinite raw_records file size to avoid downchunking
-MAX_RAW_RECORDS_FILE_SIZE_MB = 1e9
 
 # straxen XENONnT options/configuration
 XNT_COMMON_OPTS = deepcopy(straxen.contexts.xnt_common_opts)
