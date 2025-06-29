@@ -7,7 +7,7 @@ import strax
 import straxen
 
 from fuse.plugin import FuseBasePlugin
-from fuse.plugins.detector_physics.csv_input import microphysics_summary_fields
+from fuse.plugins.detector_physics.csv_input import microphysics_summary_fields, ChunkCsvInput
 from fuse.plugins.pmt_and_daq.pmt_response_and_daq import PMTResponseAndDAQ
 
 NS_NO_INSTRUCTION_AFTER_CHUNK_START = 5e7

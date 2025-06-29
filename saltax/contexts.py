@@ -1,3 +1,4 @@
+import copy, types
 from copy import deepcopy
 import logging
 from immutabledict import immutabledict
@@ -10,6 +11,9 @@ import cutax
 import fuse
 import saltax
 from saltax.plugins.records import SCHANNEL_STARTS_AT
+
+# Before you ever call deepcopy:
+copy._deepcopy_dispatch[types.ModuleType] = lambda mod, memo: mod
 
 
 logging.basicConfig(level=logging.INFO, handlers=[logging.StreamHandler()])
@@ -207,7 +211,7 @@ def xenonnt_salted(
     st.deregister_plugins_with_missing_dependencies()
 
     # Add saltax mode
-    st.set_config(dict(saltax_mode=saltax_mode))
+    st.set_config({"saltax_mode": saltax_mode})
 
     # Register cuts plugins
     if cut_list is not None:
