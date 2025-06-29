@@ -79,6 +79,12 @@ SXNT_COMMON_OPTS["register"] = SXNT_COMMON_OPTS_OVERRIDE["register"]
 
 # saltax configuration overrides
 SXNT_COMMON_CONFIG = deepcopy(XNT_COMMON_CONFIG)
+for key, cmap in XNT_COMMON_CONFIG["channel_map"].items():
+    if SCHANNEL_STARTS_AT <= cmap[1]:
+        raise ValueError(
+            f"Salted channels ({SCHANNEL_STARTS_AT}) must be after all possible channels"
+            f" but {key} starts at {cmap[0]} and ends at {cmap[1]}"
+        )
 SXNT_COMMON_CONFIG["channel_map"] = immutabledict(dict(
     stpc=(
         SCHANNEL_STARTS_AT,
