@@ -135,7 +135,7 @@ def find_runs_with_rawdata(
     # Find the runs that have standard raw_records available
     runs = []
     for f in files_found:
-        _f = f.split("/")[-1]
+        _f = os.path.basename(f)
         runid, datatype, shash = _f.split("-")
         if datatype == "raw_records" and shash == "rfzvpzj4mf":
             runs.append(runid)
