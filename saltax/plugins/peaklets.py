@@ -59,13 +59,13 @@ class SPeaklets(straxen.Peaklets):
         # FIXME: This is going to make the same lone_hit having different record_i, between in salt mode and others
         # FIXME: surgery here; channel specification related
         # Based on saltax_mode, determine what channels to involve
-        if selfsaltax_mode == "salt":
+        if self.saltax_mode == "salt":
             records = records[
                 (records["channel"] >= SCHANNEL_STARTS_AT) | (records["channel"] < self.n_tpc_pmts)
             ]
-        elif selfsaltax_mode == "simu":
+        elif self.saltax_mode == "simu":
             records = records[(records["channel"] >= SCHANNEL_STARTS_AT)]
-        elif selfsaltax_mode == "data":
+        elif self.saltax_mode == "data":
             records = records[(records["channel"] < self.n_tpc_pmts)]
         else:
             raise ValueError(f"Unknown saltax_mode {self.saltax_mode}")
