@@ -1,6 +1,8 @@
+import copy, types
+from copy import deepcopy
 import logging
-import pandas as pd
 from immutabledict import immutabledict
+import pandas as pd
 
 from utilix import xent_collection
 import strax
@@ -10,10 +12,16 @@ import fuse
 import saltax
 from saltax.plugins.records import SCHANNEL_STARTS_AT
 
+# Before you ever call deepcopy:
+copy._deepcopy_dispatch[types.ModuleType] = lambda mod, memo: mod
+
 
 logging.basicConfig(level=logging.INFO, handlers=[logging.StreamHandler()])
 log = logging.getLogger("fuse.context")
 
+
+# ~Infinite raw_records file size to avoid downchunking
+MAX_RAW_RECORDS_FILE_SIZE_MB = 1e9
 
 # fuse plugins
 # Plugins to simulate microphysics
@@ -49,15 +57,12 @@ FUSE_DONT_REGISTER = [
     fuse.plugins.pmt_and_daq.pmt_response_and_daq.PMTResponseAndDAQ,
 ]
 
-# ~Infinite raw_records file size to avoid downchunking
-MAX_RAW_RECORDS_FILE_SIZE_MB = 1e9
-
 # straxen XENONnT options/configuration
-XNT_COMMON_OPTS = straxen.contexts.xnt_common_opts.copy()
-XNT_COMMON_CONFIG = straxen.contexts.xnt_common_config.copy()
+XNT_COMMON_OPTS = deepcopy(straxen.contexts.xnt_common_opts)
+XNT_COMMON_CONFIG = deepcopy(straxen.contexts.xnt_common_config)
 
 # fuse based saltax options overrides
-SXNT_COMMON_OPTS_REGISTER = XNT_COMMON_OPTS["register"].copy()
+SXNT_COMMON_OPTS_REGISTER = deepcopy(XNT_COMMON_OPTS["register"])
 SXNT_COMMON_OPTS_REGISTER.remove(straxen.Peaklets)
 SXNT_COMMON_OPTS_REGISTER.remove(straxen.PulseProcessing)
 SXNT_COMMON_OPTS_REGISTER = [
@@ -69,29 +74,24 @@ SXNT_COMMON_OPTS_REGISTER = [
 SXNT_COMMON_OPTS_OVERRIDE = dict(
     register=SXNT_COMMON_OPTS_REGISTER,
 )
-SXNT_COMMON_OPTS = XNT_COMMON_OPTS.copy()
+SXNT_COMMON_OPTS = deepcopy(XNT_COMMON_OPTS)
 SXNT_COMMON_OPTS["register"] = SXNT_COMMON_OPTS_OVERRIDE["register"]
 
 # saltax configuration overrides
-XNT_COMMON_CONFIG_OVERRIDE = dict(
-    channel_map=immutabledict(
-        # (Minimum channel, maximum channel)
-        # Channels must be listed in a ascending order!
-        stpc=(SCHANNEL_STARTS_AT, SCHANNEL_STARTS_AT + 493),  # Salted TPC channels
-        tpc=(0, 493),  # TPC channels
-        he=(500, 752),  # high energy
-        aqmon=(790, 807),
-        aqmon_nv=(808, 815),  # nveto acquisition monitor
-        tpc_blank=(999, 999),
-        mv=(1000, 1083),
-        aux_mv=(1084, 1087),  # Aux mv channel 2 empty  1 pulser  and 1 GPS
-        mv_blank=(1999, 1999),
-        nveto=(2000, 2119),
-        nveto_blank=(2999, 2999),
+SXNT_COMMON_CONFIG = deepcopy(XNT_COMMON_CONFIG)
+for key, cmap in XNT_COMMON_CONFIG["channel_map"].items():
+    if SCHANNEL_STARTS_AT <= cmap[1]:
+        raise ValueError(
+            f"Salted channels ({SCHANNEL_STARTS_AT}) must be after all possible channels"
+            f" but {key} starts at {cmap[0]} and ends at {cmap[1]}"
+        )
+SXNT_COMMON_CONFIG["channel_map"] = immutabledict(dict(
+    stpc=(
+        SCHANNEL_STARTS_AT,
+        SCHANNEL_STARTS_AT + len(range(*XNT_COMMON_CONFIG["channel_map"]["tpc"])) + 1,
     ),
-)
-SXNT_COMMON_CONFIG = XNT_COMMON_CONFIG.copy()
-SXNT_COMMON_CONFIG["channel_map"] = XNT_COMMON_CONFIG_OVERRIDE["channel_map"]
+    **XNT_COMMON_CONFIG["channel_map"],
+))
 DEFAULT_XEDOCS_VERSION = cutax.contexts.DEFAULT_XEDOCS_VERSION
 
 # saltax modes supported
@@ -182,7 +182,7 @@ def xenonnt_salted(
     if kwargs is not None:
         context_options = dict(**SXNT_COMMON_OPTS, **kwargs)
     else:
-        context_options = SXNT_COMMON_OPTS.copy()
+        context_options = deepcopy(SXNT_COMMON_OPTS)
     context_config = dict(
         check_raw_record_overlaps=True,
         **SXNT_COMMON_CONFIG,
@@ -217,7 +217,7 @@ def xenonnt_salted(
     st.deregister_plugins_with_missing_dependencies()
 
     # Add saltax mode
-    st.set_config(dict(saltax_mode=saltax_mode))
+    st.set_config({"saltax_mode": saltax_mode})
 
     # Register cuts plugins
     if cut_list is not None:

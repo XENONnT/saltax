@@ -6,33 +6,19 @@ from straxen.plugins.records.records import NO_PULSE_COUNTS
 
 SCHANNEL_STARTS_AT = 3000
 export, __all__ = strax.exporter()
-__all__.extend(["NO_PULSE_COUNTS"])
+__all__.extend(["SCHANNEL_STARTS_AT"])
 
 
 @export
 class SPulseProcessing(straxen.PulseProcessing):
-    """
-    Split raw_records into:
-     - (tpc) records
-     - aqmon_records
-     - pulse_counts
-
-    For TPC records, apply basic processing:
-        1. Flip, baseline, and integrate the waveform
-        2. Apply software HE veto after high-energy peaks.
-        3. Find hits, apply linear filter, and zero outside hits.
-
-    For Simulated ones, repeat the same but also with channel number shifted.
-
-    pulse_counts holds some average information for the individual PMT
-    channels for each chunk of raw_records. This includes e.g.
-    number of recorded pulses, lone_pulses (pulses which do not
-    overlap with any other pulse), or mean values of baseline and
-    baseline rms channel.
-    """
-
     __version__ = "0.0.2"
     depends_on = ("raw_records", "raw_records_simu")
+
+    schannel_starts_at = straxen.URLConfig(
+        default=SCHANNEL_STARTS_AT,
+        infer_type=False,
+        help="Salting channel starts at this channel",
+    )
 
     def compute(self, raw_records, raw_records_simu, start, end):
         if self.check_raw_record_overlaps:
@@ -47,26 +33,17 @@ class SPulseProcessing(straxen.PulseProcessing):
         r_simu = strax.raw_to_records(raw_records_simu)
         del raw_records, raw_records_simu
 
-        # Do not trust in DAQ + strax.baseline to leave the
-        # out-of-bounds samples to zero.
-        strax.zero_out_of_bounds(r)
-        strax.zero_out_of_bounds(r_simu)
-
-        strax.baseline(
-            r,
-            baseline_samples=self.baseline_samples,
-            allow_sloppy_chunking=self.allow_sloppy_chunking,
-            flip=True,
-        )
-        strax.baseline(
-            r_simu,
-            baseline_samples=self.baseline_samples,
-            allow_sloppy_chunking=self.allow_sloppy_chunking,
-            flip=True,
-        )
-
-        strax.integrate(r)
-        strax.integrate(r_simu)
+        for _r in (r, r_simu):
+            # Do not trust in DAQ + strax.baseline to leave the
+            # out-of-bounds samples to zero.
+            strax.zero_out_of_bounds(_r)
+            strax.baseline(
+                _r,
+                baseline_samples=self.baseline_samples,
+                allow_sloppy_chunking=self.allow_sloppy_chunking,
+                flip=True,
+            )
+            strax.integrate(_r)
 
         # Ignoring the ones from salt channels
         pulse_counts = count_pulses(r, self.n_tpc_pmts)
@@ -95,54 +72,27 @@ class SPulseProcessing(straxen.PulseProcessing):
         else:
             veto_regions = np.zeros(0, dtype=strax.hit_dtype)
 
-        if len(r):
-            # Find hits
-            # -- before filtering,since this messes with the with the S/N
-            hits = strax.find_hits(r, min_amplitude=self.hit_thresholds)
+        for _r in (r, r_simu):
+            if len(_r):
+                # Find hits
+                # -- before filtering,since this messes with the with the S/N
+                hits = strax.find_hits(_r, min_amplitude=self.hit_thresholds)
 
-            if self.pmt_pulse_filter:
-                # Filter to concentrate the PMT pulses
-                strax.filter_records(r, np.array(self.pmt_pulse_filter))
+                if self.pmt_pulse_filter:
+                    # Filter to concentrate the PMT pulses
+                    strax.filter_records(_r, np.array(self.pmt_pulse_filter))
 
-            le, re = self.save_outside_hits
-            r = strax.cut_outside_hits(r, hits, left_extension=le, right_extension=re)
+                le, re = self.save_outside_hits
+                _r = strax.cut_outside_hits(_r, hits, left_extension=le, right_extension=re)
 
-            # Probably overkill, but just to be sure...
-            strax.zero_out_of_bounds(r)
-
-        if len(r_simu):
-            # Find hits
-            # -- before filtering,since this messes with the with the S/N
-            hits_simu = strax.find_hits(r_simu, min_amplitude=self.hit_thresholds)
-
-            if self.pmt_pulse_filter:
-                # Filter to concentrate the PMT pulses
-                strax.filter_records(r_simu, np.array(self.pmt_pulse_filter))
-
-            le, re = self.save_outside_hits
-            r_simu = strax.cut_outside_hits(
-                r_simu, hits_simu, left_extension=le, right_extension=re
-            )
-
-            # Probably overkill, but just to be sure...
-            strax.zero_out_of_bounds(r_simu)
+                # Probably overkill, but just to be sure...
+                strax.zero_out_of_bounds(_r)
 
         # Shift the SALT channels
-        r_simu = shift_salt_channels(r_simu)
+        r_simu["channel"] += self.schannel_starts_at
 
         # Merge the simulated and real records
-        r = np.concatenate((r, r_simu))  # time stamps are NOT sorted anymore
+        # time stamps are NOT sorted anymore
+        r = np.concatenate((r, r_simu))
 
         return dict(records=r, pulse_counts=pulse_counts, veto_regions=veto_regions)
-
-
-def shift_salt_channels(r, n_channel_shift=SCHANNEL_STARTS_AT):
-    """Shifts the channel numbers of the SALT PMTs.
-
-    :param r: records (from fuse)
-    :param n_channel_shift: number of channels to shift, default is
-        SCHANNEL_STARTS_AT
-    :return: raw_records with shifted channel numbers
-    """
-    r["channel"] += n_channel_shift
-    return r

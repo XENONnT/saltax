@@ -1,18 +1,20 @@
-import configparser
-import time
+import os
 import sys
 import gc
-import os
-import saltax
+import time
+import configparser
+import logging
+from functools import wraps
+
 import strax
 import straxen
-from functools import wraps
-import logging
+import saltax
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
 
 TO_PROCESS_DTYPES_EV = [
+    "microphysics_summary",
     "peaklets",
     "peaklet_classification",
     "merged_s2s",
@@ -28,9 +30,9 @@ TO_PROCESS_DTYPES_EV = [
     "event_ambience",
     "event_n_channel",
     "veto_intervals",
-#    "cuts_basic",
 ]
 TO_PROCESS_DTYPES_SE = [
+    "microphysics_summary",
     "peaklets",
     "peaklet_classification",
     "merged_s2s",
@@ -55,7 +57,6 @@ def load_config():
     settings = {
         "output_folder": config.get("job", "output_folder"),
         "saltax_mode": config.get("job", "saltax_mode"),
-        "package": config.get("job", "package"),
         "simu_config_version": config.get("job", "simu_config_version"),
         "generator_name": config.get("job", "generator_name"),
         "recoil": config.getint("job", "recoil"),
@@ -90,8 +91,7 @@ def parse_en_range(en_range_str):
 def create_context(settings, runid):
     """Create the context for the given settings and runid, and patch storage
     if needed."""
-    context_function = get_context_function(settings["package"])
-    st = context_function(
+    st = saltax.contexts.sxenonnt(
         runid=runid,
         saltax_mode=settings["saltax_mode"],
         output_folder=settings["output_folder"],
@@ -109,13 +109,6 @@ def create_context(settings, runid):
     return st
 
 
-def get_context_function(package):
-    """Return the context function for the given package."""
-    if package == "fuse":
-        return saltax.contexts.sxenonnt
-    raise ValueError(f"Invalid package name {package}")
-
-
 def get_data_types(settings):
     """Return the data types to process based on the generators."""
     # Decide if it is event level study or not
@@ -128,13 +121,6 @@ def get_data_types(settings):
     to_process_dtypes = (
         ["raw_records_simu", "records"] + to_process_dtypes
         if not settings["skip_records"]
-        else to_process_dtypes
-    )
-
-    # Decide whether to process microphysics_summary
-    to_process_dtypes = (
-        ["microphysics_summary"] + to_process_dtypes
-        if settings["package"] == "fuse"
         else to_process_dtypes
     )
 
