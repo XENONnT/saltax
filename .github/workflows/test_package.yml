@@ -51,7 +51,7 @@ jobs:
       - name: Install saltax
         run: pip install . --force-reinstall
       - name: Install pytest and hypothesis
-        run: pip install pytest hypothesis pytest-cov coverage
+        run: pip install pytest hypothesis pytest-cov coverage coveralls
       - name: Test package
         env:
           HAVE_ACCESS_TO_SECTETS: ${{ secrets.RUNDB_API_URL }}
