@@ -11,6 +11,7 @@ generated/
 *strax_data/
 *resource_cache/
 *fuse_data/
+*strax_test_data/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

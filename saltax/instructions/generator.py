@@ -110,17 +110,16 @@ def generate_times(
 def get_run_start_end(runid):
     """Get the start and end time of a run in unix time in ns, from RunDB.
 
-    :param runid: run number in integer
+    :param runid: run number
     :return: start time, end time in unix time in ns
     """
     # Get the datetime of start and end time of the run from RunDB
-    assert type(runid) == int, "runid must be an integer"
     try:
-        doc = xent_collection().find_one({"number": runid})
+        doc = xent_collection().find_one({"number": int(runid)})
     except:
-        raise RuntimeError("Cannot find runid %d in RunDB" % (runid))
+        raise RuntimeError(f"Cannot find runid {runid} in RunDB")
     if doc is None:
-        raise RuntimeError("Cannot find runid %d in RunDB" % (runid))
+        raise RuntimeError(f"Cannot find runid {runid} in RunDB")
     dt_start, dt_end = doc["start"], doc["end"]
 
     # Get timezones
@@ -183,7 +182,7 @@ def instr_file_name(
     :param recoil: NEST recoil type
     :param generator_name: name of the generator
     :param mode: 's1', 's2', or 'all'
-    :param runid: run number in integer, default: None, which means we
+    :param runid: run number, default: None, which means we
         are loading data and instruction doesn't matter (strax lineage
         unaffected)
     :param en_range: (en_min, en_max) in keV, default: DEFAULT_EN_RANGE as a placeholder
@@ -235,7 +234,7 @@ def generator_se(
 ):
     """Generate instructions for a run with single electron.
 
-    :param runid: run number in integer
+    :param runid: run number
     :param n_tot: total number of events to generate, default: None i.e.
         generate events until end_time
     :param rate: rate of events in Hz, default: 1e9/SALT_TIME_INTERVAL
@@ -270,18 +269,18 @@ def generator_se_bootstrapped(runid, xyt_files_at=SE_INSTRUCTIONS_DIR, **kwargs)
 
     We will use XYT information from bootstrapped data single electrons
     to make the simulation more realistic
-    :param runid: run number in integer
+    :param runid: run number
     :param xyt_files_at: directory to search for instructions of x,y,t
         information
     """
     # load instructions
-    runid_str = str(runid).zfill(6)
+    runid = str(runid).zfill(6)
     with open(xyt_files_at + "se_xs_dict.pkl", "rb") as f:
-        xs = pickle.load(f)[runid_str]
+        xs = pickle.load(f)[runid]
     with open(xyt_files_at + "se_ys_dict.pkl", "rb") as f:
-        ys = pickle.load(f)[runid_str]
+        ys = pickle.load(f)[runid]
     with open(xyt_files_at + "se_ts_dict.pkl", "rb") as f:
-        ts = pickle.load(f)[runid_str]
+        ts = pickle.load(f)[runid]
 
     # stay in runtime range
     start_time, end_time = get_run_start_end(runid)
@@ -331,7 +330,7 @@ def generator_ambe(
     then passing the post-epix instruction to feed this function. Each
     event with a certain event_id in the fed instructions will be
     shifted in time based on the time_mode you specified.
-    :param runid: run number in integer
+    :param runid: run number
     :param n_tot: total number of events to generate, default: None i.e.
         generate events until end_time
     :param rate: rate of events in Hz, default: 1e9/SALT_TIME_INTERVAL
@@ -396,7 +395,7 @@ def generator_ybe(
     then passing the post-epix instruction to feed this function. Each
     event with a certain event_id in the fed instructions will be
     shifted in time based on the time_mode you specified.
-    :param runid: run number in integer
+    :param runid: run number
     :param n_tot: total number of events to generate, default: None i.e.
         generate events until end_time
     :param rate: rate of events in Hz, default: 1e9/SALT_TIME_INTERVAL
@@ -460,7 +459,7 @@ def generator_flat(
 ):
     """Generate instructions for a run with flat energy spectrum.
 
-    :param runid: run number in integer
+    :param runid: run number
     :param en_range: (en_min, en_max) in keV, default: (0.2, 15.0)
     :param recoil: NEST recoil type, default: 8 (beta ER)
     :param n_tot: total number of events to generate, default: None i.e.

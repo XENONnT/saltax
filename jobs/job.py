@@ -141,12 +141,12 @@ def get_data_types(settings):
     return to_process_dtypes
 
 
-def process_data_types(st, strrunid, data_types):
+def process_data_types(st, runid, data_types):
     """Process the data types for the given context and runid."""
     for dt in data_types:
         logging.info(f"Making {dt}.")
         try:
-            st.make(strrunid, dt, save=(dt), progress_bar=True)
+            st.make(runid, dt, save=(dt), progress_bar=True)
             logging.info(f"Done with {dt}.")
         except NotImplementedError as e:
             logging.error(f"Error for data type {dt}: {str(e)}")
@@ -161,7 +161,7 @@ def delete_records_if_needed(settings, runid, st):
         if os.path.exists(records_path):
             os.rmdir(records_path)
             gc.collect()
-            logging.info("Deleted records for run %d in saltax mode salt. " % (runid))
+            logging.info(f"Deleted records for run {runid} in saltax mode salt.")
 
 
 def timeit(func):
@@ -182,7 +182,7 @@ def timeit(func):
 def main():
     print_versions()
     _, runid = sys.argv
-    runid = int(runid)
+    runid = str(runid).zfill(6)
 
     # Process the saltax desired mode
     logging.info("Loading context...")
@@ -190,35 +190,35 @@ def main():
     st = create_context(settings, runid)
     data_types = get_data_types(settings)
     print_settings(settings)
-    process_data_types(st, str(runid).zfill(6), data_types)
+    process_data_types(st, runid, data_types)
 
     # Process data-only mode if required
     if settings["process_data"] and settings["saltax_mode"] == "salt":
         logging.info("====================")
-        logging.info("Now starting data-only context for run %d" % runid)
+        logging.info(f"Now starting data-only context for run {runid}")
         settings_temp = settings.copy()
         settings_temp["saltax_mode"] = "data"
         st_data = create_context(settings_temp, runid)
         print_settings(settings_temp)
-        process_data_types(st_data, str(runid).zfill(6), data_types)
+        process_data_types(st_data, runid, data_types)
         logging.info("Finished processing for data-only mode.")
 
     # Process simu-only mode if required
     if settings["process_simu"] and settings["saltax_mode"] == "salt":
         logging.info("====================")
-        logging.info("Now starting simu-only context for run %d" % runid)
+        logging.info(f"Now starting simu-only context for run {runid}")
         settings_temp = settings.copy()
         settings_temp["saltax_mode"] = "simu"
         st_simu = create_context(settings_temp, runid)
         print_settings(settings_temp)
-        process_data_types(st_simu, str(runid).zfill(6), data_types)
+        process_data_types(st_simu, runid, data_types)
         logging.info("Finished processing for simu-only mode.")
 
     # Delete records if needed
     delete_records_if_needed(settings, runid, st)
 
     logging.info("====================")
-    logging.info("Finished all computations for run %d." % runid)
+    logging.info(f"Finished all computations for run {runid}.")
     logging.info("Exiting.")
 
 

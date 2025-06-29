@@ -101,11 +101,11 @@ SALTAX_MODES = ["data", "simu", "salt"]
 def validate_runid(runid):
     """Validate runid in RunDB to see if you can use it for computation.
 
-    :param runid: run number in integer
+    :param runid: run number
     :return: None
     """
     try:
-        doc = xent_collection().find_one({"number": runid})
+        doc = xent_collection().find_one({"number": int(runid)})
         if doc is None:
             raise ValueError(f"Run {runid} not found in RunDB")
     except Exception as e:
@@ -122,8 +122,9 @@ def get_generator(generator_name):
     return generator_func
 
 
-def xenonnt_salted_fuse(
+def xenonnt_salted(
     runid=None,
+    context=strax.Context,
     saltax_mode="salt",
     output_folder="./fuse_data",
     cut_list=cutax.BasicCuts,
@@ -143,7 +144,7 @@ def xenonnt_salted_fuse(
 ):
     """Return a strax context for XENONnT data analysis with saltax.
 
-    :param runid: run number in integer. Must exist in RunDB if you use
+    :param runid: run number. Must exist in RunDB if you use
         this context to compute raw_records_simu, or use None for data-
         loading only.
     :param saltax_mode: 'data', 'simu', or 'salt'.
@@ -186,9 +187,10 @@ def xenonnt_salted_fuse(
         check_raw_record_overlaps=True,
         **SXNT_COMMON_CONFIG,
     )
-    st = strax.Context(
-        storage=strax.DataDirectory(output_folder), config=context_config, **context_options
+    st = context(
+        storage=strax.DataDirectory(output_folder), **context_options
     )
+    st.set_config(config=context_config, mode="replace")
 
     for plugin_list in FUSED_PLUGINS:
         for plugin in plugin_list:
@@ -230,6 +232,7 @@ def xenonnt_salted_fuse(
     )
     # If runid is not None, then we need to either load instruction or generate it
     if runid is not None:
+        runid = str(runid).zfill(6)
         # Try to load instruction from file and generate if not found
         try:
             instr = pd.read_csv(instr_file_name)
@@ -251,7 +254,7 @@ def xenonnt_salted_fuse(
     return st
 
 
-def fxenonnt(
+def sxenonnt(
     runid=None,
     saltax_mode="salt",
     output_folder="./fuse_data",
@@ -274,7 +277,7 @@ def fxenonnt(
     """United strax context for XENONnT data, simulation, or salted data. Based
     on fuse.
 
-    :param runid: run number in integer. Must exist in RunDB if you use
+    :param runid: run number. Must exist in RunDB if you use
         this context to compute raw_records_simu, or use None for data-
         loading only.
     :param saltax_mode: 'data', 'simu', or 'salt'
@@ -307,7 +310,7 @@ def fxenonnt(
         validate_runid(runid)
         log.warning("Welcome to computation mode which only works for run %s!" % (runid))
 
-    st = xenonnt_salted_fuse(
+    st = xenonnt_salted(
         runid=runid,
         saltax_mode=saltax_mode,
         output_folder=output_folder,
