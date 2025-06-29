@@ -6,7 +6,7 @@ from straxen.plugins.records.records import NO_PULSE_COUNTS
 
 SCHANNEL_STARTS_AT = 3000
 export, __all__ = strax.exporter()
-__all__.extend(["NO_PULSE_COUNTS"])
+__all__.extend(["SCHANNEL_STARTS_AT"])
 
 
 @export
