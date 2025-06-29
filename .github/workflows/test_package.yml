@@ -57,15 +57,13 @@ jobs:
           HAVE_ACCESS_TO_SECTETS: ${{ secrets.RUNDB_API_URL }}
         if: env.HAVE_ACCESS_TO_SECTETS != null
         run: pytest --cov=saltax --cov-report=xml
-      - name: Test coverage scan
+      - name: Test package and report to coveralls
         env:
           HAVE_ACCESS_TO_SECTETS: ${{ secrets.RUNDB_API_URL }}
         if: env.HAVE_ACCESS_TO_SECTETS != null
-        run: coverage run --append --source=saltax -m pytest -v
-      - name: Coverage report
-        env:
-          HAVE_ACCESS_TO_SECTETS: ${{ secrets.RUNDB_API_URL }}
-        if: env.HAVE_ACCESS_TO_SECTETS != null
-        run: coverage report
+        run: |
+          coverage run --append --source=saltax -m pytest -v
+          coveralls --service=github
+          coverage report
       - name: goodbye
         run: echo goodbye
