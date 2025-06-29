@@ -29,7 +29,7 @@ FIELD_MAP = straxen.InterpolatingMap(
 SE_INSTRUCTIONS_DIR = "/project/lgrandi/yuanlq/salt/se_instructions"
 AMBE_INSTRUCTIONS_FILE = "/project/lgrandi/yuanlq/salt/ambe_instructions/minghao_aptinput.csv"
 YBE_INSTRUCTIONS_FILE = "/project2/lgrandi/ghusheng/ybe_instrutions/ybe_wfsim_instructions_6806_events_time_modified.csv"
-BASE_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "generated")
+BASE_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "generated")
 
 
 def generate_vertex(r_range=R_RANGE, z_range=Z_RANGE, size=1):
