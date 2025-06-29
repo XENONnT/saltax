@@ -87,12 +87,18 @@ class SPeaklets(straxen.Peaklets):
 src = inspect.getsource(Peaklets.compute)
 olds = [
 """
+        peaklets = strax.find_peaks(
+""",
+"""
         strax.sum_waveform(
             peaklets, hitlets, r, rlinks, self.to_pe, n_top_channels=n_top_pmts_if_digitize_top
         )
 """,
 ]
 news = [
+    """
+        peaklets = find_peaks(
+""",
 """
         sum_waveform(
             peaklets, hitlets, r, rlinks, self.to_pe, n_top_channels=n_top_pmts_if_digitize_top
@@ -208,3 +214,5 @@ news = [
 ]
 src = replace_source(src, olds, news)
 exec(src)
+# this assignment is needed because `PeakSplitter.__call__` calls `strax.sum_waveform`
+setattr(strax, "sum_waveform", sum_waveform)
