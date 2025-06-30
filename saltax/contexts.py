@@ -111,12 +111,9 @@ def validate_runid(runid):
     :param runid: run number
     :return: None
     """
-    try:
-        doc = xent_collection().find_one({"number": int(runid)})
-        if doc is None:
-            raise ValueError(f"Run {runid} not found in RunDB")
-    except:
-        raise ValueError(f"Run {runid} not found in RunDB: {e}")
+    doc = xent_collection().find_one({"number": int(runid)})
+    if doc is None:
+        raise ValueError(f"Run {runid} not found in RunDB")
 
 
 def get_generator(generator_name):
