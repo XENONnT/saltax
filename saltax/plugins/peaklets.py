@@ -65,7 +65,7 @@ class SPeaklets(straxen.Peaklets):
         else:
             raise ValueError(f"Unknown saltax_mode {self.saltax_mode}")
 
-        result = self.compute(records, start, end)
+        result = super().compute(records, start, end)
 
         # FIXME: surgery here; shifted lone_hits' channel for those which were salted
         mask_salted_lone_hits = result["lone_hits"]["channel"] >= self.schannel_starts_at
