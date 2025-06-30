@@ -11,7 +11,7 @@ __all__.extend(["SCHANNEL_STARTS_AT"])
 
 @export
 class SPulseProcessing(straxen.PulseProcessing):
-    __version__ = "0.0.2"
+    __version__ = "0.0.3"
     depends_on = ("raw_records", "raw_records_simu")
 
     schannel_starts_at = straxen.URLConfig(
@@ -94,5 +94,6 @@ class SPulseProcessing(straxen.PulseProcessing):
         # Merge the simulated and real records
         # time stamps are NOT sorted anymore
         r = np.concatenate((r, r_simu))
+        r = strax.sort_by_time(r)
 
         return dict(records=r, pulse_counts=pulse_counts, veto_regions=veto_regions)
