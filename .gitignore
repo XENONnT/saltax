@@ -8,10 +8,16 @@ jobs/config.ini
 generated/
 
 # strax
-*strax_data/
+*strax_data*/
 *resource_cache/
 *fuse_data/
 *strax_test_data/
+
+# plots
+*.png
+*.svg
+*.pdf
+*.gv
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
