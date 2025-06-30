@@ -4,7 +4,6 @@ import configparser
 
 import utilix
 
-
 config = configparser.ConfigParser()
 config.read("config.ini")
 
