@@ -4,6 +4,7 @@ import straxen
 from straxen.plugins.records.records import count_pulses
 
 SCHANNEL_STARTS_AT = 3000
+
 export, __all__ = strax.exporter()
 __all__.extend(["SCHANNEL_STARTS_AT"])
 

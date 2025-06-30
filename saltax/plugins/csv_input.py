@@ -75,7 +75,6 @@ class SChunkCsvInput(FuseBasePlugin):
             random_number_generator=self.rng,
             ns_no_instruction_before_chunk_end=self.ns_no_instruction_before_chunk_end,
             ns_no_instruction_after_chunk_start=self.ns_no_instruction_after_chunk_start,
-            debug=self.debug,
         )
 
     def compute(self, raw_records, start, end):
@@ -119,13 +118,11 @@ class SCsvFileLoader:
         random_number_generator,
         ns_no_instruction_before_chunk_end=NS_NO_INSTRUCTION_BEFORE_CHUNK_END,
         ns_no_instruction_after_chunk_start=NS_NO_INSTRUCTION_AFTER_CHUNK_START,
-        debug=False,
     ):
         self.input_file = input_file
         self.rng = random_number_generator
         self.ns_no_instruction_before_chunk_end = ns_no_instruction_before_chunk_end
         self.ns_no_instruction_after_chunk_start = ns_no_instruction_after_chunk_start
-        self.debug = debug
 
         # The csv file needs to have these columns:
         _fields = ChunkCsvInput.needed_csv_input_fields()

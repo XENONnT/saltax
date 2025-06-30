@@ -1,5 +1,7 @@
 __version__ = "0.1.7"
 
+from . import patches
+
 from . import utils
 from .utils import *
 
