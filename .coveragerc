@@ -1,0 +1,6 @@
+# .coveragerc to control coverage.py
+[report]
+omit =
+    saltax/jobs/*.py
+
+ignore_errors = True
