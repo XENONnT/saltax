@@ -6,9 +6,9 @@ Modified `straxen` and `fuse` [data structure](https://straxen.readthedocs.io/en
 
 ## Structure
 
-- `s_raw_records.py`: `fuse` based plugins. Modified `ChunkCsvInput` from `fuse ` specifically for  `raw_records_simu`, which determine chunking time range based on the ones' from `raw_reocrds`
+- `s_raw_records.py`: `fuse` based plugins. Modified `ChunkCsvInput` from `fuse` specifically for  `raw_records_simu`, which determine chunking time range based on the ones' from `raw_reocrds`
 - `records.py`: Modified `records`, which combines `raw_reords` and `raw_records_simu` together. The latter one's channel starts at constant variable `SCHANNEL_STARTS_AT`.
-- `peaklets.py`: Modified `peaklets`, which build peaks as there are `2*n_tpc_pmts` channels, but sum up per-channel information (`area_per_channel` and top-bottom specific fields) as if there are only `n_tpc_pmts`.
+- `peaklets.py`: Modified `peaklets`, which build peaks as there are `2 * straxen.n_tpc_pmts` channels, but sum up per-channel information (`area_per_channel` and top-bottom specific fields) as if there are only `straxen.n_tpc_pmts`.
 
 ## Data Structure
 

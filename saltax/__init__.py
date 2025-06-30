@@ -1,5 +1,7 @@
 __version__ = "0.1.7"
 
+from . import patches
+
 from . import utils
 from .utils import *
 
@@ -9,6 +11,6 @@ from .instructions import *
 from . import plugins
 from .plugins import *
 
-from . import match
-
 from . import contexts
+
+from . import match

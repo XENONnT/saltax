@@ -8,7 +8,7 @@ name: Test package
 on:
   workflow_dispatch:
   release:
-    types: [created]
+    types: [ created ]
   pull_request:
   push:
     branches:

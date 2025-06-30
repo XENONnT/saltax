@@ -1,0 +1,6 @@
+# .coveragerc to control coverage.py
+[report]
+omit =
+    saltax/match/*.py
+
+ignore_errors = True
