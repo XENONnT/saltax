@@ -92,7 +92,6 @@ class SPulseProcessing(straxen.PulseProcessing):
         r_simu["channel"] += self.schannel_starts_at
 
         # Merge the simulated and real records
-        # time stamps are NOT sorted anymore
         r = np.concatenate((r, r_simu))
         r = strax.sort_by_time(r)
 
