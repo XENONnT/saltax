@@ -72,7 +72,6 @@ class SChunkCsvInput(FuseBasePlugin):
         super().setup()
         self.csv_file_reader = SCsvFileLoader(
             input_file=self.input_file,
-            random_number_generator=self.rng,
             ns_no_instruction_before_chunk_end=self.ns_no_instruction_before_chunk_end,
             ns_no_instruction_after_chunk_start=self.ns_no_instruction_after_chunk_start,
         )
@@ -95,12 +94,10 @@ class SCsvFileLoader:
     def __init__(
         self,
         input_file,
-        random_number_generator,
         ns_no_instruction_before_chunk_end=NS_NO_INSTRUCTION_BEFORE_CHUNK_END,
         ns_no_instruction_after_chunk_start=NS_NO_INSTRUCTION_AFTER_CHUNK_START,
     ):
         self.input_file = input_file
-        self.rng = random_number_generator
         self.ns_no_instruction_before_chunk_end = ns_no_instruction_before_chunk_end
         self.ns_no_instruction_after_chunk_start = ns_no_instruction_after_chunk_start
 
