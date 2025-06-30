@@ -23,13 +23,7 @@ class SPeaklets(straxen.Peaklets):
     )
 
     gain_model_mc = straxen.URLConfig(
-        default=(
-            "list-to-array://xedocs://pmt_area_to_pes"
-            "?as_list=True&sort=pmt&detector=tpc"
-            "&run_id=plugin.run_id&version=ONLINE&attr=value"
-        ),
-        infer_type=False,
-        help="PMT gain model",
+        infer_type=False, help="PMT gain model. Specify as URL or explicit value"
     )
 
     def setup(self):
