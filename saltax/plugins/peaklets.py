@@ -8,6 +8,7 @@ from straxen.plugins.peaklets.peaklets import Peaklets
 from straxen.plugins.peaklets.peaklets import peak_saturation_correction
 
 import numba  # noqa: F401
+from strax import utils  # noqa: F401
 from strax.processing.general import _touching_windows  # noqa: F401
 from strax.dtypes import peak_dtype, DIGITAL_SUM_WAVEFORM_CHANNEL  # noqa: F401
 from strax.processing.peak_building import _build_hit_waveform  # noqa: F401
