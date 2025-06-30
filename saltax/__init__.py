@@ -11,6 +11,6 @@ from .instructions import *
 from . import plugins
 from .plugins import *
 
-from . import match
-
 from . import contexts
+
+from . import match
