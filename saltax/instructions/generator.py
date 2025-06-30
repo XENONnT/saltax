@@ -15,7 +15,6 @@ from fuse.plugins.detector_physics.csv_input import ChunkCsvInput
 
 from saltax.plugins.csv_input import SALT_TIME_INTERVAL
 
-
 DEFAULT_EN_RANGE = (0.2, 15.0)  # in unit of keV
 Z_RANGE = (-148.15, 0)  # in unit of cm
 R_RANGE = (0, 66.4)  # in unit of cm

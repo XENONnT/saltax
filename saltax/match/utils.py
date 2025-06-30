@@ -10,7 +10,6 @@ import utilix
 import strax
 import saltax
 
-
 ALL_CUTS_MINIMAL = [
     "cut_daq_veto",
     "cut_interaction_exists",

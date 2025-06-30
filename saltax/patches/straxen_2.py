@@ -18,7 +18,6 @@ from strax.processing.peak_building import store_downsampled_waveform
 from straxen.plugins.peaklets.peaklets import _peak_saturation_correction_inner
 from ..plugins.records import SCHANNEL_STARTS_AT
 
-
 mod = peak_saturation_correction.__module__
 src = inspect.getsource(peak_saturation_correction)
 olds = [
