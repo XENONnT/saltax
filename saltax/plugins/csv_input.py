@@ -72,41 +72,20 @@ class SChunkCsvInput(FuseBasePlugin):
         super().setup()
         self.csv_file_reader = SCsvFileLoader(
             input_file=self.input_file,
-            random_number_generator=self.rng,
             ns_no_instruction_before_chunk_end=self.ns_no_instruction_before_chunk_end,
             ns_no_instruction_after_chunk_start=self.ns_no_instruction_after_chunk_start,
         )
+        self.csv_file_reader.read()
 
     def compute(self, raw_records, start, end):
-        try:
-            chunk_data, source_done = self.csv_file_reader.output_chunk(start, end)
-            chunk_data["time"] = chunk_data["t"]
-            chunk_data["endtime"] = chunk_data["time"]
-            chunk_data = chunk_data.to_records(index=False)
-            data = np.zeros(len(chunk_data), dtype=self.dtype)
-            strax.copy_to_buffer(chunk_data, data, "_bring_data_into_correct_format")
+        chunk_data = self.csv_file_reader.output_chunk(start, end)
+        chunk_data["time"] = chunk_data["t"]
+        chunk_data["endtime"] = chunk_data["time"]
+        chunk_data = chunk_data.to_records(index=False)
+        data = np.zeros(len(chunk_data), dtype=self.dtype)
+        strax.copy_to_buffer(chunk_data, data, "_bring_data_into_correct_format")
 
-            self.source_done = source_done
-
-            # Stick rigorously with raw_records time range
-            return self.chunk(start=start, end=end, data=data)
-
-        except StopIteration:
-            raise RuntimeError("Bug in chunk building!")
-
-    def source_finished(self):
-        return self.source_done
-
-    def is_ready(self, chunk_i):
-        """Overwritten to mimic online input plugin.
-
-        Returns False to check source finished; Returns True to get next chunk.
-
-        """
-        if "ready" not in self.__dict__:
-            self.ready = False
-        self.ready ^= True  # Flip
-        return self.ready
+        return data
 
 
 class SCsvFileLoader:
@@ -115,12 +94,10 @@ class SCsvFileLoader:
     def __init__(
         self,
         input_file,
-        random_number_generator,
         ns_no_instruction_before_chunk_end=NS_NO_INSTRUCTION_BEFORE_CHUNK_END,
         ns_no_instruction_after_chunk_start=NS_NO_INSTRUCTION_AFTER_CHUNK_START,
     ):
         self.input_file = input_file
-        self.rng = random_number_generator
         self.ns_no_instruction_before_chunk_end = ns_no_instruction_before_chunk_end
         self.ns_no_instruction_after_chunk_start = ns_no_instruction_after_chunk_start
 
@@ -129,13 +106,16 @@ class SCsvFileLoader:
         self.columns = list(np.dtype(_fields).names)
         self.dtype = _fields + strax.time_fields
 
+    def read(self):
+        """Load the simulation instructions from the csv file."""
+        self.instructions = self._load_csv_file()
+
     def output_chunk(self, chunk_start, chunk_end):
         """Load the simulation instructions from the csv file.
 
         Truncate the instructions to the chunk time range.
 
         """
-        instructions = self._load_csv_file()
 
         # truncate instructions to the chunk time range
         log.debug("Truncating instructions to the chunk time range!")
@@ -145,19 +125,11 @@ class SCsvFileLoader:
             chunk_end - self.ns_no_instruction_before_chunk_end,
         )
 
-        # See if we have any instructions after the chunk end
-        mask_next = instructions["t"] > chunk_end
-        if np.any(mask_next):
-            source_done = False
-        else:
-            log.debug("This is the last chunk! No more instructions available!")
-            source_done = True
+        mask = self.instructions["t"] >= chunk_start + self.ns_no_instruction_after_chunk_start
+        mask &= self.instructions["t"] < chunk_end - self.ns_no_instruction_before_chunk_end
+        instructions = self.instructions[mask].reset_index(drop=True)
 
-        mask = instructions["t"] >= chunk_start + self.ns_no_instruction_after_chunk_start
-        mask &= instructions["t"] < chunk_end - self.ns_no_instruction_before_chunk_end
-        instructions = instructions[mask]
-
-        return instructions, source_done
+        return instructions
 
     def _load_csv_file(self):
         """Load the simulation instructions from a csv file."""
