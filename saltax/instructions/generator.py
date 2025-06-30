@@ -28,8 +28,13 @@ FIELD_MAP = straxen.InterpolatingMap(
 )
 SE_INSTRUCTIONS_DIR = "/project/lgrandi/yuanlq/salt/se_instructions"
 AMBE_INSTRUCTIONS_FILE = "/project/lgrandi/yuanlq/salt/ambe_instructions/minghao_aptinput.csv"
-YBE_INSTRUCTIONS_FILE = "/project2/lgrandi/ghusheng/ybe_instrutions/ybe_wfsim_instructions_6806_events_time_modified.csv"
-BASE_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "generated")
+YBE_INSTRUCTIONS_FILE = (
+    "/project2/lgrandi/ghusheng/ybe_instrutions/"
+    "ybe_wfsim_instructions_6806_events_time_modified.csv"
+)
+BASE_DIR = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "generated"
+)
 
 
 def generate_vertex(r_range=R_RANGE, z_range=Z_RANGE, size=1):
@@ -39,6 +44,7 @@ def generate_vertex(r_range=R_RANGE, z_range=Z_RANGE, size=1):
     :param z_range: (z_min, z_max) in cm
     :param size: number of vertices to generate
     :return: x, y, z coordinates of the vertex
+
     """
     phi = np.random.uniform(size=size) * 2 * np.pi
     r = r_range[1] * np.sqrt(np.random.uniform((r_range[0] / r_range[1]) ** 2, 1, size=size))
@@ -68,11 +74,12 @@ def generate_times(
 
     :param start_time: start time in ns
     :param end_time: end time in ns
-    :param size: rough number of events to generate, default: None i.e.
-        generate events until end_time
+    :param size: rough number of events to generate, default: None i.e. generate events until
+        end_time
     :param rate: rate of events in Hz
     :param time_mode: 'uniform' or 'realistic'
     :return: array of event times in ns
+
     """
     total_time_ns = end_time - start_time
     estimated_size = int(total_time_ns * rate / units.s)
@@ -113,12 +120,10 @@ def get_run_start_end(runid):
 
     :param runid: run number
     :return: start time, end time in unix time in ns
+
     """
     # Get the datetime of start and end time of the run from RunDB
-    try:
-        doc = xent_collection().find_one({"number": int(runid)})
-    except:
-        raise RuntimeError(f"Cannot find runid {runid} in RunDB")
+    doc = xent_collection().find_one({"number": int(runid)})
     if doc is None:
         raise RuntimeError(f"Cannot find runid {runid} in RunDB")
     dt_start, dt_end = doc["start"], doc["end"]
@@ -175,10 +180,10 @@ def instr_file_name(
     en_range=DEFAULT_EN_RANGE,
     rate=units.s / SALT_TIME_INTERVAL,
     base_dir=BASE_DIR,
-    **kwargs
+    **kwargs,
 ):
-    """Generate the instruction file name based on the runid, recoil,
-    generator_name, mode, and rate.
+    """Generate the instruction file name based on the runid, recoil, generator_name, mode, and
+    rate.
 
     :param recoil: NEST recoil type
     :param generator_name: name of the generator
@@ -191,6 +196,7 @@ def instr_file_name(
     :param base_dir: base directory to save the instruction file,
         default: BASE_DIR
     :return: instruction file name
+
     """
     if en_range is not None:
         en_range = str(en_range[0]) + "_" + str(en_range[1])
@@ -217,20 +223,19 @@ def generator_se(
     r_range=R_RANGE,
     z_range=Z_RANGE,
     time_mode="uniform",
-    **kwargs
+    **kwargs,
 ):
     """Generate instructions for a run with single electron.
 
     :param runid: run number
-    :param n_tot: total number of events to generate, default: None i.e.
-        generate events until end_time
+    :param n_tot: total number of events to generate, default: None i.e. generate events until
+        end_time
     :param rate: rate of events in Hz, default: units.s / SALT_TIME_INTERVAL
-    :param r_range: (r_min, r_max) in cm, default: R_RANGE, defined
-        above
-    :param z_range: (z_min, z_max) in cm, default: Z_RANGE, defined
-        above
+    :param r_range: (r_min, r_max) in cm, default: R_RANGE, defined above
+    :param z_range: (z_min, z_max) in cm, default: Z_RANGE, defined above
     :param time_mode: 'uniform' or 'realistic', default: 'uniform'
     :return: instructions in numpy array
+
     """
     start_time, end_time = get_run_start_end(runid)
     times = generate_times(start_time, end_time, size=n_tot, rate=rate, time_mode=time_mode)
@@ -241,7 +246,9 @@ def generator_se(
     instr["t"] = times
 
     # Generating unoformely distributed events for give R and Z range
-    instr["x"], instr["y"], instr["z"] = generate_vertex(r_range=r_range, z_range=z_range, size=n_tot)
+    instr["x"], instr["y"], instr["z"] = generate_vertex(
+        r_range=r_range, z_range=z_range, size=n_tot
+    )
 
     # And assigning quanta
     instr["photons"] = 0
@@ -254,11 +261,11 @@ def generator_se(
 def generator_se_bootstrapped(runid, xyt_files_at=SE_INSTRUCTIONS_DIR, **kwargs):
     """Generate instructions for a run with single electron.
 
-    We will use XYT information from bootstrapped data single electrons
-    to make the simulation more realistic
+    We will use XYT information from bootstrapped data single electrons to make the simulation more
+    realistic
     :param runid: run number
-    :param xyt_files_at: directory to search for instructions of x,y,t
-        information
+    :param xyt_files_at: directory to search for instructions of x,y,t information
+
     """
     # load instructions
     runid = str(runid).zfill(6)
@@ -309,22 +316,22 @@ def generator_neutron(
     time_mode="uniform",
     neutron_instructions_file=None,
     fmap=FIELD_MAP,
-    **kwargs
+    **kwargs,
 ):
     """Generate instructions for a run with AmBe source.
 
-    AmBe instruction was first generated by full-chain simulation, and
-    then passing the post-epix instruction to feed this function. Each
-    event with a certain event_id in the fed instructions will be
-    shifted in time based on the time_mode you specified.
+    AmBe instruction was first generated by full-chain simulation, and then passing the post-epix
+    instruction to feed this function. Each event with a certain event_id in the fed instructions
+    will be shifted in time based on the time_mode you specified.
     :param runid: run number
-    :param n_tot: total number of events to generate, default: None i.e.
-        generate events until end_time
+    :param n_tot: total number of events to generate, default: None i.e. generate events until
+        end_time
     :param rate: rate of events in Hz, default: units.s / SALT_TIME_INTERVAL
     :param time_mode: 'uniform' or 'realistic', default: 'uniform'
     :param neutron_instructions_file: file containing neutron instructions, default: None
     :param fmap: field map, default: FIELD_MAP, defined above
     :return: instructions in numpy array
+
     """
     # determine time offsets to shift neutron instructions
     start_time, end_time = get_run_start_end(runid)
@@ -354,11 +361,21 @@ def generator_neutron(
         instr_i["z"] = selected_neutron["z"]
         instr_i["nestid"] = selected_neutron["recoil"]
         instr_i["ed"] = selected_neutron["e_dep"]
-        instr_i["photons"][selected_neutron["type"] == 1] = selected_neutron["amp"][selected_neutron["type"] == 1]
-        instr_i["electrons"][selected_neutron["type"] == 2] = selected_neutron["amp"][selected_neutron["type"] == 2]
+        instr_i["photons"][selected_neutron["type"] == 1] = selected_neutron["amp"][
+            selected_neutron["type"] == 1
+        ]
+        instr_i["electrons"][selected_neutron["type"] == 2] = selected_neutron["amp"][
+            selected_neutron["type"] == 2
+        ]
         instr_i["excitons"] = selected_neutron["n_excitons"]
-        instr_i["e_field"] = fmap(np.array([np.sqrt(selected_neutron["x"]**2 + selected_neutron["y"]**2), 
-                                                selected_neutron["z"]]).T)
+        instr_i["e_field"] = fmap(
+            np.array(
+                [
+                    np.sqrt(selected_neutron["x"] ** 2 + selected_neutron["y"] ** 2),
+                    selected_neutron["z"],
+                ]
+            ).T
+        )
 
         # concatenate instr
         instr = np.concatenate((instr, instr_i))
@@ -373,7 +390,7 @@ def generator_ambe(
     time_mode="uniform",
     ambe_instructions_file=AMBE_INSTRUCTIONS_FILE,
     fmap=FIELD_MAP,
-    **kwargs
+    **kwargs,
 ):
     """Generate instructions for a run with AmBe source.
 
@@ -390,6 +407,7 @@ def generator_ambe(
         default: AMBE_INSTRUCTIONS_FILE
     :param fmap: field map, default: FIELD_MAP, defined above
     :return: instructions in numpy array
+
     """
     return generator_neutron(
         runid=runid,
@@ -398,7 +416,7 @@ def generator_ambe(
         time_mode=time_mode,
         neutron_instructions_file=ambe_instructions_file,
         fmap=fmap,
-        **kwargs
+        **kwargs,
     )
 
 
@@ -409,7 +427,7 @@ def generator_ybe(
     time_mode="uniform",
     ybe_instructions_file=YBE_INSTRUCTIONS_FILE,
     fmap=FIELD_MAP,
-    **kwargs
+    **kwargs,
 ):
     """Generate instructions for a run with YBe source.
 
@@ -426,6 +444,7 @@ def generator_ybe(
         default: YBE_INSTRUCTIONS_FILE
     :param fmap: field map, default: FIELD_MAP, defined above
     :return: instructions in numpy array
+
     """
     return generator_neutron(
         runid=runid,
@@ -434,7 +453,7 @@ def generator_ybe(
         time_mode=time_mode,
         neutron_instructions_file=ybe_instructions_file,
         fmap=fmap,
-        **kwargs
+        **kwargs,
     )
 
 
@@ -450,25 +469,24 @@ def generator_flat(
     z_range=Z_RANGE,
     mode="all",
     time_mode="uniform",
-    **kwargs
+    **kwargs,
 ):
     """Generate instructions for a run with flat energy spectrum.
 
     :param runid: run number
     :param en_range: (en_min, en_max) in keV, default: (0.2, 15.0)
     :param recoil: NEST recoil type, default: 8 (beta ER)
-    :param n_tot: total number of events to generate, default: None i.e.
-        generate events until end_time
+    :param n_tot: total number of events to generate, default: None i.e. generate events until
+        end_time
     :param rate: rate of events in Hz, default: units.s / SALT_TIME_INTERVAL
     :param fmap: field map, default: FIELD_MAP, defined above
     :param nc: NEST calculator, default: NC, defined above
-    :param r_range: (r_min, r_max) in cm, default: R_RANGE, defined
-        above
-    :param z_range: (z_min, z_max) in cm, default: Z_RANGE, defined
-        above
+    :param r_range: (r_min, r_max) in cm, default: R_RANGE, defined above
+    :param z_range: (z_min, z_max) in cm, default: Z_RANGE, defined above
     :param mode: 's1', 's2', or 'all', default: 'all'
     :param time_mode: 'uniform' or 'realistic', default: 'uniform'
     :return: instructions in numpy array
+
     """
     start_time, end_time = get_run_start_end(runid)
     times = generate_times(start_time, end_time, size=n_tot, rate=rate, time_mode=time_mode)
@@ -479,14 +497,16 @@ def generator_flat(
     instr["t"] = times
 
     # Generating unoformely distributed events for give R and Z range
-    instr["x"], instr["y"], instr["z"] = generate_vertex(r_range=r_range, z_range=z_range, size=n_tot)
+    instr["x"], instr["y"], instr["z"] = generate_vertex(
+        r_range=r_range, z_range=z_range, size=n_tot
+    )
 
     # Making energy
     instr["ed"] = np.random.uniform(en_range[0], en_range[1], size=n_tot)
     instr["nestid"] = recoil
 
     # Getting local field from field map
-    instr["e_field"] = fmap(np.array([np.sqrt(instr["x"]**2 + instr["y"]**2), instr["z"]]).T)
+    instr["e_field"] = fmap(np.array([np.sqrt(instr["x"] ** 2 + instr["y"] ** 2), instr["z"]]).T)
 
     # And generating quantas from nest
     for i in range(n_tot):

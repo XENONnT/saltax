@@ -1,5 +1,5 @@
-import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 def plot_event_wf(
@@ -15,8 +15,8 @@ def plot_event_wf(
     s2_ext_window_samples=100,
     ylim=(0, 5),
 ):
-    """Plot waveforms for a single event, including full event waveform and
-    zoomed-in S1 and S2 waveforms.
+    """Plot waveforms for a single event, including full event waveform and zoomed-in S1 and S2
+    waveforms.
 
     This plot function will show info from salt, simu and data mode.
     :param ind: index of the event in the events_simu dataframe
@@ -25,16 +25,14 @@ def plot_event_wf(
     :param st_data: saltax context for data mode
     :param runid: runid of the event, example: '066666'
     :param events_simu: simu event_info.
-    :param events_salt: salt event_info matched to events_simu, default
-        None and event level information from sprinkled dataset won't be
-        used
-    :param event_ext_window_ns: time window in ns to plot around the
-        event, default 2.4e6 ns = 2.4 ms
-    :param s1_ext_window_samples: time window in samples to plot around
-        S1, default 25 samples
-    :param s2_ext_window_samples: time window in samples to plot around
-        S2, default 100 samples
+    :param events_salt: salt event_info matched to events_simu, default None and event level
+        information from sprinkled dataset won't be used
+    :param event_ext_window_ns: time window in ns to plot around the event, default 2.4e6 ns = 2.4
+        ms
+    :param s1_ext_window_samples: time window in samples to plot around S1, default 25 samples
+    :param s2_ext_window_samples: time window in samples to plot around S2, default 100 samples
     :param ylim: y-axis limits for the waveforms, default (0,5) PE/10ns
+
     """
     if events_salt is not None:
         assert len(events_salt) == len(
@@ -141,9 +139,9 @@ def plot_event_wf(
                         start_i + i * int(dt / 10) : start_i + (i + 1) * int(dt / 10)
                     ] = (p["data"][i] / dt * 10)
     if len(lhs_salt_selected):
-        for l in lhs_salt_selected:
-            time_i = int((l["time"] - int(extended_simu_event_timerange_ns[0])) / 10)
-            amp = l["area"] * to_pes[l["channel"]]
+        for lh in lhs_salt_selected:
+            time_i = int((lh["time"] - int(extended_simu_event_timerange_ns[0])) / 10)
+            amp = lh["area"] * to_pes[lh["channel"]]
             wf_salt_others[time_i] += amp / 10
     # Fill simulated waveforms with peaks and lone hits
     if len(peaks_simu_selected):
@@ -167,9 +165,9 @@ def plot_event_wf(
                         start_i + i * int(dt / 10) : start_i + (i + 1) * int(dt / 10)
                     ] = (p["data"][i] / dt * 10)
     if len(lhs_simu_selected):
-        for l in lhs_simu_selected:
-            time_i = int((l["time"] - int(extended_simu_event_timerange_ns[0])) / 10)
-            amp = l["area"] * to_pes[l["channel"]]
+        for lh in lhs_simu_selected:
+            time_i = int((lh["time"] - int(extended_simu_event_timerange_ns[0])) / 10)
+            amp = lh["area"] * to_pes[lh["channel"]]
             wf_simu_others[time_i] += amp / 10
     # Fill data waveform with peaks and lone hits
     if len(peaks_data_selected):
@@ -182,9 +180,9 @@ def plot_event_wf(
                     p["data"][i] / dt * 10
                 )
     if len(lhs_data_selected):
-        for l in lhs_data_selected:
-            time_i = int((l["time"] - int(extended_simu_event_timerange_ns[0])) / 10)
-            amp = l["area"] * to_pes[l["channel"]]
+        for lh in lhs_data_selected:
+            time_i = int((lh["time"] - int(extended_simu_event_timerange_ns[0])) / 10)
+            amp = lh["area"] * to_pes[lh["channel"]]
             wf_data[time_i] += amp / 10
 
     # Plot full event waveform

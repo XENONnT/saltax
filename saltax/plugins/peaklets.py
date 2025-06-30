@@ -1,19 +1,20 @@
 import inspect
 import textwrap
 import numpy as np
-import numba
 
 import strax
-from strax import utils
 import straxen
 from straxen.plugins.peaklets.peaklets import Peaklets
 from straxen.plugins.peaklets.peaklets import peak_saturation_correction
 
-from strax.processing.general import _touching_windows
-from strax.dtypes import peak_dtype, DIGITAL_SUM_WAVEFORM_CHANNEL
-from strax.processing.peak_building import _build_hit_waveform, store_downsampled_waveform
-from straxen.plugins.peaklets.peaklets import hit_max_sample, get_tight_coin, drop_data_top_field
-from straxen.plugins.peaklets.peaklets import _peak_saturation_correction_inner
+import numba  # noqa: F401
+from strax.processing.general import _touching_windows  # noqa: F401
+from strax.dtypes import peak_dtype, DIGITAL_SUM_WAVEFORM_CHANNEL  # noqa: F401
+from strax.processing.peak_building import _build_hit_waveform  # noqa: F401
+from strax.processing.peak_building import store_downsampled_waveform  # noqa: F401
+from straxen.plugins.peaklets.peaklets import hit_max_sample, get_tight_coin  # noqa: F401
+from straxen.plugins.peaklets.peaklets import drop_data_top_field  # noqa: F401
+from straxen.plugins.peaklets.peaklets import _peak_saturation_correction_inner  # noqa: F401
 
 from ..utils import replace_source
 from .records import SCHANNEL_STARTS_AT
@@ -49,12 +50,12 @@ class SPeaklets(straxen.Peaklets):
         self.to_pe_simu = self.gain_model_mc
         self.to_pe = np.zeros(self.schannel_starts_at + self.n_tpc_pmts, dtype=np.float64)
         self.to_pe[: self.n_tpc_pmts] = self.to_pe_data
-        self.to_pe[self.schannel_starts_at:] = self.to_pe_simu
+        self.to_pe[self.schannel_starts_at :] = self.to_pe_simu
 
         # Get the hitfinder thresholds
         self.hit_thresholds = np.zeros(self.schannel_starts_at + self.n_tpc_pmts, dtype=np.int64)
         self.hit_thresholds[: self.n_tpc_pmts] = self.hit_min_amplitude
-        self.hit_thresholds[self.schannel_starts_at:] = self.hit_min_amplitude
+        self.hit_thresholds[self.schannel_starts_at :] = self.hit_min_amplitude
 
         self.channel_range = (
             min(min(self.channel_map["tpc"]), min(self.channel_map["stpc"])),
@@ -62,12 +63,14 @@ class SPeaklets(straxen.Peaklets):
         )
 
     def compute(self, records, start, end):
-        # FIXME: This is going to make the same lone_hit having different record_i, between in salt mode and others
+        # FIXME: This is going to make the same lone_hit having different record_i,
+        # FIXME: between in salt mode and others
         # FIXME: surgery here; channel specification related
         # Based on saltax_mode, determine what channels to involve
         if self.saltax_mode == "salt":
             records = records[
-                (records["channel"] >= self.schannel_starts_at) | (records["channel"] < self.n_tpc_pmts)
+                (records["channel"] >= self.schannel_starts_at)
+                | (records["channel"] < self.n_tpc_pmts)
             ]
         elif self.saltax_mode == "simu":
             records = records[(records["channel"] >= self.schannel_starts_at)]
@@ -92,10 +95,10 @@ class SPeaklets(straxen.Peaklets):
 
 src = inspect.getsource(Peaklets.compute)
 olds = [
-"""
+    """
         peaklets = strax.find_peaks(
 """,
-"""
+    """
         strax.sum_waveform(
             peaklets, hitlets, r, rlinks, self.to_pe, n_top_channels=n_top_pmts_if_digitize_top
         )
@@ -105,7 +108,7 @@ news = [
     """
         peaklets = find_peaks(
 """,
-"""
+    """
         sum_waveform(
             peaklets, hitlets, r, rlinks, self.to_pe, n_top_channels=n_top_pmts_if_digitize_top
         )
@@ -114,14 +117,14 @@ news = [
 src = replace_source(src, olds, news)
 src = textwrap.dedent(src)
 exec(src, globals())
-SPeaklets._compute = compute
+SPeaklets._compute = compute  # type: ignore[name-defined]
 
 
 src = inspect.getsource(peak_saturation_correction)
 olds = [
-"""Correct the area and per pmt area of peaks from saturation.
+    """Correct the area and per pmt area of peaks from saturation.
 """,
-"""
+    """
             ch = r["channel"]
             if channel_saturated[ch]:
                 b_pulse[ch, slice(*b_slice)] += r["data"][slice(*r_slice)]
@@ -129,17 +132,17 @@ olds = [
             else:
                 b_sumwf[slice(*b_slice)] += r["data"][slice(*r_slice)] * to_pe[ch]
 """,
-"""
+    """
     strax.sum_waveform(peaks, hitlets, records, rlinks, to_pe, n_top_channels, peak_list)
 """,
 ]
 news = [
-"""WARNING: This probably doesn't work when we have the salted channel also saturated!!!
+    """WARNING: This probably doesn't work when we have the salted channel also saturated!!!
     We will be using only the real TPC channels to correct the saturation!!! This is dangerous
     if you are salting things outside WIMP/LowER regions!!!
     Correct the area and per pmt area of peaks from saturation.
 """,
-"""
+    """
             # Shift channels to handle salted channels
             ch = r["channel"]
             if ch >= SCHANNEL_STARTS_AT:
@@ -153,7 +156,7 @@ news = [
             else:
                 b_sumwf[slice(*b_slice)] += r["data"][slice(*r_slice)] * to_pe[ch]
 """,
-"""
+    """
     sum_waveform(peaks, hitlets, records, rlinks, to_pe, n_top_channels, peak_list)
 """,
 ]
@@ -164,13 +167,13 @@ exec(src)
 src = inspect.getsource(strax.find_peaks)
 olds = [
     "cache=True",
-"""
+    """
         area_per_channel[hit["channel"]] += hit_area_pe
 """,
 ]
 news = [
     "cache=False",
-"""
+    """
         # Manually shift channels for area_per_channel
         if hit["channel"] >= SCHANNEL_STARTS_AT:
             area_per_channel[hit["channel"] - SCHANNEL_STARTS_AT] += hit_area_pe
@@ -186,39 +189,39 @@ exec(src)
 src = inspect.getsource(strax.sum_waveform)
 olds = [
     "cache=True",
-"""
+    """
             ch = h["channel"]
 """,
-"""
+    """
             p["saturated_channel"][ch] |= is_saturated
 """,
-"""
+    """
                 if ch < n_top_channels:
 """,
-"""
+    """
             area_per_channel[ch] += area_pe
 """,
 ]
 news = [
     "cache=False",
-"""
+    """
             # Shift salted channel
             ch = h["channel"]
             ch_shifted = ch
             if ch >= n_channels:
                 ch_shifted = ch - SCHANNEL_STARTS_AT
 """,
-"""
+    """
             p["saturated_channel"][ch_shifted] |= is_saturated
 """,
-"""
+    """
                 if ch_shifted < n_top_channels:
 """,
-"""
+    """
             area_per_channel[ch_shifted] += area_pe
 """,
 ]
 src = replace_source(src, olds, news)
 exec(src)
 # this assignment is needed because `PeakSplitter.__call__` calls `strax.sum_waveform`
-setattr(strax, "sum_waveform", sum_waveform)
+setattr(strax, "sum_waveform", sum_waveform)  # type: ignore[name-defined]

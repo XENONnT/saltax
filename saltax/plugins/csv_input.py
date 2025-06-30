@@ -1,6 +1,4 @@
 import logging
-from typing import Tuple
-
 import numpy as np
 import pandas as pd
 import strax
@@ -9,7 +7,6 @@ from straxen import units
 
 from fuse.plugin import FuseBasePlugin
 from fuse.plugins.detector_physics.csv_input import microphysics_summary_fields, ChunkCsvInput
-from fuse.plugins.pmt_and_daq.pmt_response_and_daq import PMTResponseAndDAQ
 
 SALT_TIME_INTERVAL = 2e7  # in unit of ns. The number should be way bigger then full drift time
 NS_NO_INSTRUCTION_AFTER_CHUNK_START = 5e7
@@ -23,11 +20,12 @@ log = logging.getLogger("saltax.plugins.csv_input")
 
 @export
 class SChunkCsvInput(FuseBasePlugin):
-    """Plugin which reads a CSV file containing instructions for the detector
-    physics simulation and returns the data in chunks.
+    """Plugin which reads a CSV file containing instructions for the detector physics simulation and
+    returns the data in chunks.
 
-    Modified from csv_file_loader: https://github.com/XENONnT/fuse/blob/e538d32a5a0735757a77b1dce31d6f95a379bf4e/fuse/plugins/detector_physics/csv_input.py#L118
+    Modified from csv_file_loader: https://github.com/XENONnT/fuse/blob/e538d32a5a0735757a77b1dce31d6f95a379bf4e/fuse/plugins/detector_physics/csv_input.py#L118  # noqa
     Similar to the case event_rate=0 there: we don't reassign times.
+
     """
 
     __version__ = "0.0.1"
@@ -103,8 +101,8 @@ class SChunkCsvInput(FuseBasePlugin):
     def is_ready(self, chunk_i):
         """Overwritten to mimic online input plugin.
 
-        Returns False to check source finished; Returns True to get next
-        chunk.
+        Returns False to check source finished; Returns True to get next chunk.
+
         """
         if "ready" not in self.__dict__:
             self.ready = False
@@ -113,8 +111,7 @@ class SChunkCsvInput(FuseBasePlugin):
 
 
 class SCsvFileLoader:
-    """Class to load a CSV file with detector simulation
-    instructions."""
+    """Class to load a CSV file with detector simulation instructions."""
 
     def __init__(
         self,
@@ -139,6 +136,7 @@ class SCsvFileLoader:
         """Load the simulation instructions from the csv file.
 
         Truncate the instructions to the chunk time range.
+
         """
         instructions = self._load_csv_file()
 
