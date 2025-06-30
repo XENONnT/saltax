@@ -1,135 +1,106 @@
-import numpy as np
-from tqdm import tqdm
-import numpy as np
-import matplotlib.pyplot as plt
+import os
+from glob import glob
 from tabulate import tabulate
 from itertools import cycle
-import saltax
+from tqdm import tqdm
+import numpy as np
 from scipy.stats import binomtest
+import numpy as np
+import matplotlib.pyplot as plt
+
 import utilix
 import strax
-from glob import glob
+import saltax
 
-ALL_CUTS = np.array(
-    [
-        "cut_daq_veto",
-        "cut_interaction_exists",
-        "cut_main_is_valid_triggering_peak",
-        "cut_run_boundaries",
-        "cut_s1_area_fraction_top",
-        "cut_s1_max_pmt",
-        "cut_s1_pattern_bottom",
-        "cut_s1_pattern_top",
-        "cut_s1_single_scatter",
-        "cut_s1_tightcoin_3fold",
-        "cut_s1_width",
-        "cut_s2_pattern",
-        "cut_s2_recon_pos_diff",
-        "cut_s2_single_scatter",
-        "cut_s2_width",
-        "cut_cs2_area_fraction_top",
-        "cut_shadow",
-        "cut_ambience",
-    ]
-)
-ALL_CUTS_MINIMAL = np.array(
-    [
-        "cut_daq_veto",
-        "cut_interaction_exists",
-        "cut_main_is_valid_triggering_peak",
-        "cut_run_boundaries",
-    ]
-)
-ALL_CUTS_EXCEPT_S2PatternS1Width = np.array(
-    [
-        "cut_daq_veto",
-        "cut_interaction_exists",
-        "cut_main_is_valid_triggering_peak",
-        "cut_run_boundaries",
-        "cut_s1_area_fraction_top",
-        "cut_s1_max_pmt",
-        "cut_s1_pattern_bottom",
-        "cut_s1_pattern_top",
-        "cut_s1_single_scatter",
-        "cut_s1_tightcoin_3fold",
-        "cut_s2_recon_pos_diff",
-        "cut_s2_single_scatter",
-        "cut_s2_width",
-        "cut_cs2_area_fraction_top",
-        "cut_shadow",
-        "cut_ambience",
-    ]
-)
-AmBe_CUTS_EXCEPT_S2Pattern = np.array(
-    [
-        "cut_daq_veto",
-        "cut_interaction_exists",
-        "cut_main_is_valid_triggering_peak",
-        "cut_run_boundaries",
-        "cut_s1_area_fraction_top",
-        "cut_s1_max_pmt",
-        "cut_s1_pattern_bottom",
-        "cut_s1_pattern_top",
-        "cut_s1_single_scatter",
-        "cut_s1_tightcoin_3fold",
-        "cut_s1_width",
-        "cut_s2_recon_pos_diff",
-        "cut_s2_single_scatter",
-        "cut_s2_width",
-        "cut_cs2_area_fraction_top",
-    ]
-)
-AmBe_CUTS_EXCEPT_S2PatternS1Width = np.array(
-    [
-        "cut_daq_veto",
-        "cut_interaction_exists",
-        "cut_main_is_valid_triggering_peak",
-        "cut_run_boundaries",
-        "cut_s1_area_fraction_top",
-        "cut_s1_max_pmt",
-        "cut_s1_pattern_bottom",
-        "cut_s1_pattern_top",
-        "cut_s1_single_scatter",
-        "cut_s1_tightcoin_3fold",
-        "cut_s2_recon_pos_diff",
-        "cut_s2_single_scatter",
-        "cut_s2_width",
-        "cut_cs2_area_fraction_top",
-    ]
-)
-AmBe_CUTS = np.array(
-    [
-        "cut_daq_veto",
-        "cut_interaction_exists",
-        "cut_main_is_valid_triggering_peak",
-        "cut_run_boundaries",
-        "cut_s1_area_fraction_top",
-        "cut_s1_max_pmt",
-        "cut_s1_pattern_bottom",
-        "cut_s1_pattern_top",
-        "cut_s1_single_scatter",
-        "cut_s1_tightcoin_3fold",
-        "cut_s1_width",
-        "cut_s2_pattern",
-        "cut_s2_recon_pos_diff",
-        "cut_s2_single_scatter",
-        "cut_s2_width",
-        "cut_cs2_area_fraction_top",
-    ]
-)
+
+ALL_CUTS_MINIMAL = [
+    "cut_daq_veto",
+    "cut_interaction_exists",
+    "cut_main_is_valid_triggering_peak",
+    "cut_run_boundaries",
+]
+ALL_CUTS = ALL_CUTS_MINIMAL + [
+    "cut_s1_area_fraction_top",
+    "cut_s1_max_pmt",
+    "cut_s1_pattern_bottom",
+    "cut_s1_pattern_top",
+    "cut_s1_single_scatter",
+    "cut_s1_tightcoin_3fold",
+    "cut_s1_width",
+    "cut_s2_pattern",
+    "cut_s2_recon_pos_diff",
+    "cut_s2_single_scatter",
+    "cut_s2_width",
+    "cut_cs2_area_fraction_top",
+    "cut_shadow",
+    "cut_ambience",
+]
+ALL_CUTS_EXCEPT_S2PatternS1Width = ALL_CUTS_MINIMAL + [
+    "cut_s1_area_fraction_top",
+    "cut_s1_max_pmt",
+    "cut_s1_pattern_bottom",
+    "cut_s1_pattern_top",
+    "cut_s1_single_scatter",
+    "cut_s1_tightcoin_3fold",
+    "cut_s2_recon_pos_diff",
+    "cut_s2_single_scatter",
+    "cut_s2_width",
+    "cut_cs2_area_fraction_top",
+    "cut_shadow",
+    "cut_ambience",
+]
+AmBe_CUTS_EXCEPT_S2Pattern = ALL_CUTS_MINIMAL + [
+    "cut_s1_area_fraction_top",
+    "cut_s1_max_pmt",
+    "cut_s1_pattern_bottom",
+    "cut_s1_pattern_top",
+    "cut_s1_single_scatter",
+    "cut_s1_tightcoin_3fold",
+    "cut_s1_width",
+    "cut_s2_recon_pos_diff",
+    "cut_s2_single_scatter",
+    "cut_s2_width",
+    "cut_cs2_area_fraction_top",
+]
+AmBe_CUTS_EXCEPT_S2PatternS1Width = ALL_CUTS_MINIMAL + [
+    "cut_s1_area_fraction_top",
+    "cut_s1_max_pmt",
+    "cut_s1_pattern_bottom",
+    "cut_s1_pattern_top",
+    "cut_s1_single_scatter",
+    "cut_s1_tightcoin_3fold",
+    "cut_s2_recon_pos_diff",
+    "cut_s2_single_scatter",
+    "cut_s2_width",
+    "cut_cs2_area_fraction_top",
+]
+AmBe_CUTS = ALL_CUTS_MINIMAL + [
+    "cut_s1_area_fraction_top",
+    "cut_s1_max_pmt",
+    "cut_s1_pattern_bottom",
+    "cut_s1_pattern_top",
+    "cut_s1_single_scatter",
+    "cut_s1_tightcoin_3fold",
+    "cut_s1_width",
+    "cut_s2_pattern",
+    "cut_s2_recon_pos_diff",
+    "cut_s2_single_scatter",
+    "cut_s2_width",
+    "cut_cs2_area_fraction_top",
+]
 
 
 def find_runs_with_rawdata(
     rawdata_folders=[
-        "/project/lgrandi/yuanlq/salt/raw_records/",
-        "/scratch/midway2/yuanlq/salt/raw_records/",
-        "/scratch/midway3/yuanlq/salt/raw_records/",
+        "/project/lgrandi/yuanlq/salt/raw_records",
+        "/scratch/midway2/yuanlq/salt/raw_records",
+        "/scratch/midway3/yuanlq/salt/raw_records",
     ]
 ):
     # Find the files that correspond to strax data
     files_found = []
     for folder in rawdata_folders:
-        _files_found = glob(folder + "0*")
+        _files_found = glob(os.path.join(folder, "0*"))
         files_found += _files_found
 
     # Find the runs that have standard raw_records available
@@ -522,7 +493,7 @@ def apply_n_minus_1_cuts(events_with_cuts, cut_oi, all_cuts=ALL_CUTS_EXCEPT_S2Pa
     :param cut_oi: the cut to be left out for examination
     :param all_cuts: all cuts
     """
-    other_cuts = all_cuts[all_cuts != cut_oi]
+    other_cuts = [cut for cut in all_cuts if cut != cut_oi]
     mask = np.ones(len(events_with_cuts), dtype=bool)
 
     for cut in other_cuts:

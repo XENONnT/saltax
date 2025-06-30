@@ -58,8 +58,15 @@ FUSE_DONT_REGISTER = [
 ]
 
 # straxen XENONnT options/configuration
-XNT_COMMON_OPTS = deepcopy(straxen.contexts.xnt_common_opts)
-XNT_COMMON_CONFIG = deepcopy(straxen.contexts.xnt_common_config)
+# Determine which config names to use (backward compatibility)
+if hasattr(straxen.contexts, "xnt_common_opts"):
+    # This is for straxen <=2
+    XNT_COMMON_OPTS = deepcopy(straxen.contexts.xnt_common_opts)
+    XNT_COMMON_CONFIG = deepcopy(straxen.contexts.xnt_common_config)
+else:
+    # This is for straxen >=3, variable names changed
+    XNT_COMMON_OPTS = deepcopy(straxen.contexts.common_opts)
+    XNT_COMMON_CONFIG = deepcopy(straxen.contexts.common_config)
 
 # fuse based saltax options overrides
 SXNT_COMMON_OPTS_REGISTER = deepcopy(XNT_COMMON_OPTS["register"])
@@ -104,12 +111,9 @@ def validate_runid(runid):
     :param runid: run number
     :return: None
     """
-    try:
-        doc = xent_collection().find_one({"number": int(runid)})
-        if doc is None:
-            raise ValueError(f"Run {runid} not found in RunDB")
-    except:
-        raise ValueError(f"Run {runid} not found in RunDB: {e}")
+    doc = xent_collection().find_one({"number": int(runid)})
+    if doc is None:
+        raise ValueError(f"Run {runid} not found in RunDB")
 
 
 def get_generator(generator_name):
@@ -192,6 +196,12 @@ def xenonnt_salted(
     )
     st.set_config(config=context_config, mode="replace")
 
+    # Register cuts plugins
+    if cut_list is not None:
+        st.register_cut_list(cut_list)
+    for p in cutax.contexts.EXTRA_PLUGINS:
+        st.register(p)
+
     for plugin_list in FUSED_PLUGINS:
         for plugin in plugin_list:
             if plugin not in FUSE_DONT_REGISTER:
@@ -210,18 +220,11 @@ def xenonnt_salted(
         else:
             log.warning(f"Warning! {processing_config} not in context config, skipping...")
 
-    # No blinding in simulations
-    st.config["event_info_function"] = "disabled"
-
     # Deregister plugins with missing dependencies
     st.deregister_plugins_with_missing_dependencies()
 
     # Add saltax mode
     st.set_config({"saltax_mode": saltax_mode})
-
-    # Register cuts plugins
-    if cut_list is not None:
-        st.register_cut_list(cut_list)
 
     # Get salt generator
     generator_func = get_generator(generator_name)
@@ -328,6 +331,6 @@ def sxenonnt(
         **kwargs,
     )
     if unblind:
-        st.set_config(dict(event_info_function="disabled"))
+        st.set_config({"event_info_function": "disabled"})
 
     return st
