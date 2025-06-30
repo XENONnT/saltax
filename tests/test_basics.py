@@ -2,6 +2,7 @@ from straxen.test_utils import nt_test_context, nt_test_run_id
 
 import saltax
 
+
 def test_version():
     saltax.__version__
 

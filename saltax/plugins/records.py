@@ -1,8 +1,7 @@
-from straxen.plugins.records.records import count_pulses
 import numpy as np
 import strax
 import straxen
-from straxen.plugins.records.records import NO_PULSE_COUNTS
+from straxen.plugins.records.records import count_pulses
 
 SCHANNEL_STARTS_AT = 3000
 export, __all__ = strax.exporter()

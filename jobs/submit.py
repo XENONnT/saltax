@@ -1,9 +1,8 @@
-import numpy as np
-import time
 import os
-import utilix
-from utilix.batchq import *
+import time
 import configparser
+
+import utilix
 
 
 config = configparser.ConfigParser()
@@ -15,14 +14,13 @@ USER = config.get("slurm", "username")
 ACCOUNT = config.get("slurm", "account")
 LOG_DIR = config.get("slurm", "log_dir")
 CONTAINER = config.get("job", "container")
-RUNIDS = config.get("job", "runids")
+RUNIDS = [int(runid) for runid in config.get("job", "runids").split(",")]
 JOB_TITLE = config.get("slurm", "job_title")
 PARTITION = config.get("slurm", "partition")
 QOS = config.get("slurm", "qos")
 MEM_PER_CPU = config.getint("slurm", "mem_per_cpu")
 CPUS_PER_TASK = config.getint("slurm", "cpus_per_task")
 
-RUNIDS = [int(runid) for runid in RUNIDS.split(",")]
 os.makedirs(LOG_DIR, exist_ok=True)
 
 

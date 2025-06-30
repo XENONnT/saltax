@@ -1,4 +1,5 @@
-import copy, types
+import copy
+import types
 from copy import deepcopy
 import logging
 from immutabledict import immutabledict
@@ -92,13 +93,15 @@ for key, cmap in XNT_COMMON_CONFIG["channel_map"].items():
             f"Salted channels ({SCHANNEL_STARTS_AT}) must be after all possible channels"
             f" but {key} starts at {cmap[0]} and ends at {cmap[1]}"
         )
-SXNT_COMMON_CONFIG["channel_map"] = immutabledict(dict(
-    stpc=(
-        SCHANNEL_STARTS_AT,
-        SCHANNEL_STARTS_AT + len(range(*XNT_COMMON_CONFIG["channel_map"]["tpc"])) + 1,
-    ),
-    **XNT_COMMON_CONFIG["channel_map"],
-))
+SXNT_COMMON_CONFIG["channel_map"] = immutabledict(
+    dict(
+        stpc=(
+            SCHANNEL_STARTS_AT,
+            SCHANNEL_STARTS_AT + len(range(*XNT_COMMON_CONFIG["channel_map"]["tpc"])) + 1,
+        ),
+        **XNT_COMMON_CONFIG["channel_map"],
+    )
+)
 DEFAULT_XEDOCS_VERSION = cutax.contexts.DEFAULT_XEDOCS_VERSION
 
 # saltax modes supported
@@ -110,6 +113,7 @@ def validate_runid(runid):
 
     :param runid: run number
     :return: None
+
     """
     doc = xent_collection().find_one({"number": int(runid)})
     if doc is None:
@@ -121,6 +125,7 @@ def get_generator(generator_name):
 
     :param generator_name: Name of the instruction mode, e.g. 'flat'
     :return: generator function
+
     """
     generator_func = eval("saltax.generator_" + generator_name)
     return generator_func
@@ -148,25 +153,23 @@ def xenonnt_salted(
 ):
     """Return a strax context for XENONnT data analysis with saltax.
 
-    :param runid: run number. Must exist in RunDB if you use
-        this context to compute raw_records_simu, or use None for data-
-        loading only.
+    :param runid: run number. Must exist in RunDB if you use this context to compute
+        raw_records_simu, or use None for data- loading only.
     :param saltax_mode: 'data', 'simu', or 'salt'.
-    :param output_folder: Directory where data will be stored, defaults
-        to ./strax_data
-    :param corrections_version: XENONnT documentation version to use,
-        defaults to DEFAULT_XEDOCS_VERSION
+    :param output_folder: Directory where data will be stored, defaults to ./strax_data
+    :param corrections_version: XENONnT documentation version to use, defaults to
+        DEFAULT_XEDOCS_VERSION
     :param cut_list: Cut list to use, defaults to cutax.BasicCuts
-    :param simu_config_version: simulation configuration version to use,
-        defaults to "sr1_dev"
+    :param simu_config_version: simulation configuration version to use, defaults to "sr1_dev"
     :param run_id_specific_config: Mapping of run_id specific config
-    :param run_without_proper_corrections: Whether to run without proper
-        corrections, defaults to False
+    :param run_without_proper_corrections: Whether to run without proper corrections, defaults to
+        False
     :param generator_name: Instruction mode to use, defaults to 'flat'
     :param recoil: NEST recoil type, defaults to 8
     :param simu_mode: 's1', 's2', or 'all'. Defaults to 'all'
     :param kwargs: Extra options to pass to strax.Context or generator
     :return: strax context
+
     """
     if (corrections_version is None) & (not run_without_proper_corrections):
         raise ValueError(
@@ -191,9 +194,7 @@ def xenonnt_salted(
         check_raw_record_overlaps=True,
         **SXNT_COMMON_CONFIG,
     )
-    st = context(
-        storage=strax.DataDirectory(output_folder), **context_options
-    )
+    st = context(storage=strax.DataDirectory(output_folder), **context_options)
     st.set_config(config=context_config, mode="replace")
 
     # Register cuts plugins
@@ -243,7 +244,7 @@ def xenonnt_salted(
         try:
             instr = pd.read_csv(instr_file_name)
             log.info("Loaded instructions from file", instr_file_name)
-        except:
+        except FileNotFoundError:
             log.info(f"Instruction file {instr_file_name} not found. Generating instructions...")
             instr = generator_func(runid=runid, recoil=recoil, **kwargs)
             pd.DataFrame(instr).to_csv(instr_file_name, index=False)
@@ -280,36 +281,32 @@ def sxenonnt(
     unblind=True,
     **kwargs,
 ):
-    """United strax context for XENONnT data, simulation, or salted data. Based
-    on fuse.
+    """United strax context for XENONnT data, simulation, or salted data. Based on fuse.
 
-    :param runid: run number. Must exist in RunDB if you use
-        this context to compute raw_records_simu, or use None for data-
-        loading only.
+    :param runid: run number. Must exist in RunDB if you use this context to compute
+        raw_records_simu, or use None for data- loading only.
     :param saltax_mode: 'data', 'simu', or 'salt'
-    :param output_folder: Output folder for strax data, default
-        './strax_data'
-    :param corrections_version: xedocs version to use, default is synced
-        with cutax latest
-    :param cut_list: List of cuts to register, default is
-        cutax.BasicCuts
-    :param simu_config_version: fax config version to use, default is
-        synced with cutax latest
+    :param output_folder: Output folder for strax data, default './strax_data'
+    :param corrections_version: xedocs version to use, default is synced with cutax latest
+    :param cut_list: List of cuts to register, default is cutax.BasicCuts
+    :param simu_config_version: fax config version to use, default is synced with cutax latest
     :param run_id_specific_config: Mapping of run_id specific config
-    :param run_without_proper_corrections: Whether to run without proper
-        corrections, defaults to False
+    :param run_without_proper_corrections: Whether to run without proper corrections, defaults to
+        False
     :param generator_name: Instruction mode to use, defaults to 'flat'
     :param recoil: NEST recoil type, defaults to 8 (beta ER)
     :param simu_mode: 's1', 's2', or 'all'. Defaults to 'all'
     :param unblind: Whether to bypass any kind of blinding, defaults to True
-    :param kwargs: Extra options to pass to strax.Context or generator,
-        and rate/en_range etc for generator
+    :param kwargs: Extra options to pass to strax.Context or generator, and rate/en_range etc for
+        generator
     :return: strax context
+
     """
     assert saltax_mode in SALTAX_MODES, f"saltax_mode must be one of {SALTAX_MODES}"
     if runid is None:
         log.warning(
-            "Since you specified runid=None, this context will not be able to compute raw_records_simu."
+            "Since you specified runid=None, "
+            "this context will not be able to compute raw_records_simu."
         )
         log.warning("Welcome to data-loading only mode!")
     else:

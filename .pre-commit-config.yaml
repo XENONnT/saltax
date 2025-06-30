@@ -33,7 +33,7 @@ repos:
     -   id: mypy
         additional_dependencies: [
             types-PyYAML, types-tqdm, types-pytz,
-            types-requests, types-setuptools,
+            types-requests, types-setuptools, types-tabulate,
         ]
 
 -   repo: https://github.com/pycqa/flake8
@@ -42,5 +42,4 @@ repos:
     -   id: flake8
 
 ci:
-    autofix_prs: false
     autoupdate_schedule: weekly

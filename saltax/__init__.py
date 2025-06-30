@@ -10,6 +10,5 @@ from . import plugins
 from .plugins import *
 
 from . import match
-from .match import *
 
 from . import contexts

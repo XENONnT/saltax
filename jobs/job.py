@@ -89,8 +89,7 @@ def parse_en_range(en_range_str):
 
 
 def create_context(settings, runid):
-    """Create the context for the given settings and runid, and patch storage
-    if needed."""
+    """Create the context for the given settings and runid, and patch storage if needed."""
     st = saltax.contexts.sxenonnt(
         runid=runid,
         saltax_mode=settings["saltax_mode"],
@@ -101,7 +100,7 @@ def create_context(settings, runid):
         simu_mode=settings["simu_mode"],
         rate=settings["rate"] if settings["rate"] else None,
         en_range=settings["en_range"] if settings["en_range"] else None,
-        unblind=True
+        unblind=True,
     )
     for d in settings["storage_to_patch"]:
         if d:
