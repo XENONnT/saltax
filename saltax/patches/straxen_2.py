@@ -6,7 +6,7 @@ import straxen
 from straxen.plugins.peaklets.peaklets import peak_saturation_correction
 from strax.processing.peak_building import find_peaks
 from strax.processing.peak_building import sum_waveform
-from ..utils import replace_source
+from ..utils import replace_source, setattr_module
 
 import numpy as np
 import numba
@@ -56,10 +56,7 @@ news = [
 ]
 src = replace_source(src, olds, news)
 exec(src)
-setattr(straxen, "peak_saturation_correction", peak_saturation_correction)
-setattr(straxen.plugins, "peak_saturation_correction", peak_saturation_correction)
-setattr(straxen.plugins.peaklets, "peak_saturation_correction", peak_saturation_correction)
-setattr(sys.modules[mod], "peak_saturation_correction", peak_saturation_correction)
+setattr_module(mod, "peak_saturation_correction", peak_saturation_correction)
 
 
 mod = find_peaks.__module__
@@ -85,10 +82,7 @@ news = [
 ]
 src = replace_source(src, olds, news)
 exec(src)
-setattr(strax, "find_peaks", find_peaks)
-setattr(strax.processing, "find_peaks", find_peaks)
-setattr(strax.processing.peak_building, "find_peaks", find_peaks)
-setattr(sys.modules[mod], "find_peaks", find_peaks)
+setattr_module(mod, "find_peaks", find_peaks)
 
 
 mod = sum_waveform.__module__
@@ -132,9 +126,6 @@ news = [
 ]
 src = replace_source(src, olds, news)
 exec(src)
-setattr(strax, "sum_waveform", sum_waveform)
-setattr(strax.processing, "sum_waveform", sum_waveform)
-setattr(strax.processing.peak_building, "sum_waveform", sum_waveform)
-setattr(sys.modules[mod], "sum_waveform", sum_waveform)
+setattr_module(mod, "sum_waveform", sum_waveform)
 
 del mod, src, olds, news
