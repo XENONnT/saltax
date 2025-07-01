@@ -120,17 +120,6 @@ def validate_runid(runid):
         raise ValueError(f"Run {runid} not found in RunDB")
 
 
-def get_generator(generator_name):
-    """Return the generator function for the given instruction mode.
-
-    :param generator_name: Name of the instruction mode, e.g. 'flat'
-    :return: generator function
-
-    """
-    generator_func = eval("saltax.generator_" + generator_name)
-    return generator_func
-
-
 def xenonnt_salted(
     runid=None,
     context=strax.Context,
@@ -228,7 +217,7 @@ def xenonnt_salted(
     st.set_config({"saltax_mode": saltax_mode})
 
     # Get salt generator
-    generator_func = get_generator(generator_name)
+    generator_func = getattr(saltax.instructions.generator, "generator_" + generator_name)
 
     # Specify simulation instructions
     instr_file_name = saltax.instr_file_name(
@@ -246,7 +235,7 @@ def xenonnt_salted(
             log.info("Loaded instructions from file", instr_file_name)
         except FileNotFoundError:
             log.info(f"Instruction file {instr_file_name} not found. Generating instructions...")
-            instr = generator_func(runid=runid, recoil=recoil, **kwargs)
+            instr = generator_func(runid=runid, recoil=recoil, context=st, **kwargs)
             pd.DataFrame(instr).to_csv(instr_file_name, index=False)
             log.info(f"Instructions saved to {instr_file_name}")
 

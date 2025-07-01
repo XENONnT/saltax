@@ -8,22 +8,17 @@ def test_version():
 
 
 def test_context():
-    st_salt = saltax.contexts.sxenonnt(
-        runid=nt_test_run_id,
-        context=nt_test_context,
-        corrections_version=None,
-        run_without_proper_corrections=True,
-        saltax_mode="salt",
-        output_folder=None,
-    )
-    st_simu = saltax.contexts.sxenonnt(
-        runid=nt_test_run_id,
-        context=nt_test_context,
-        corrections_version=None,
-        run_without_proper_corrections=True,
-        saltax_mode="simu",
-        output_folder=None,
-    )
+    st = {}
+    for saltax_mode in ["salt", "simu"]:
+        st[saltax_mode] = saltax.contexts.sxenonnt(
+            runid=nt_test_run_id,
+            context=nt_test_context,
+            corrections_version=None,
+            run_without_proper_corrections=True,
+            saltax_mode=saltax_mode,
+            output_folder=None,
+            start_end_from_medatata=True,
+        )
     dtypes = [
         "microphysics_summary",
         "raw_records_simu",
@@ -35,6 +30,5 @@ def test_context():
         "event_info",
     ]
     for dt in dtypes:
-        st_salt.make(nt_test_run_id, dt, save=(dt))
-    for dt in dtypes:
-        st_simu.make(nt_test_run_id, dt, save=(dt))
+        for saltax_mode in ["salt", "simu"]:
+            st[saltax_mode].make(nt_test_run_id, dt, save=dt)
