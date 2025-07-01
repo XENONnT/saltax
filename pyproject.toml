@@ -1,7 +1,7 @@
 [tool]
 [tool.poetry]
 name = "saltax"
-version = "0.1.7"
+version = "0.2.0"
 description = "Streaming analysis for XENON"
 readme = "README.md"
 authors = [
