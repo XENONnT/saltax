@@ -1,11 +1,12 @@
 import inspect
+import textwrap
 import strax
 import straxen
 
 from strax.processing.peak_building import find_peaks
 from strax.processing.peak_building import sum_waveform
 from straxen.plugins.peaklets.peaklets import peak_saturation_correction
-from strax.processing.peak_properties import compute_area_fraction_top
+from straxen.plugins.peaklets import Peaklets
 from ..utils import replace_source, setattr_module
 
 
@@ -128,6 +129,25 @@ news = [
 src = replace_source(src, olds, news)
 exec(src)
 setattr_module(mod, "peak_saturation_correction", peak_saturation_correction)
+
+
+src = inspect.getsource(Peaklets.add_hit_features)
+olds = [
+    """
+            peaklet["first_channel"] = sorted_hitlets[0]["channel"]
+            peaklet["last_channel"] = sorted_hitlets[-1]["channel"]
+""",
+]
+news = [
+    """
+            peaklet["first_channel"] = sorted_hitlets[0]["channel"] % SCHANNEL_STARTS_AT
+            peaklet["last_channel"] = sorted_hitlets[-1]["channel"] % SCHANNEL_STARTS_AT
+""",
+]
+src = replace_source(src, olds, news)
+src = textwrap.dedent(src)
+exec(src)
+Peaklets.add_hit_features = add_hit_features
 
 
 del mod, src, olds, news
