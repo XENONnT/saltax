@@ -32,10 +32,7 @@ news = [
     "cache=False",
     """
         # Manually shift channels for area_per_channel
-        if hit["channel"] >= SCHANNEL_STARTS_AT:
-            area_per_channel[hit["channel"] - SCHANNEL_STARTS_AT] += hit_area_pe
-        else:
-            area_per_channel[hit["channel"]] += hit_area_pe
+        area_per_channel[hit["channel"] % SCHANNEL_STARTS_AT] += hit_area_pe
 """,
 ]
 src = replace_source(src, olds, news)
@@ -68,9 +65,7 @@ news = [
     """
             # Shift salted channel
             ch = h["channel"]
-            ch_shifted = ch
-            if ch >= n_channels:
-                ch_shifted = ch - SCHANNEL_STARTS_AT
+            ch_shifted = ch % SCHANNEL_STARTS_AT
 """,
     """
             p["saturated_channel"][ch_shifted] |= is_saturated
@@ -110,10 +105,7 @@ news = [
     """
             # Shift channels to handle salted channels
             ch = r["channel"]
-            if ch >= SCHANNEL_STARTS_AT:
-                ch_shifted = ch - SCHANNEL_STARTS_AT
-            else:
-                ch_shifted = ch
+            ch_shifted = ch % SCHANNEL_STARTS_AT
 
             if channel_saturated[ch]:
                 b_pulse[ch_shifted, slice(*b_slice)] += r["data"][slice(*r_slice)]
