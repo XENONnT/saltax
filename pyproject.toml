@@ -2,10 +2,11 @@
 [tool.poetry]
 name = "saltax"
 version = "0.2.0"
-description = "Streaming analysis for XENON"
+description = "Salting MC into straxen"
 readme = "README.md"
 authors = [
   "Lanqing Yuan",
+  "Dacheng Xu",
 ]
 classifiers = [
   "Development Status :: 3 - Alpha",
