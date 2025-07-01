@@ -1,8 +1,6 @@
 import os
 import pytz
 import pickle
-import datetime
-from zoneinfo import ZoneInfo
 from tqdm import tqdm
 import numpy as np
 import pandas as pd
@@ -34,6 +32,8 @@ YBE_INSTRUCTIONS_FILE = (
 BASE_DIR = os.path.join(
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "generated"
 )
+
+coll = xent_collection()
 
 
 def generate_vertex(r_range=R_RANGE, z_range=Z_RANGE, size=1):
@@ -122,51 +122,15 @@ def get_run_start_end(runid):
 
     """
     # Get the datetime of start and end time of the run from RunDB
-    doc = xent_collection().find_one({"number": int(runid)})
+    doc = coll.find_one({"number": int(runid)})
     if doc is None:
         raise RuntimeError(f"Cannot find runid {runid} in RunDB")
-    dt_start, dt_end = doc["start"], doc["end"]
-
-    # Get timezones
-    chicago_tz = ZoneInfo("America/Chicago")
-    utc_tz = pytz.utc
-
-    # Transform the datetime to Chicago time
-    dt_start_year, dt_end_year = dt_start.year, dt_end.year
-    dt_start_month, dt_end_month = dt_start.month, dt_end.month
-    dt_start_day, dt_end_day = dt_start.day, dt_end.day
-    dt_start_hour, dt_end_hour = dt_start.hour, dt_end.hour
-    dt_start_minute, dt_end_minute = dt_start.minute, dt_end.minute
-    dt_start_second, dt_end_second = dt_start.second, dt_end.second
-    dt_start_ms, dt_end_ms = dt_start.microsecond, dt_end.microsecond
-    dt_start_transformed = datetime.datetime(
-        dt_start_year,
-        dt_start_month,
-        dt_start_day,
-        dt_start_hour,
-        dt_start_minute,
-        dt_start_second,
-        dt_start_ms,
-        tzinfo=utc_tz,
-    ).astimezone(chicago_tz)
-    dt_end_transformed = datetime.datetime(
-        dt_end_year,
-        dt_end_month,
-        dt_end_day,
-        dt_end_hour,
-        dt_end_minute,
-        dt_end_second,
-        dt_end_ms,
-        tzinfo=utc_tz,
-    ).astimezone(chicago_tz)
+    dt_start = doc["start"].replace(tzinfo=pytz.UTC)
+    dt_end = doc["end"].replace(tzinfo=pytz.UTC)
 
     # Transform the datetime to unix time in ns
-    unix_time_start_ns = int(
-        dt_start_transformed.timestamp() * units.s + dt_start_transformed.microsecond * 1000
-    )
-    unix_time_end_ns = int(
-        dt_end_transformed.timestamp() * units.s + dt_end_transformed.microsecond * 1000
-    )
+    unix_time_start_ns = int(dt_start.timestamp() * units.s)
+    unix_time_end_ns = int(dt_end.timestamp() * units.s)
 
     return unix_time_start_ns, unix_time_end_ns
 
