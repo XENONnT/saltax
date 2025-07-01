@@ -194,7 +194,7 @@ def xenonnt_salted(
         check_raw_record_overlaps=True,
         **SXNT_COMMON_CONFIG,
     )
-    st = context(storage=strax.DataDirectory(output_folder), **context_options)
+    st = context(storage=output_folder, **context_options)
     st.set_config(config=context_config, mode="replace")
 
     # Register cuts plugins

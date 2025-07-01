@@ -14,6 +14,7 @@ def test_context():
         corrections_version=None,
         run_without_proper_corrections=True,
         saltax_mode="salt",
+        output_folder=None,
     )
     st_simu = saltax.contexts.sxenonnt(
         runid=nt_test_run_id,
@@ -21,6 +22,7 @@ def test_context():
         corrections_version=None,
         run_without_proper_corrections=True,
         saltax_mode="simu",
+        output_folder=None,
     )
     dtypes = [
         "microphysics_summary",
