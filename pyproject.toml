@@ -9,7 +9,7 @@ authors = [
 ]
 classifiers = [
   "Development Status :: 3 - Alpha",
-  "License :: MIT License",
+  "License :: OSI Approved :: MIT License",
   "Natural Language :: English",
   "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
