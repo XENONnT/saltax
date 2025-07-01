@@ -1,6 +1,13 @@
+import os
 from straxen.test_utils import nt_test_context, nt_test_run_id
 
 import saltax
+
+if os.environ["NUMBA_DISABLE_JIT"] != "1":
+    raise RuntimeError(
+        "NUMBA_DISABLE_JIT must be set to 1 to run saltax tests. "
+        "Please run `export NUMBA_DISABLE_JIT=1` in your terminal before running the tests."
+    )
 
 
 def test_version():
