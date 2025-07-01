@@ -17,11 +17,16 @@ on:
 jobs:
   update:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [ "3.9", "3.10" ]
+
     steps:
-      - name: Setup python
+      - name: Setup python ${{ matrix.python-version }}
         uses: actions/setup-python@v2
         with:
-          python-version: '3.9'
+          python-version: ${{ matrix.python-version }}
       - name: Checkout repo
         uses: actions/checkout@v3
       - name: Write utilix config
@@ -36,20 +41,38 @@ jobs:
           XENT_USER: ${{ secrets.MONGO_USER }}
           XENT_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
           XENT_DATABASE: ${{ secrets.MONGO_DATABASE }}
-      - name: Checkout cutax
+      - name: Checkout cutax for Python 3.9
         uses: actions/checkout@v3
+        if: matrix.python-version == '3.9'
         with:
           repository: XENONnT/cutax
           ssh-key: ${{ secrets.CUTAX_DEPLOY_KEY }}
           path: cutax
           ref: v1.19.5
           fetch-depth: 0
-      - name: Install requirements
+      - name: Checkout cutax for Python 3.10
+        uses: actions/checkout@v3
+        if: matrix.python-version == '3.10'
+        with:
+          repository: XENONnT/cutax
+          ssh-key: ${{ secrets.CUTAX_DEPLOY_KEY }}
+          path: cutax
+          ref: v2.2.0
+          fetch-depth: 0
+      - name: Install requirements for Python 3.9
+        if: matrix.python-version == '3.9'
         run: |
           pip install git+https://github.com/XENONnT/base_environment@el7.sr1_wimp_unblind --force-reinstall
           pip install ./cutax
-      - name: Install saltax
-        run: pip install . --force-reinstall
+          pip install . --force-reinstall
+          pip install strax==1.6.5 straxen==2.2.7
+      - name: Install requirements for Python 3.10
+        if: matrix.python-version == '3.10'
+        run: |
+          pip install git+https://github.com/XENONnT/base_environment@el7.2025.05.2 --force-reinstall
+          pip install ./cutax
+          pip install . --force-reinstall
+          pip install strax==2.2.0 straxen==3.2.1
       - name: Install pytest and hypothesis
         run: pip install pytest hypothesis pytest-cov coverage coveralls
       - name: Test package
