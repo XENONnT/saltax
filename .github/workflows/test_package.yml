@@ -15,19 +15,24 @@ on:
       - main
 
 jobs:
-  update:
+  test:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [ "3.9", "3.11" ]
+
     steps:
-      - name: Setup python
+      - name: Setup python ${{ matrix.python-version }}
         uses: actions/setup-python@v2
         with:
-          python-version: '3.9'
+          python-version: ${{ matrix.python-version }}
       - name: Checkout repo
         uses: actions/checkout@v3
       - name: Write utilix config
         run: |
-            bash .github/scripts/create-utilix-config.sh
-            cp ~/.xenon_config ./
+          bash .github/scripts/create-utilix-config.sh
+          cp ~/.xenon_config ./
         env:
           RUNDB_API_URL: ${{ secrets.RUNDB_API_URL }}
           RUNDB_API_USER: ${{ secrets.RUNDB_API_USER }}
@@ -36,24 +41,56 @@ jobs:
           XENT_USER: ${{ secrets.MONGO_USER }}
           XENT_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
           XENT_DATABASE: ${{ secrets.MONGO_DATABASE }}
-      - name: Checkout cutax
+      - name: Install nestpy
+        run: |
+          git clone --branch v2.0.4 --single-branch https://github.com/NESTCollaboration/nestpy.git
+          cd nestpy
+          git submodule update --init --recursive
+          cd lib/pybind11
+          git fetch --tags
+          git checkout v2.13.0
+          cd ../../
+          sed -i 's/cmake_minimum_required(VERSION 2.8.12)/cmake_minimum_required(VERSION 2.8.12...3.30)/' CMakeLists.txt
+          pip install .
+          cd ..
+          rm -rf nestpy
+      - name: Checkout cutax for Python 3.9
         uses: actions/checkout@v3
+        if: matrix.python-version == '3.9'
         with:
           repository: XENONnT/cutax
           ssh-key: ${{ secrets.CUTAX_DEPLOY_KEY }}
           path: cutax
           ref: v1.19.5
           fetch-depth: 0
-      - name: Install requirements
+      - name: Checkout cutax for Python 3.11
+        uses: actions/checkout@v3
+        if: matrix.python-version == '3.11'
+        with:
+          repository: XENONnT/cutax
+          ssh-key: ${{ secrets.CUTAX_DEPLOY_KEY }}
+          path: cutax
+          ref: v2.2.0
+          fetch-depth: 0
+      - name: Install requirements for Python 3.9
+        if: matrix.python-version == '3.9'
         run: |
-          pip install git+https://github.com/XENONnT/base_environment@el7.sr1_wimp_unblind --force-reinstall
+          pip install git+https://github.com/XENONnT/base_environment@el7.sr1_wimp_unblind
           pip install ./cutax
-      - name: Install saltax
-        run: pip install . --force-reinstall
+          pip install strax==1.6.5 straxen==2.2.7
+          pip install .
+      - name: Install requirements for Python 3.11
+        if: matrix.python-version == '3.11'
+        run: |
+          pip install git+https://github.com/XENONnT/base_environment@el7.2025.05.2
+          pip install ./cutax
+          pip install strax==2.2.0 straxen==3.2.1
+          pip install .
       - name: Install pytest and hypothesis
         run: pip install pytest hypothesis pytest-cov coverage coveralls
       - name: Test package
         env:
+          NUMBA_DISABLE_JIT: 1
           HAVE_ACCESS_TO_SECTETS: ${{ secrets.RUNDB_API_URL }}
         if: env.HAVE_ACCESS_TO_SECTETS != null
         run: pytest --cov=saltax --cov-report=xml

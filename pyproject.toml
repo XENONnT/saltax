@@ -22,9 +22,9 @@ repository = "https://github.com/XENONnT/saltax"
 
 [tool.poetry.dependencies]
 python = ">=3.9,<3.13"
-strax = "<2.0.0"
-straxen = "<3.0.0"
-xenon-fuse = ">=1.4.3"
+strax = "*"
+straxen = "*"
+xenon-fuse = ">=1.5.3"
 tabulate = "*"
 numpy = "*"
 numba = "*"

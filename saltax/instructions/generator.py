@@ -114,23 +114,32 @@ def generate_times(
         return times[: min(int(size), len(times))]
 
 
-def get_run_start_end(runid):
+def get_run_start_end(runid, start_end_from_medatata=False, context=None):
     """Get the start and end time of a run in unix time in ns, from RunDB.
 
     :param runid: run number
+    :param start_end_from_medatata: whether use the start and end from raw_records metadata,
+        default: False
+    :param context: strax context, default: None
     :return: start time, end time in unix time in ns
 
     """
-    # Get the datetime of start and end time of the run from RunDB
-    doc = coll.find_one({"number": int(runid)})
-    if doc is None:
-        raise RuntimeError(f"Cannot find runid {runid} in RunDB")
-    dt_start = doc["start"].replace(tzinfo=pytz.UTC)
-    dt_end = doc["end"].replace(tzinfo=pytz.UTC)
+    if start_end_from_medatata:
+        if context is None:
+            raise RuntimeError("context must be provided if start_end_from_medatata is True")
+        metadata = context.get_metadata(runid, "raw_records")
+        unix_time_start_ns, unix_time_end_ns = metadata["start"], metadata["end"]
+    else:
+        # Get the datetime of start and end time of the run from RunDB
+        doc = coll.find_one({"number": int(runid)})
+        if doc is None:
+            raise RuntimeError(f"Cannot find runid {runid} in RunDB")
+        dt_start = doc["start"].replace(tzinfo=pytz.UTC)
+        dt_end = doc["end"].replace(tzinfo=pytz.UTC)
 
-    # Transform the datetime to unix time in ns
-    unix_time_start_ns = int(dt_start.timestamp() * units.s)
-    unix_time_end_ns = int(dt_end.timestamp() * units.s)
+        # Transform the datetime to unix time in ns
+        unix_time_start_ns = int(dt_start.timestamp() * units.s)
+        unix_time_end_ns = int(dt_end.timestamp() * units.s)
 
     return unix_time_start_ns, unix_time_end_ns
 
@@ -186,6 +195,8 @@ def generator_se(
     r_range=R_RANGE,
     z_range=Z_RANGE,
     time_mode="uniform",
+    start_end_from_medatata=False,
+    context=None,
     **kwargs,
 ):
     """Generate instructions for a run with single electron.
@@ -197,10 +208,15 @@ def generator_se(
     :param r_range: (r_min, r_max) in cm, default: R_RANGE, defined above
     :param z_range: (z_min, z_max) in cm, default: Z_RANGE, defined above
     :param time_mode: 'uniform' or 'realistic', default: 'uniform'
+    :param start_end_from_medatata: whether use the start and end from raw_records metadata,
+        default: False
+    :param context: strax context, default: None
     :return: instructions in numpy array
 
     """
-    start_time, end_time = get_run_start_end(runid)
+    start_time, end_time = get_run_start_end(
+        runid, start_end_from_medatata=start_end_from_medatata, context=context
+    )
     times = generate_times(start_time, end_time, size=n_tot, rate=rate, time_mode=time_mode)
     n_tot = len(times)
 
@@ -221,13 +237,23 @@ def generator_se(
     return instr
 
 
-def generator_se_bootstrapped(runid, xyt_files_at=SE_INSTRUCTIONS_DIR, **kwargs):
+def generator_se_bootstrapped(
+    runid,
+    xyt_files_at=SE_INSTRUCTIONS_DIR,
+    start_end_from_medatata=False,
+    context=None,
+    **kwargs,
+):
     """Generate instructions for a run with single electron.
 
     We will use XYT information from bootstrapped data single electrons to make the simulation more
     realistic
     :param runid: run number
     :param xyt_files_at: directory to search for instructions of x,y,t information
+    :param start_end_from_medatata: whether use the start and end from raw_records metadata,
+        default: False
+    :param context: strax context, default: None
+    :return: instructions in numpy array
 
     """
     # load instructions
@@ -240,7 +266,9 @@ def generator_se_bootstrapped(runid, xyt_files_at=SE_INSTRUCTIONS_DIR, **kwargs)
         ts = pickle.load(f)[runid]
 
     # stay in runtime range
-    start_time, end_time = get_run_start_end(runid)
+    start_time, end_time = get_run_start_end(
+        runid, start_end_from_medatata=start_end_from_medatata, context=context
+    )
     mask_in_run = ts < (end_time - 1 / 20 * units.s)  # empirical patch to stay in run
     mask_in_run &= ts > (start_time + 1 / 20 * units.s)  # empirical patch to stay in run
     xs = xs[mask_in_run]
@@ -279,6 +307,8 @@ def generator_neutron(
     time_mode="uniform",
     neutron_instructions_file=None,
     fmap=FIELD_MAP,
+    start_end_from_medatata=False,
+    context=None,
     **kwargs,
 ):
     """Generate instructions for a run with AmBe source.
@@ -293,11 +323,16 @@ def generator_neutron(
     :param time_mode: 'uniform' or 'realistic', default: 'uniform'
     :param neutron_instructions_file: file containing neutron instructions, default: None
     :param fmap: field map, default: FIELD_MAP, defined above
+    :param start_end_from_medatata: whether use the start and end from raw_records metadata,
+        default: False
+    :param context: strax context, default: None
     :return: instructions in numpy array
 
     """
     # determine time offsets to shift neutron instructions
-    start_time, end_time = get_run_start_end(runid)
+    start_time, end_time = get_run_start_end(
+        runid, start_end_from_medatata=start_end_from_medatata, context=context
+    )
     times_offset = generate_times(start_time, end_time, size=n_tot, rate=rate, time_mode=time_mode)
     n_tot = len(times_offset)
 
@@ -432,6 +467,8 @@ def generator_flat(
     z_range=Z_RANGE,
     mode="all",
     time_mode="uniform",
+    start_end_from_medatata=False,
+    context=None,
     **kwargs,
 ):
     """Generate instructions for a run with flat energy spectrum.
@@ -448,10 +485,15 @@ def generator_flat(
     :param z_range: (z_min, z_max) in cm, default: Z_RANGE, defined above
     :param mode: 's1', 's2', or 'all', default: 'all'
     :param time_mode: 'uniform' or 'realistic', default: 'uniform'
+    :param start_end_from_medatata: whether use the start and end from raw_records metadata,
+        default: False
+    :param context: strax context, default: None
     :return: instructions in numpy array
 
     """
-    start_time, end_time = get_run_start_end(runid)
+    start_time, end_time = get_run_start_end(
+        runid, start_end_from_medatata=start_end_from_medatata, context=context
+    )
     times = generate_times(start_time, end_time, size=n_tot, rate=rate, time_mode=time_mode)
     n_tot = len(times)
 
