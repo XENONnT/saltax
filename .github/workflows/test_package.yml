@@ -31,8 +31,8 @@ jobs:
         uses: actions/checkout@v3
       - name: Write utilix config
         run: |
-            bash .github/scripts/create-utilix-config.sh
-            cp ~/.xenon_config ./
+          bash .github/scripts/create-utilix-config.sh
+          cp ~/.xenon_config ./
         env:
           RUNDB_API_URL: ${{ secrets.RUNDB_API_URL }}
           RUNDB_API_USER: ${{ secrets.RUNDB_API_USER }}
@@ -41,6 +41,19 @@ jobs:
           XENT_USER: ${{ secrets.MONGO_USER }}
           XENT_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
           XENT_DATABASE: ${{ secrets.MONGO_DATABASE }}
+      - name: Install nestpy
+        run: |
+          git clone --branch v2.0.4 --single-branch https://github.com/NESTCollaboration/nestpy.git
+          cd nestpy
+          git submodule update --init --recursive
+          cd lib/pybind11
+          git fetch --tags
+          git checkout v2.13.0
+          cd ../../
+          sed -i 's/cmake_minimum_required(VERSION 2.8.12)/cmake_minimum_required(VERSION 2.8.12...3.30)/' CMakeLists.txt
+          pip install .
+          cd ${target_dir}
+          rm -rf nestpy
       - name: Checkout cutax for Python 3.9
         uses: actions/checkout@v3
         if: matrix.python-version == '3.9'
