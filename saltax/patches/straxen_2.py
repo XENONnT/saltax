@@ -43,7 +43,6 @@ exec(src)
 setattr_module(mod, "find_peaks", find_peaks)
 
 
-# FIXME: surgery here; top / bot array related
 mod = sum_waveform.__module__
 src = inspect.getsource(sum_waveform)
 olds = [
