@@ -52,7 +52,7 @@ jobs:
           cd ../../
           sed -i 's/cmake_minimum_required(VERSION 2.8.12)/cmake_minimum_required(VERSION 2.8.12...3.30)/' CMakeLists.txt
           pip install .
-          cd ${target_dir}
+          cd ..
           rm -rf nestpy
       - name: Checkout cutax for Python 3.9
         uses: actions/checkout@v3
