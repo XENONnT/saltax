@@ -75,14 +75,14 @@ jobs:
       - name: Install requirements for Python 3.9
         if: matrix.python-version == '3.9'
         run: |
-          pip install git+https://github.com/XENONnT/base_environment@el7.sr1_wimp_unblind --force-reinstall
+          pip install git+https://github.com/XENONnT/base_environment@el7.sr1_wimp_unblind
           pip install ./cutax
           pip install strax==1.6.5 straxen==2.2.7
           pip install .
       - name: Install requirements for Python 3.11
         if: matrix.python-version == '3.11'
         run: |
-          pip install git+https://github.com/XENONnT/base_environment@el7.2025.05.2 --force-reinstall
+          pip install git+https://github.com/XENONnT/base_environment@el7.2025.05.2
           pip install ./cutax
           pip install strax==2.2.0 straxen==3.2.1
           pip install .
