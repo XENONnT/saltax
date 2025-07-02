@@ -981,65 +981,6 @@ def show_area_bias(
     return result_dict
 
 
-def show_eff2d(
-    events,
-    events_selected,
-    coord=("s1_area", "s2_area"),
-    bins=(np.linspace(0, 100, 101), np.linspace(500, 7000, 101)),
-    title="Matching Acceptance",
-    vmin_vmax=(0, 1),  # New parameter to set color bar range
-    min_counts=100,
-):
-    """Show the acceptance in 2D coordinates.
-
-    :param events: events before some selection
-    :param events_selected: events after some selection
-    :param coord: coordinates to be compared (default: ('s1_area', 's2_area'))
-    :param bins: bins for the coordinates (default: (np.linspace(0, 100, 101), np.linspace(500,
-        7000, 101)))
-    :param title: title of the plot (default: 'Matching Acceptance')
-    :param vmin_vmax: range of color bar (default: (0, 1))
-    :param min_counts: minimum number of counts in a bin to be considered (default: 100)
-    :return: efficiency, xedges, yedges
-
-    """
-    label_dict = {
-        "e_ces": "Simulated CES [keV]",
-        "s1_area": "Simulated S1 Area [PE]",
-        "s2_area": "Simulated S2 Area [PE]",
-        "z": "Z [cm]",
-    }
-
-    # Count the number of events in each bin
-    counts, xedges, yedges = np.histogram2d(events[coord[0]], events[coord[1]], bins=bins)
-    counts_selected, xedges, yedges = np.histogram2d(
-        events_selected[coord[0]], events_selected[coord[1]], bins=bins
-    )
-
-    # Compute efficiency
-    eff = counts_selected / counts
-    eff[np.isnan(eff)] = 0
-    eff[counts < min_counts] = 0
-
-    # Plot
-    plt.figure(dpi=150)
-    plt.imshow(
-        eff.T,
-        origin="lower",
-        extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]],
-        aspect="auto",
-        cmap="viridis",
-        vmin=vmin_vmax[0],  # Set minimum value for color scale
-        vmax=vmin_vmax[1],  # Set maximum value for color scale
-    )
-    plt.colorbar(label="Efficiency")
-    plt.xlabel(label_dict[coord[0]])
-    plt.ylabel(label_dict[coord[1]])
-    plt.title(title)
-    plt.show()
-    return eff, xedges, yedges
-
-
 def show_eff1d(
     events_simu,
     events_simu_matched_to_salt,
@@ -1047,9 +988,9 @@ def show_eff1d(
     coord="e_ces",
     bins=np.linspace(0, 12, 25),
     labels_hist=[
-        "Simulation before matching&cuts",
+        "Simulation before matching & cuts",
         "Simulation after matching",
-        "Simulation after matching&cuts",
+        "Simulation after matching & cuts",
     ],
     labels_eff=["Matching", "Cut (Already Matched)"],
     title="Matching Acceptance and Cut Acceptance",
@@ -1149,6 +1090,65 @@ def show_eff1d(
     plt.show()
 
 
+def show_eff2d(
+    events,
+    events_selected,
+    coord=("s1_area", "s2_area"),
+    bins=(np.linspace(0, 100, 101), np.linspace(500, 7000, 101)),
+    title="Matching Acceptance",
+    vmin_vmax=(0, 1),  # New parameter to set color bar range
+    min_counts=100,
+):
+    """Show the acceptance in 2D coordinates.
+
+    :param events: events before some selection
+    :param events_selected: events after some selection
+    :param coord: coordinates to be compared (default: ('s1_area', 's2_area'))
+    :param bins: bins for the coordinates (default: (np.linspace(0, 100, 101), np.linspace(500,
+        7000, 101)))
+    :param title: title of the plot (default: 'Matching Acceptance')
+    :param vmin_vmax: range of color bar (default: (0, 1))
+    :param min_counts: minimum number of counts in a bin to be considered (default: 100)
+    :return: efficiency, xedges, yedges
+
+    """
+    label_dict = {
+        "e_ces": "Simulated CES [keV]",
+        "s1_area": "Simulated S1 Area [PE]",
+        "s2_area": "Simulated S2 Area [PE]",
+        "z": "Z [cm]",
+    }
+
+    # Count the number of events in each bin
+    counts, xedges, yedges = np.histogram2d(events[coord[0]], events[coord[1]], bins=bins)
+    counts_selected, xedges, yedges = np.histogram2d(
+        events_selected[coord[0]], events_selected[coord[1]], bins=bins
+    )
+
+    # Compute efficiency
+    eff = counts_selected / counts
+    eff[np.isnan(eff)] = 0
+    eff[counts < min_counts] = 0
+
+    # Plot
+    plt.figure(dpi=150)
+    plt.imshow(
+        eff.T,
+        origin="lower",
+        extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]],
+        aspect="auto",
+        cmap="viridis",
+        vmin=vmin_vmax[0],  # Set minimum value for color scale
+        vmax=vmin_vmax[1],  # Set maximum value for color scale
+    )
+    plt.colorbar(label="Efficiency")
+    plt.xlabel(label_dict[coord[0]])
+    plt.ylabel(label_dict[coord[1]])
+    plt.title(title)
+    plt.show()
+    return eff, xedges, yedges
+
+
 def apply_peaks_daq_cuts(st_data, runs, peaks, proximity_extension=int(0.25e6)):
     """
     Analogy to DAQVeto in cutax: https://github.com/XENONnT/cutax/blob/fb9c23cea86b44c0402437189fc606399d4e134c/cutax/cuts/daq_veto.py#L8  # noqa
@@ -1156,7 +1156,7 @@ def apply_peaks_daq_cuts(st_data, runs, peaks, proximity_extension=int(0.25e6)):
     :param st_data: context for data in cutax
     :param runs: ordered runs list
     :param peaks: peaks level data with ordered times
-    :param proximity_extension: extension of the veto proximity cut, default to int(0.25e6)
+    :param proximity_extension: extension of the veto proximity cut (default: int(0.25e6))
     :return: mask_daq_cut mask for veto cuts
     """
     # Load veto_intervals
