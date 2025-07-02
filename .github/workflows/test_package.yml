@@ -88,12 +88,6 @@ jobs:
           pip install .
       - name: Install pytest and hypothesis
         run: pip install pytest hypothesis pytest-cov coverage coveralls
-      - name: Test package
-        env:
-          NUMBA_DISABLE_JIT: 1
-          HAVE_ACCESS_TO_SECTETS: ${{ secrets.RUNDB_API_URL }}
-        if: env.HAVE_ACCESS_TO_SECTETS != null
-        run: pytest --cov=saltax --cov-report=xml
       - name: Test package and report to coveralls
         env:
           NUMBA_DISABLE_JIT: 1
