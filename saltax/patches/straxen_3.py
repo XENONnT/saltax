@@ -130,6 +130,23 @@ exec(src)
 setattr_module(mod, "peak_saturation_correction", peak_saturation_correction)
 
 
+src = inspect.getsource(Peaklets.compute)
+olds = [
+    """
+        sorted_hit_channels = hitlets["channel"][hit_max_times_argsort]
+""",
+]
+news = [
+    """
+        sorted_hit_channels = hitlets["channel"][hit_max_times_argsort] % SCHANNEL_STARTS_AT
+""",
+]
+src = replace_source(src, olds, news)
+src = textwrap.dedent(src)
+exec(src)
+Peaklets.compute = compute
+
+
 src = inspect.getsource(Peaklets.add_hit_features)
 olds = [
     """
