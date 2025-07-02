@@ -8,10 +8,10 @@ def test_make():
 
     # Init contexts for both salt and simu modes
     st = {}
-    for saltax_mode in ["salt", "simu"]:
+    for saltax_mode in ["salt", "simu", "data"]:
         st[saltax_mode] = get_test_context(saltax_mode)
 
     # Try creating some data_types in both modes
     for dt in TEST_DATA_TYPES:
-        for saltax_mode in ["salt", "simu"]:
+        for saltax_mode in ["salt", "simu", "data"]:
             st[saltax_mode].make(nt_test_run_id, dt, save=dt)
