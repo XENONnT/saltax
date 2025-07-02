@@ -246,7 +246,7 @@ def load_peaks(runs, st_salt, st_simu, plugins=("peak_basics", "peak_positions_m
             ind_simu_peak_lost_i,
             ind_salt_peak_split_i,
             ind_simu_peak_split_i,
-        ) = saltax.match_peaks(peaks_simu_i, peaks_salt_i, **kwargs)
+        ) = saltax.match.match_peaks(peaks_simu_i, peaks_salt_i, **kwargs)
 
         # Load the indices into the dictionary
         inds_dict["ind_salt_peak_found"] = np.concatenate(
@@ -281,13 +281,13 @@ def load_peaks(runs, st_salt, st_simu, plugins=("peak_basics", "peak_positions_m
 
 
 def load_events(runs, st_salt, st_simu, plugins=("event_info", "cuts_basic"), **kwargs):
-    """Load events from the runs and do basic filtering suggeted by saltax.match_events :param runs:
-    list of runs.
+    """Load events from the runs and do basic filtering suggeted by saltax.match.match_events :param
+    runs: list of runs.
 
     :param st_salt: saltax context for salt mode
     :param st_simu: saltax context for simu mode
     :param plugins: plugins to be loaded (default: ('event_info', 'cuts_basic'))
-    :param kwargs: arguments for saltax.match_events, i.e. event_window_fuzz,
+    :param kwargs: arguments for saltax.match.match_events, i.e. event_window_fuzz,
     :return: events_simu: events from simulated dataset, filtered out those who miss S1
     :return: events_salt: events from sprinkled dataset
     :return inds_dict: dictionary of indices of events from sprinkled or filtered simulated dataset,
@@ -337,7 +337,7 @@ def load_events(runs, st_salt, st_simu, plugins=("event_info", "cuts_basic"), **
             ind_simu_s2_found_i,
             ind_salt_s2_made_alt_i,
             ind_simu_s2_made_alt_i,
-        ) = saltax.match_events(events_simu_i, events_salt_i, **kwargs)
+        ) = saltax.match.match_events(events_simu_i, events_salt_i, **kwargs)
 
         # Load the indices into the dictionary
         inds_dict["ind_salt_event_found"] = np.concatenate(

@@ -15,12 +15,18 @@ def test_match():
 
     # Try creating some data_types in both modes
     for dt in TEST_DATA_TYPES:
-        for saltax_mode in ["salt", "simu"]:
+        for saltax_mode in ["salt", "simu", "data"]:
             st[saltax_mode].make(nt_test_run_id, dt, save=dt)
 
     runs_with_rawdata = find_runs_with_rawdata(rawdata_folders=[st["salt"].storage[-1].path])
 
-    get_available_runs(runs_with_rawdata, st["salt"], st["simu"])
+    get_available_runs(
+        runs_with_rawdata,
+        st["salt"],
+        st["simu"],
+        salt_available=["event_basics"],
+        simu_available=["event_basics"],
+    )
 
     (peaks_simu, peaks_salt, inds_dict) = load_peaks([nt_test_run_id], st["salt"], st["simu"])
     peaks_simu_matched_to_salt = peaks_simu[inds_dict["ind_simu_peak_found"]]
@@ -34,7 +40,7 @@ def test_match():
     mask_salt_cut = apply_cut_lists(events_salt_matched_to_simu, cut_list)
     mask_simu_cut = apply_cut_lists(events_simu_matched_to_salt, cut_list)
 
-    n_bins = 1
+    n_bins = 2
 
     compare_templates(
         events_salt_matched_to_simu[mask_salt_cut],
@@ -66,8 +72,12 @@ def test_match():
         n_bins=n_bins,
     )
 
-    show_eff1d(events_simu, events_simu_matched_to_salt)
-    show_eff2d(events_simu, events_simu_matched_to_salt)
+    show_eff1d(events_simu, events_simu_matched_to_salt, bins=np.linspace(0, 12, n_bins))
+    show_eff2d(
+        events_simu,
+        events_simu_matched_to_salt,
+        bins=(np.linspace(0, 100, n_bins), np.linspace(500, 7000, n_bins)),
+    )
 
     apply_peaks_daq_cuts(st["data"], [nt_test_run_id], peaks_simu_matched_to_salt)
 
