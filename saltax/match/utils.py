@@ -19,7 +19,10 @@ try:
 
     MINIMAL_CUTS = [c.cut_name for c in cutax.cut_lists.MinimalCuts.cuts]
     BASIC_CUTS = [c.cut_name for c in cutax.cut_lists.BasicCuts.cuts]
-    AmBe_CUTS = [c.cut_name for c in cutax.cut_lists.AmBeNRSelectionSR1.basic_cuts]
+    try:
+        AmBe_CUTS = [c.cut_name for c in cutax.cut_lists.AmBeNRSelectionSR1.basic_cuts]
+    except AttributeError:
+        AmBe_CUTS = ["cut_interaction_exists"]
 except ImportError:
     log.warning("cutax is not installed, will only use 'cut_interaction_exists'.")
     MINIMAL_CUTS = ["cut_interaction_exists"]
