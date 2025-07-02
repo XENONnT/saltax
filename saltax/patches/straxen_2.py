@@ -1,12 +1,16 @@
+import sys
 import inspect
+import textwrap
 import strax
 import straxen
 
 from strax.processing.peak_building import find_peaks
 from strax.processing.peak_building import sum_waveform
 from straxen.plugins.peaklets.peaklets import peak_saturation_correction
+from straxen.plugins.peaklets import Peaklets
 from ..utils import replace_source, setattr_module
 
+# objects needs to be present in this namespace for the executed source code
 import numpy as np
 import numba
 from strax import utils
@@ -125,6 +129,25 @@ news = [
 src = replace_source(src, olds, news)
 exec(src)
 setattr_module(mod, "peak_saturation_correction", peak_saturation_correction)
+
+
+mod = Peaklets.compute.__module__
+src = inspect.getsource(Peaklets.compute)
+olds = [
+    """
+        sorted_hit_channels = hitlets["channel"][hit_max_times_argsort]
+""",
+]
+news = [
+    """
+        sorted_hit_channels = hitlets["channel"][hit_max_times_argsort] % SCHANNEL_STARTS_AT
+""",
+]
+src = replace_source(src, olds, news)
+src = textwrap.dedent(src)
+exec(src, sys.modules[mod].__dict__)
+sys.modules[mod].__dict__["SCHANNEL_STARTS_AT"] = SCHANNEL_STARTS_AT
+Peaklets.compute = sys.modules[mod].__dict__["compute"]
 
 
 del mod, src, olds, news
