@@ -1,3 +1,4 @@
+import sys
 import inspect
 import textwrap
 import strax
@@ -9,7 +10,7 @@ from straxen.plugins.peaklets.peaklets import peak_saturation_correction
 from straxen.plugins.peaklets import Peaklets
 from ..utils import replace_source, setattr_module
 
-
+# objects needs to be present in this namespace for the executed source code
 import numpy as np
 import numba
 from strax import utils
@@ -130,6 +131,7 @@ exec(src)
 setattr_module(mod, "peak_saturation_correction", peak_saturation_correction)
 
 
+mod = Peaklets.compute.__module__
 src = inspect.getsource(Peaklets.compute)
 olds = [
     """
@@ -143,10 +145,12 @@ news = [
 ]
 src = replace_source(src, olds, news)
 src = textwrap.dedent(src)
-exec(src)
-Peaklets.compute = compute
+exec(src, sys.modules[mod].__dict__)
+sys.modules[mod].__dict__["SCHANNEL_STARTS_AT"] = SCHANNEL_STARTS_AT
+Peaklets.compute = sys.modules[mod].__dict__["compute"]
 
 
+mod = Peaklets.add_hit_features.__module__
 src = inspect.getsource(Peaklets.add_hit_features)
 olds = [
     """
@@ -162,8 +166,9 @@ news = [
 ]
 src = replace_source(src, olds, news)
 src = textwrap.dedent(src)
-exec(src)
-Peaklets.add_hit_features = add_hit_features
+exec(src, sys.modules[mod].__dict__)
+sys.modules[mod].__dict__["SCHANNEL_STARTS_AT"] = SCHANNEL_STARTS_AT
+Peaklets.add_hit_features = sys.modules[mod].__dict__["add_hit_features"]
 
 
 del mod, src, olds, news
