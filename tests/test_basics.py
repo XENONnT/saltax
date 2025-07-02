@@ -21,8 +21,9 @@ def test_context():
         st[saltax_mode] = saltax.contexts.sxenonnt(
             runid=nt_test_run_id,
             saltax_mode=saltax_mode,
-            corrections_version="global_ONLINE",
+            corrections_version=None,
         )
+        st[saltax_mode].apply_xedocs_configs(version="global_ONLINE")
         # Copied from straxen.test_utils.nt_test_context: https://github.com/XENONnT/straxen/blob/ea3291d32fec284e66dbda66d63cc746bf032494/straxen/test_utils.py#L85  # noqa
         st[saltax_mode].set_config(
             {"diagnose_sorting": True, "diagnose_overlapping": True, "store_per_channel": True}
