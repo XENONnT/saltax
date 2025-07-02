@@ -1,4 +1,5 @@
 import os
+import logging
 from glob import glob
 from tabulate import tabulate
 from itertools import cycle
@@ -10,81 +11,32 @@ import utilix
 import strax
 import saltax
 
-ALL_CUTS_MINIMAL = [
-    "cut_daq_veto",
-    "cut_interaction_exists",
-    "cut_main_is_valid_triggering_peak",
-    "cut_run_boundaries",
-]
-ALL_CUTS = ALL_CUTS_MINIMAL + [
-    "cut_s1_area_fraction_top",
-    "cut_s1_max_pmt",
-    "cut_s1_pattern_bottom",
-    "cut_s1_pattern_top",
-    "cut_s1_single_scatter",
-    "cut_s1_tightcoin_3fold",
-    "cut_s1_width",
-    "cut_s2_pattern",
-    "cut_s2_recon_pos_diff",
-    "cut_s2_single_scatter",
-    "cut_s2_width",
-    "cut_cs2_area_fraction_top",
-    "cut_shadow",
-    "cut_ambience",
-]
-ALL_CUTS_EXCEPT_S2PatternS1Width = ALL_CUTS_MINIMAL + [
-    "cut_s1_area_fraction_top",
-    "cut_s1_max_pmt",
-    "cut_s1_pattern_bottom",
-    "cut_s1_pattern_top",
-    "cut_s1_single_scatter",
-    "cut_s1_tightcoin_3fold",
-    "cut_s2_recon_pos_diff",
-    "cut_s2_single_scatter",
-    "cut_s2_width",
-    "cut_cs2_area_fraction_top",
-    "cut_shadow",
-    "cut_ambience",
-]
-AmBe_CUTS_EXCEPT_S2Pattern = ALL_CUTS_MINIMAL + [
-    "cut_s1_area_fraction_top",
-    "cut_s1_max_pmt",
-    "cut_s1_pattern_bottom",
-    "cut_s1_pattern_top",
-    "cut_s1_single_scatter",
-    "cut_s1_tightcoin_3fold",
-    "cut_s1_width",
-    "cut_s2_recon_pos_diff",
-    "cut_s2_single_scatter",
-    "cut_s2_width",
-    "cut_cs2_area_fraction_top",
-]
-AmBe_CUTS_EXCEPT_S2PatternS1Width = ALL_CUTS_MINIMAL + [
-    "cut_s1_area_fraction_top",
-    "cut_s1_max_pmt",
-    "cut_s1_pattern_bottom",
-    "cut_s1_pattern_top",
-    "cut_s1_single_scatter",
-    "cut_s1_tightcoin_3fold",
-    "cut_s2_recon_pos_diff",
-    "cut_s2_single_scatter",
-    "cut_s2_width",
-    "cut_cs2_area_fraction_top",
-]
-AmBe_CUTS = ALL_CUTS_MINIMAL + [
-    "cut_s1_area_fraction_top",
-    "cut_s1_max_pmt",
-    "cut_s1_pattern_bottom",
-    "cut_s1_pattern_top",
-    "cut_s1_single_scatter",
-    "cut_s1_tightcoin_3fold",
-    "cut_s1_width",
-    "cut_s2_pattern",
-    "cut_s2_recon_pos_diff",
-    "cut_s2_single_scatter",
-    "cut_s2_width",
-    "cut_cs2_area_fraction_top",
-]
+logging.basicConfig(level=logging.INFO, handlers=[logging.StreamHandler()])
+log = logging.getLogger("saltax.match.utils")
+
+try:
+    import cutax
+
+    MINIMAL_CUTS = [c.cut_name for c in cutax.cut_lists.MinimalCuts.cuts]
+    BASIC_CUTS = [c.cut_name for c in cutax.cut_lists.BasicCuts.cuts]
+    AmBe_CUTS = [c.cut_name for c in cutax.cut_lists.AmBeNRSelectionSR1.basic_cuts]
+except ImportError:
+    log.warning("cutax is not installed, will only use 'cut_interaction_exists'.")
+    MINIMAL_CUTS = ["cut_interaction_exists"]
+    BASIC_CUTS = ["cut_interaction_exists"]
+    AmBe_CUTS = ["cut_interaction_exists"]
+
+BASIC_CUTS_EXCEPT_S2PatternS1Width = BASIC_CUTS.copy()
+if "cut_s2_pattern" in BASIC_CUTS_EXCEPT_S2PatternS1Width:
+    BASIC_CUTS_EXCEPT_S2PatternS1Width.remove("cut_s2_pattern")
+if "cut_s1_width" in BASIC_CUTS_EXCEPT_S2PatternS1Width:
+    BASIC_CUTS_EXCEPT_S2PatternS1Width.remove("cut_s1_width")
+AmBe_CUTS_EXCEPT_S2Pattern = AmBe_CUTS.copy()
+if "cut_s2_pattern" in AmBe_CUTS_EXCEPT_S2Pattern:
+    AmBe_CUTS_EXCEPT_S2Pattern.remove("cut_s2_pattern")
+AmBe_CUTS_EXCEPT_S2PatternS1Width = AmBe_CUTS_EXCEPT_S2Pattern.copy()
+if "cut_s1_width" in AmBe_CUTS_EXCEPT_S2PatternS1Width:
+    AmBe_CUTS_EXCEPT_S2PatternS1Width.remove("cut_s1_width")
 
 
 def find_runs_with_rawdata(
@@ -480,15 +432,15 @@ def compare_templates(
     plt.show()
 
 
-def apply_n_minus_1_cuts(events_with_cuts, cut_oi, all_cuts=ALL_CUTS_EXCEPT_S2PatternS1Width):
+def apply_n_minus_1_cuts(events_with_cuts, cut_oi, BASIC_CUTS=BASIC_CUTS_EXCEPT_S2PatternS1Width):
     """Apply N-1 cuts to the events, where N is the number of cuts.
 
     :param events_with_cuts: events with cuts
     :param cut_oi: the cut to be left out for examination
-    :param all_cuts: all cuts
+    :param BASIC_CUTS: all cuts
 
     """
-    other_cuts = [cut for cut in all_cuts if cut != cut_oi]
+    other_cuts = [cut for cut in BASIC_CUTS if cut != cut_oi]
     mask = np.ones(len(events_with_cuts), dtype=bool)
 
     for cut in other_cuts:
@@ -497,12 +449,12 @@ def apply_n_minus_1_cuts(events_with_cuts, cut_oi, all_cuts=ALL_CUTS_EXCEPT_S2Pa
     return mask
 
 
-def apply_single_cut(events_with_cuts, cut_oi, all_cuts=None):
+def apply_single_cut(events_with_cuts, cut_oi, BASIC_CUTS=None):
     """Apply a single cut to the events.
 
     :param events_with_cuts: events with cuts
     :param cut_oi: the cut to be applied
-    :param all_cuts: pseudo parameter, not really used
+    :param BASIC_CUTS: pseudo parameter, not really used
 
     """
     mask = np.ones(len(events_with_cuts), dtype=bool)
@@ -511,21 +463,21 @@ def apply_single_cut(events_with_cuts, cut_oi, all_cuts=None):
     return mask
 
 
-def apply_cut_lists(events_with_cuts, all_cuts=ALL_CUTS_EXCEPT_S2PatternS1Width):
+def apply_cut_lists(events_with_cuts, BASIC_CUTS=BASIC_CUTS_EXCEPT_S2PatternS1Width):
     """Apply a list of cuts to the events.
 
     :param events_with_cuts: events with cuts
-    :param all_cuts: list of cuts to be applied
+    :param BASIC_CUTS: list of cuts to be applied
 
     """
     mask = np.ones(len(events_with_cuts), dtype=bool)
-    for cut in all_cuts:
+    for cut in BASIC_CUTS:
         mask &= events_with_cuts[cut]
     return mask
 
 
 def get_n_minus_1_cut_acc(
-    events_salt_matched_to_simu, events_simu_matched_to_salt, all_cut_list=ALL_CUTS
+    events_salt_matched_to_simu, events_simu_matched_to_salt, all_cut_list=BASIC_CUTS
 ):
     """Get a text table of acceptance of N-1 cut acceptance for each cut.
 
@@ -534,8 +486,8 @@ def get_n_minus_1_cut_acc(
     :param all_cut_list: list of all cuts
 
     """
-    mask_salt_all_cuts = apply_cut_lists(events_salt_matched_to_simu, all_cuts=all_cut_list)
-    mask_simu_all_cuts = apply_cut_lists(events_simu_matched_to_salt, all_cuts=all_cut_list)
+    mask_salt_BASIC_CUTS = apply_cut_lists(events_salt_matched_to_simu, BASIC_CUTS=all_cut_list)
+    mask_simu_BASIC_CUTS = apply_cut_lists(events_simu_matched_to_salt, BASIC_CUTS=all_cut_list)
 
     # Initialize a list to store your rows
     table_data = []
@@ -543,16 +495,16 @@ def get_n_minus_1_cut_acc(
     # Loop over each cut and calculate the acceptance values
     for cut_oi in all_cut_list:
         mask_salt_except_cut_oi = apply_n_minus_1_cuts(
-            events_salt_matched_to_simu, cut_oi, all_cuts=all_cut_list
+            events_salt_matched_to_simu, cut_oi, BASIC_CUTS=all_cut_list
         )
         mask_simu_except_cut_oi = apply_n_minus_1_cuts(
-            events_simu_matched_to_salt, cut_oi, all_cuts=all_cut_list
+            events_simu_matched_to_salt, cut_oi, BASIC_CUTS=all_cut_list
         )
         acceptance_salt = (
-            int(np.sum(mask_salt_all_cuts) / np.sum(mask_salt_except_cut_oi) * 100) / 100
+            int(np.sum(mask_salt_BASIC_CUTS) / np.sum(mask_salt_except_cut_oi) * 100) / 100
         )
         acceptance_simu = (
-            int(np.sum(mask_simu_all_cuts) / np.sum(mask_simu_except_cut_oi) * 100) / 100
+            int(np.sum(mask_simu_BASIC_CUTS) / np.sum(mask_simu_except_cut_oi) * 100) / 100
         )
 
         # Add a row for each cut
@@ -566,7 +518,7 @@ def get_n_minus_1_cut_acc(
 
 
 def get_single_cut_acc(
-    events_salt_matched_to_simu, events_simu_matched_to_salt, all_cut_list=ALL_CUTS
+    events_salt_matched_to_simu, events_simu_matched_to_salt, all_cut_list=BASIC_CUTS
 ):
     """Get a text table of acceptance of single cut acceptance for each cut.
 
@@ -604,7 +556,7 @@ def get_single_cut_acc(
 
 def get_cut_eff(
     events,
-    all_cut_list=ALL_CUTS,
+    all_cut_list=BASIC_CUTS,
     n_bins=31,
     coord="cs1",
     plot=True,
@@ -647,9 +599,9 @@ def get_cut_eff(
         result_dict[cut] = np.zeros(n_bins - 1)
         result_dict[cut + "_upper"] = np.zeros(n_bins - 1)
         result_dict[cut + "_lower"] = np.zeros(n_bins - 1)
-    result_dict["all_cuts"] = np.zeros(n_bins - 1)
-    result_dict["all_cuts_upper"] = np.zeros(n_bins - 1)
-    result_dict["all_cuts_lower"] = np.zeros(n_bins - 1)
+    result_dict["BASIC_CUTS"] = np.zeros(n_bins - 1)
+    result_dict["BASIC_CUTS_upper"] = np.zeros(n_bins - 1)
+    result_dict["BASIC_CUTS_lower"] = np.zeros(n_bins - 1)
     result_dict[coord] = np.zeros(n_bins - 1)
 
     for i in range(n_bins - 1):
@@ -659,9 +611,9 @@ def get_cut_eff(
         selected_events = events[(events[coord] >= bins[i]) * (events[coord] < bins[i + 1])]
         selected_events_all_cut = selected_events[apply_cut_lists(selected_events, all_cut_list)]
         interval = binomtest(len(selected_events_all_cut), len(selected_events)).proportion_ci()
-        result_dict["all_cuts"][i] = len(selected_events_all_cut) / len(selected_events)
-        result_dict["all_cuts_upper"][i] = interval.high
-        result_dict["all_cuts_lower"][i] = interval.low
+        result_dict["BASIC_CUTS"][i] = len(selected_events_all_cut) / len(selected_events)
+        result_dict["BASIC_CUTS_upper"][i] = interval.high
+        result_dict["BASIC_CUTS_lower"][i] = interval.low
 
         for cut_oi in all_cut_list:
             if indv_cut_type == "n_minus_1":
@@ -693,11 +645,11 @@ def get_cut_eff(
         )  # +1 for the 'Combined' line
         color_cycle = cycle(colors)
         plt.figure(dpi=150)
-        plt.plot(result_dict[coord], result_dict["all_cuts"], color="k", label="Combined")
+        plt.plot(result_dict[coord], result_dict["BASIC_CUTS"], color="k", label="Combined")
         plt.fill_between(
             result_dict[coord],
-            result_dict["all_cuts_lower"],
-            result_dict["all_cuts_upper"],
+            result_dict["BASIC_CUTS_lower"],
+            result_dict["BASIC_CUTS_upper"],
             color="k",
             alpha=0.3,
         )
