@@ -49,19 +49,17 @@ def find_runs_with_rawdata(
         "/scratch/midway3/yuanlq/salt/raw_records",
     ]
 ):
+    """Find runs with real raw_records data in the specified folders."""
     # Find the files that correspond to strax data
     files_found = []
     for folder in rawdata_folders:
-        _files_found = glob(os.path.join(folder, "0*"))
+        _files_found = glob(os.path.join(folder, "*-raw_records-rfzvpzj4mf"))
         files_found += _files_found
 
     # Find the runs that have standard raw_records available
     runs = []
     for f in files_found:
-        _f = os.path.basename(f)
-        runid, datatype, shash = _f.split("-")
-        if datatype == "raw_records" and shash == "rfzvpzj4mf":
-            runs.append(runid)
+        runs.append(os.path.basename(f).split("-")[0])
     runs = np.array(runs)
     return runs
 
