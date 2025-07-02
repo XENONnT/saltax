@@ -49,12 +49,12 @@ def sxenonnt(
     :param runid: run number. Must exist in RunDB if you use this context to compute
         raw_records_simu, or use None for data- loading only.
     :param saltax_mode: 'data', 'simu', or 'salt'.
-    :param generator_name: Instruction mode to use, defaults to 'flat'
-    :param recoil: NEST recoil type, defaults to 8
-    :param simu_mode: 's1', 's2', or 'all', defaults to 'all'
-    :param context: strax context to use, defaults to xenonnt_fuse_full_chain_simulation
-    :param cut_list: Cut list to use, defaults to None
-    :param unblind: Whether to bypass any kind of blinding, defaults to True
+    :param generator_name: Instruction mode to use (default: 'flat')
+    :param recoil: NEST recoil type (default: 8)
+    :param simu_mode: 's1', 's2', or 'all' (default: 'all')
+    :param context: strax context to use (default: xenonnt_fuse_full_chain_simulation)
+    :param cut_list: Cut list to use (default: None)
+    :param unblind: Whether to bypass any kind of blinding (default: True)
     :param kwargs: Extra options to pass to strax.Context or generator
     :return: strax context
 

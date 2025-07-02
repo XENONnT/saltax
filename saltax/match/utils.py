@@ -210,7 +210,7 @@ def load_peaks(runs, st_salt, st_simu, plugins=("peak_basics", "peak_positions_m
     :param runs: list of runs.
     :param st_salt: saltax context for salt mode
     :param st_simu: saltax context for simu mode
-    :param plugins: plugins to be loaded, default to ('peak_basics', 'peak_positions_mlp')
+    :param plugins: plugins to be loaded (default: ('peak_basics', 'peak_positions_mlp'))
     :param kwargs: arguments for saltax.match_peaks, i.e. window_length
     :return: peaks_simu: peaks from simulated dataset
     :return: peaks_salt: peaks from sprinkled dataset
@@ -286,7 +286,7 @@ def load_events(runs, st_salt, st_simu, plugins=("event_info", "cuts_basic"), **
 
     :param st_salt: saltax context for salt mode
     :param st_simu: saltax context for simu mode
-    :param plugins: plugins to be loaded, default to ('event_info', 'cuts_basic')
+    :param plugins: plugins to be loaded (default: ('event_info', 'cuts_basic'))
     :param kwargs: arguments for saltax.match_events, i.e. event_window_fuzz,
     :return: events_simu: events from simulated dataset, filtered out those who miss S1
     :return: events_salt: events from sprinkled dataset
@@ -619,14 +619,13 @@ def get_cut_eff(
     :param events: events
     :param all_cut_list: list of all cuts
     :param n_bins: number of bins for the coordinate
-    :param coord: coordinate to be binned, default to 'cs1'
-    :param plot: whether to plot the acceptance, default to True
-    :param indv_cut_type: type of cut to be applied, default to
-        'n_minus_1', can also be 'single'
+    :param coord: coordinate to be binned (default: 'cs1')
+    :param plot: whether to plot the acceptance (default: True)
+    :param indv_cut_type: type of cut to be applied, can be 'n_minus_1' and 'single' (default:
+        'n_minus_1')
     :param title: title of the plot
-    :param bbox_to_anchor: position of the legend, default to (0.5,
-        1.50)
-    :param bin_range: range of the coordinate, default to None
+    :param bbox_to_anchor: position of the legend (default: (0.5, 1.50))
+    :param bin_range: range of the coordinate (default: None)
     :return: a dictionary of acceptance values
 
     """
@@ -752,7 +751,7 @@ def compare_2d(
     :param label1: label for the second dataset
     :param xlabel: x-axis label
     :param ylabel: y-axis label
-    :param coords: coordinates to be compared, default to ['z', 's2_range_50p_area']
+    :param coords: coordinates to be compared (default: ['z', 's2_range_50p_area'])
 
     """
     events0_med = []
@@ -816,10 +815,10 @@ def compare_bands(salt, simu, title, coords=["z", "s2_range_50p_area"], n_bins=1
     :param salt: events from the first dataset
     :param simu: events from the second dataset
     :param title: title of the plot
-    :param coords: coordinates to be compared, default to ['z', 's2_range_50p_area'], can choose
-        from ['z', 's1_area', 's2_area', 's1_range_50p_area', 's1_range_90p_area', 's1_rise_time',
-        's2_range_50p_area', 's2_range_90p_area']
-    :param n_bins: number of bins for each coordinate, default to 16
+    :param coords: coordinates to be compared, can choose from ['z', 's1_area', 's2_area',
+        's1_range_50p_area', 's1_range_90p_area', 's1_rise_time', 's2_range_50p_area',
+        's2_range_90p_area'] (default: ['z', 's2_range_50p_area'])
+    :param n_bins: number of bins for each coordinate (default: 16)
 
     """
     BINS = {
@@ -879,14 +878,14 @@ def show_area_bias(
     :param salt: events from the first dataset
     :param simu: events from the second dataset
     :param title: title of the plot
-    :param fraction: whether to show the bias in fraction, default to False
-    :param coord: coordinate to be compared, default to 's1_area', can choose from ['z', 's1_area',
-        's2_area', 's1_range_50p_area', 's1_range_90p_area', 's1_rise_time', 's2_range_50p_area',
-        's2_range_90p_area']
-    :param s1s2: s1 or s2, default to 's1'
-    :param n_bins: number of bins for the coordinate, default to 16
-    :param ylim: y-axis limits, default to (-5,20)
-    :param bin_range: range of the bins, default to None
+    :param fraction: whether to show the bias in fraction (default: False)
+    :param coord: coordinate to be compared, can choose from ['z', 's1_area', 's2_area',
+        's1_range_50p_area', 's1_range_90p_area', 's1_rise_time', 's2_range_50p_area',
+        's2_range_90p_area'] (default: 's1_area')
+    :param s1s2: 's1' or 's2' (default: 's1')
+    :param n_bins: number of bins for the coordinate (default: 16)
+    :param ylim: y-axis limits (default: (-5, 20))
+    :param bin_range: range of the bins (default: None)
 
     """
     BINS = {
@@ -995,12 +994,12 @@ def show_eff2d(
 
     :param events: events before some selection
     :param events_selected: events after some selection
-    :param coord: coordinates to be compared, default to ('s1_area', 's2_area')
-    :param bins: bins for the coordinates, default to (np.linspace(0,100,101),
-        np.linspace(500,7000,101))
-    :param title: title of the plot, default to "Matching Acceptance"
-    :param vmin_vmax: range of color bar, default to (0,1)
-    :param min_counts: minimum number of counts in a bin to be considered, default to 100
+    :param coord: coordinates to be compared (default: ('s1_area', 's2_area'))
+    :param bins: bins for the coordinates (default: (np.linspace(0, 100, 101), np.linspace(500,
+        7000, 101)))
+    :param title: title of the plot (default: 'Matching Acceptance')
+    :param vmin_vmax: range of color bar (default: (0, 1))
+    :param min_counts: minimum number of counts in a bin to be considered (default: 100)
     :return: efficiency, xedges, yedges
 
     """
@@ -1059,11 +1058,11 @@ def show_eff1d(
 
     :param events_simu: events from the simulated dataset
     :param events_simu_matched_to_salt: events from the simulated dataset matched to sprinkled
-    :param mask_salt_cut: mask of the sprinkled dataset with cuts, default to None
-    :param coord: coordinate to be compared, default to 'e_ces', can choose from ['e_ces',
-        's1_area', 's2_area']
-    :param bins: bins for the coordinate, default to np.linspace(0,12,25)
-    :param title: title of the plot, default to "Matching Acceptance and Cut Acceptance"
+    :param mask_salt_cut: mask of the sprinkled dataset with cuts (default: None)
+    :param coord: coordinate to be compared, can choose from ['e_ces', 's1_area', 's2_area']
+        (default: 'e_ces')
+    :param bins: bins for the coordinate (default: np.linspace(0, 12, 25))
+    :param title: title of the plot (default: 'Matching Acceptance and Cut Acceptance')
 
     """
     xlabel_dict = {

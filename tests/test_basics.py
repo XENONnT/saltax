@@ -1,4 +1,5 @@
 import os
+import pandas as pd
 import strax
 from straxen.test_utils import _get_fake_daq_reader, download_test_data, nt_test_run_id
 
@@ -20,7 +21,6 @@ def test_context():
         st[saltax_mode] = saltax.contexts.sxenonnt(
             runid=nt_test_run_id,
             saltax_mode=saltax_mode,
-            start_end_from_medatata=True,
         )
         # Copied from straxen.test_utils.nt_test_context: https://github.com/XENONnT/straxen/blob/ea3291d32fec284e66dbda66d63cc746bf032494/straxen/test_utils.py#L85  # noqa
         st[saltax_mode].set_config(
@@ -40,6 +40,15 @@ def test_context():
         assert st[saltax_mode].is_stored(nt_test_run_id, "raw_records"), os.listdir(
             st[saltax_mode].storage[-1].path
         )
+        input_file = saltax.instructions.generator.instr_file_name(
+            runid=nt_test_run_id,
+        )
+        instr = saltax.instructions.generator.generator_flat(
+            runid=nt_test_run_id,
+            context=st[saltax_mode],
+            start_end_from_medatata=True,
+        )
+        pd.DataFrame(instr).to_csv(input_file, index=False)
 
     # Try creating some data_types in both modes
     dtypes = [

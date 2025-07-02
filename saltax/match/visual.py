@@ -25,13 +25,12 @@ def plot_event_wf(
     :param st_data: saltax context for data mode
     :param runid: runid of the event, example: '066666'
     :param events_simu: simu event_info.
-    :param events_salt: salt event_info matched to events_simu, default None and event level
-        information from sprinkled dataset won't be used
-    :param event_ext_window_ns: time window in ns to plot around the event, default 2.4e6 ns = 2.4
-        ms
-    :param s1_ext_window_samples: time window in samples to plot around S1, default 25 samples
-    :param s2_ext_window_samples: time window in samples to plot around S2, default 100 samples
-    :param ylim: y-axis limits for the waveforms, default (0,5) PE/10ns
+    :param events_salt: salt event_info matched to events_simu. None means event level information
+        from sprinkled dataset won't be used (default: None)
+    :param event_ext_window_ns: time window in ns to plot around the event (default: 2.4e6)
+    :param s1_ext_window_samples: time window in samples to plot around S1 (default: 25)
+    :param s2_ext_window_samples: time window in samples to plot around S2 (default: 100)
+    :param ylim: y-axis limits for the waveforms in unit PE / 10ns (default: (0, 5))
 
     """
     if events_salt is not None:
