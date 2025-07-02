@@ -5,7 +5,12 @@ import pytest
 # session scope is needed when running locally to ensure
 # that the environment variable is set before any import
 @pytest.fixture(autouse=True, scope="session")
-def set_env():
+def set_env_session():
+    os.environ["NUMBA_DISABLE_JIT"] = "1"
+
+
+@pytest.fixture(autouse=True, scope="function")
+def set_env_function():
     os.environ["NUMBA_DISABLE_JIT"] = "1"
 
 
