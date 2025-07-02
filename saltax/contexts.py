@@ -135,9 +135,14 @@ def sxenonnt(
     )
     st.set_config({"channel_map": channel_map})
 
-    # Register cuts plugins
-    for p in cutax.contexts.EXTRA_PLUGINS:
-        st.register(p)
+    try:
+        import cutax
+
+        # Register cuts plugins
+        for p in cutax.contexts.EXTRA_PLUGINS:
+            st.register(p)
+    except ImportError:
+        pass
 
     # Deregister plugins with missing dependencies
     st.deregister_plugins_with_missing_dependencies()
