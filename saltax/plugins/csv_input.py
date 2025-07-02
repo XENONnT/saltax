@@ -3,7 +3,6 @@ import numpy as np
 import pandas as pd
 import strax
 import straxen
-from straxen import units
 
 from fuse.plugin import FuseBasePlugin
 from fuse.plugins.detector_physics.csv_input import microphysics_summary_fields, ChunkCsvInput
@@ -44,12 +43,6 @@ class SChunkCsvInput(FuseBasePlugin):
         track=False,
         infer_type=False,
         help="CSV file to read",
-    )
-
-    salt_rate = straxen.URLConfig(
-        default=units.s / SALT_TIME_INTERVAL,
-        infer_type=False,
-        help="Rate of salting events",
     )
 
     ns_no_instruction_after_chunk_start = straxen.URLConfig(

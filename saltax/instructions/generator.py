@@ -152,7 +152,6 @@ def instr_file_name(
     en_range=DEFAULT_EN_RANGE,
     rate=units.s / SALT_TIME_INTERVAL,
     base_dir=BASE_DIR,
-    **kwargs,
 ):
     """Generate the instruction file name based on the runid, recoil, generator_name, mode, and
     rate.
@@ -197,7 +196,6 @@ def generator_se(
     time_mode="uniform",
     start_end_from_medatata=False,
     context=None,
-    **kwargs,
 ):
     """Generate instructions for a run with single electron.
 
@@ -242,7 +240,6 @@ def generator_se_bootstrapped(
     xyt_files_at=SE_INSTRUCTIONS_DIR,
     start_end_from_medatata=False,
     context=None,
-    **kwargs,
 ):
     """Generate instructions for a run with single electron.
 
@@ -309,7 +306,6 @@ def generator_neutron(
     fmap=FIELD_MAP,
     start_end_from_medatata=False,
     context=None,
-    **kwargs,
 ):
     """Generate instructions for a run with AmBe source.
 
@@ -388,7 +384,8 @@ def generator_ambe(
     time_mode="uniform",
     ambe_instructions_file=AMBE_INSTRUCTIONS_FILE,
     fmap=FIELD_MAP,
-    **kwargs,
+    start_end_from_medatata=False,
+    context=None,
 ):
     """Generate instructions for a run with AmBe source.
 
@@ -404,6 +401,9 @@ def generator_ambe(
     :param ambe_instructions_file: file containing ambe instructions,
         default: AMBE_INSTRUCTIONS_FILE
     :param fmap: field map, default: FIELD_MAP, defined above
+    :param start_end_from_medatata: whether use the start and end from raw_records metadata,
+        default: False
+    :param context: strax context, default: None
     :return: instructions in numpy array
 
     """
@@ -414,7 +414,8 @@ def generator_ambe(
         time_mode=time_mode,
         neutron_instructions_file=ambe_instructions_file,
         fmap=fmap,
-        **kwargs,
+        start_end_from_medatata=start_end_from_medatata,
+        context=context,
     )
 
 
@@ -425,7 +426,8 @@ def generator_ybe(
     time_mode="uniform",
     ybe_instructions_file=YBE_INSTRUCTIONS_FILE,
     fmap=FIELD_MAP,
-    **kwargs,
+    start_end_from_medatata=False,
+    context=None,
 ):
     """Generate instructions for a run with YBe source.
 
@@ -441,6 +443,9 @@ def generator_ybe(
     :param ybe_instructions_file: file containing ybe instructions,
         default: YBE_INSTRUCTIONS_FILE
     :param fmap: field map, default: FIELD_MAP, defined above
+    :param start_end_from_medatata: whether use the start and end from raw_records metadata,
+        default: False
+    :param context: strax context, default: None
     :return: instructions in numpy array
 
     """
@@ -451,7 +456,8 @@ def generator_ybe(
         time_mode=time_mode,
         neutron_instructions_file=ybe_instructions_file,
         fmap=fmap,
-        **kwargs,
+        start_end_from_medatata=start_end_from_medatata,
+        context=context,
     )
 
 
@@ -469,7 +475,6 @@ def generator_flat(
     time_mode="uniform",
     start_end_from_medatata=False,
     context=None,
-    **kwargs,
 ):
     """Generate instructions for a run with flat energy spectrum.
 
