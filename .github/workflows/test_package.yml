@@ -96,6 +96,7 @@ jobs:
         run: pytest --cov=saltax --cov-report=xml
       - name: Test package and report to coveralls
         env:
+          NUMBA_DISABLE_JIT: 1
           HAVE_ACCESS_TO_SECTETS: ${{ secrets.RUNDB_API_URL }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         if: env.HAVE_ACCESS_TO_SECTETS != null
