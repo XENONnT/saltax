@@ -4,6 +4,11 @@ import straxen
 
 
 def straxen_version():
+    """Get the major version of straxen.
+
+    :return: Major version of straxen as an integer.
+
+    """
     v = version.parse(straxen.__version__.split("-")[0])
     if v < version.parse("3.0.0"):
         return 2
