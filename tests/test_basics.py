@@ -1,6 +1,7 @@
 import os
 import pandas as pd
 import strax
+import straxen
 from straxen.test_utils import _get_fake_daq_reader, download_test_data, nt_test_run_id
 
 import saltax
@@ -25,6 +26,11 @@ def test_context():
             corrections_version="global_v10",
         )
         st[saltax_mode].apply_xedocs_configs(version="global_ONLINE")
+        # Patch tf_model_mlp to be compatible with keras version
+        if saltax.utils.straxen_version() == 3:
+            st[saltax_mode].set_config(
+                {"tf_model_mlp": straxen.PeakletPositionsMLP.takes_config["tf_model_mlp"].default}
+            )
         # Copied from straxen.test_utils.nt_test_context: https://github.com/XENONnT/straxen/blob/ea3291d32fec284e66dbda66d63cc746bf032494/straxen/test_utils.py#L85  # noqa
         st[saltax_mode].set_config(
             {"diagnose_sorting": True, "diagnose_overlapping": True, "store_per_channel": True}
