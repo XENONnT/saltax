@@ -1,4 +1,5 @@
 import os
+import logging
 from glob import glob
 from tabulate import tabulate
 from itertools import cycle
@@ -10,81 +11,35 @@ import utilix
 import strax
 import saltax
 
-ALL_CUTS_MINIMAL = [
-    "cut_daq_veto",
-    "cut_interaction_exists",
-    "cut_main_is_valid_triggering_peak",
-    "cut_run_boundaries",
-]
-ALL_CUTS = ALL_CUTS_MINIMAL + [
-    "cut_s1_area_fraction_top",
-    "cut_s1_max_pmt",
-    "cut_s1_pattern_bottom",
-    "cut_s1_pattern_top",
-    "cut_s1_single_scatter",
-    "cut_s1_tightcoin_3fold",
-    "cut_s1_width",
-    "cut_s2_pattern",
-    "cut_s2_recon_pos_diff",
-    "cut_s2_single_scatter",
-    "cut_s2_width",
-    "cut_cs2_area_fraction_top",
-    "cut_shadow",
-    "cut_ambience",
-]
-ALL_CUTS_EXCEPT_S2PatternS1Width = ALL_CUTS_MINIMAL + [
-    "cut_s1_area_fraction_top",
-    "cut_s1_max_pmt",
-    "cut_s1_pattern_bottom",
-    "cut_s1_pattern_top",
-    "cut_s1_single_scatter",
-    "cut_s1_tightcoin_3fold",
-    "cut_s2_recon_pos_diff",
-    "cut_s2_single_scatter",
-    "cut_s2_width",
-    "cut_cs2_area_fraction_top",
-    "cut_shadow",
-    "cut_ambience",
-]
-AmBe_CUTS_EXCEPT_S2Pattern = ALL_CUTS_MINIMAL + [
-    "cut_s1_area_fraction_top",
-    "cut_s1_max_pmt",
-    "cut_s1_pattern_bottom",
-    "cut_s1_pattern_top",
-    "cut_s1_single_scatter",
-    "cut_s1_tightcoin_3fold",
-    "cut_s1_width",
-    "cut_s2_recon_pos_diff",
-    "cut_s2_single_scatter",
-    "cut_s2_width",
-    "cut_cs2_area_fraction_top",
-]
-AmBe_CUTS_EXCEPT_S2PatternS1Width = ALL_CUTS_MINIMAL + [
-    "cut_s1_area_fraction_top",
-    "cut_s1_max_pmt",
-    "cut_s1_pattern_bottom",
-    "cut_s1_pattern_top",
-    "cut_s1_single_scatter",
-    "cut_s1_tightcoin_3fold",
-    "cut_s2_recon_pos_diff",
-    "cut_s2_single_scatter",
-    "cut_s2_width",
-    "cut_cs2_area_fraction_top",
-]
-AmBe_CUTS = ALL_CUTS_MINIMAL + [
-    "cut_s1_area_fraction_top",
-    "cut_s1_max_pmt",
-    "cut_s1_pattern_bottom",
-    "cut_s1_pattern_top",
-    "cut_s1_single_scatter",
-    "cut_s1_tightcoin_3fold",
-    "cut_s1_width",
-    "cut_s2_pattern",
-    "cut_s2_recon_pos_diff",
-    "cut_s2_single_scatter",
-    "cut_s2_width",
-    "cut_cs2_area_fraction_top",
-]
+logging.basicConfig(level=logging.INFO, handlers=[logging.StreamHandler()])
+log = logging.getLogger("saltax.match.utils")
+
+try:
+    import cutax
+
+    MINIMAL_CUTS = [c.cut_name for c in cutax.cut_lists.MinimalCuts.cuts]
+    BASIC_CUTS = [c.cut_name for c in cutax.cut_lists.BasicCuts.cuts]
+    try:
+        AmBe_CUTS = [c.cut_name for c in cutax.cut_lists.AmBeNRSelectionSR1.basic_cuts]
+    except AttributeError:
+        AmBe_CUTS = ["cut_interaction_exists"]
+except ImportError:
+    log.warning("cutax is not installed, will only use 'cut_interaction_exists'.")
+    MINIMAL_CUTS = ["cut_interaction_exists"]
+    BASIC_CUTS = ["cut_interaction_exists"]
+    AmBe_CUTS = ["cut_interaction_exists"]
+
+BASIC_CUTS_EXCEPT_S2PatternS1Width = BASIC_CUTS.copy()
+if "cut_s2_pattern" in BASIC_CUTS_EXCEPT_S2PatternS1Width:
+    BASIC_CUTS_EXCEPT_S2PatternS1Width.remove("cut_s2_pattern")
+if "cut_s1_width" in BASIC_CUTS_EXCEPT_S2PatternS1Width:
+    BASIC_CUTS_EXCEPT_S2PatternS1Width.remove("cut_s1_width")
+AmBe_CUTS_EXCEPT_S2Pattern = AmBe_CUTS.copy()
+if "cut_s2_pattern" in AmBe_CUTS_EXCEPT_S2Pattern:
+    AmBe_CUTS_EXCEPT_S2Pattern.remove("cut_s2_pattern")
+AmBe_CUTS_EXCEPT_S2PatternS1Width = AmBe_CUTS_EXCEPT_S2Pattern.copy()
+if "cut_s1_width" in AmBe_CUTS_EXCEPT_S2PatternS1Width:
+    AmBe_CUTS_EXCEPT_S2PatternS1Width.remove("cut_s1_width")
 
 
 def find_runs_with_rawdata(
@@ -246,7 +201,7 @@ def load_peaks(runs, st_salt, st_simu, plugins=("peak_basics", "peak_positions_m
             ind_simu_peak_lost_i,
             ind_salt_peak_split_i,
             ind_simu_peak_split_i,
-        ) = saltax.match_peaks(peaks_simu_i, peaks_salt_i, **kwargs)
+        ) = saltax.match.match_peaks(peaks_simu_i, peaks_salt_i, **kwargs)
 
         # Load the indices into the dictionary
         inds_dict["ind_salt_peak_found"] = np.concatenate(
@@ -281,13 +236,13 @@ def load_peaks(runs, st_salt, st_simu, plugins=("peak_basics", "peak_positions_m
 
 
 def load_events(runs, st_salt, st_simu, plugins=("event_info", "cuts_basic"), **kwargs):
-    """Load events from the runs and do basic filtering suggeted by saltax.match_events :param runs:
-    list of runs.
+    """Load events from the runs and do basic filtering suggeted by saltax.match.match_events :param
+    runs: list of runs.
 
     :param st_salt: saltax context for salt mode
     :param st_simu: saltax context for simu mode
     :param plugins: plugins to be loaded (default: ('event_info', 'cuts_basic'))
-    :param kwargs: arguments for saltax.match_events, i.e. event_window_fuzz,
+    :param kwargs: arguments for saltax.match.match_events, i.e. event_window_fuzz,
     :return: events_simu: events from simulated dataset, filtered out those who miss S1
     :return: events_salt: events from sprinkled dataset
     :return inds_dict: dictionary of indices of events from sprinkled or filtered simulated dataset,
@@ -337,7 +292,7 @@ def load_events(runs, st_salt, st_simu, plugins=("event_info", "cuts_basic"), **
             ind_simu_s2_found_i,
             ind_salt_s2_made_alt_i,
             ind_simu_s2_made_alt_i,
-        ) = saltax.match_events(events_simu_i, events_salt_i, **kwargs)
+        ) = saltax.match.match_events(events_simu_i, events_salt_i, **kwargs)
 
         # Load the indices into the dictionary
         inds_dict["ind_salt_event_found"] = np.concatenate(
@@ -480,15 +435,15 @@ def compare_templates(
     plt.show()
 
 
-def apply_n_minus_1_cuts(events_with_cuts, cut_oi, all_cuts=ALL_CUTS_EXCEPT_S2PatternS1Width):
+def apply_n_minus_1_cuts(events_with_cuts, cut_oi, BASIC_CUTS=BASIC_CUTS_EXCEPT_S2PatternS1Width):
     """Apply N-1 cuts to the events, where N is the number of cuts.
 
     :param events_with_cuts: events with cuts
     :param cut_oi: the cut to be left out for examination
-    :param all_cuts: all cuts
+    :param BASIC_CUTS: all cuts
 
     """
-    other_cuts = [cut for cut in all_cuts if cut != cut_oi]
+    other_cuts = [cut for cut in BASIC_CUTS if cut != cut_oi]
     mask = np.ones(len(events_with_cuts), dtype=bool)
 
     for cut in other_cuts:
@@ -497,12 +452,12 @@ def apply_n_minus_1_cuts(events_with_cuts, cut_oi, all_cuts=ALL_CUTS_EXCEPT_S2Pa
     return mask
 
 
-def apply_single_cut(events_with_cuts, cut_oi, all_cuts=None):
+def apply_single_cut(events_with_cuts, cut_oi, BASIC_CUTS=None):
     """Apply a single cut to the events.
 
     :param events_with_cuts: events with cuts
     :param cut_oi: the cut to be applied
-    :param all_cuts: pseudo parameter, not really used
+    :param BASIC_CUTS: pseudo parameter, not really used
 
     """
     mask = np.ones(len(events_with_cuts), dtype=bool)
@@ -511,21 +466,21 @@ def apply_single_cut(events_with_cuts, cut_oi, all_cuts=None):
     return mask
 
 
-def apply_cut_lists(events_with_cuts, all_cuts=ALL_CUTS_EXCEPT_S2PatternS1Width):
+def apply_cut_lists(events_with_cuts, BASIC_CUTS=BASIC_CUTS_EXCEPT_S2PatternS1Width):
     """Apply a list of cuts to the events.
 
     :param events_with_cuts: events with cuts
-    :param all_cuts: list of cuts to be applied
+    :param BASIC_CUTS: list of cuts to be applied
 
     """
     mask = np.ones(len(events_with_cuts), dtype=bool)
-    for cut in all_cuts:
+    for cut in BASIC_CUTS:
         mask &= events_with_cuts[cut]
     return mask
 
 
 def get_n_minus_1_cut_acc(
-    events_salt_matched_to_simu, events_simu_matched_to_salt, all_cut_list=ALL_CUTS
+    events_salt_matched_to_simu, events_simu_matched_to_salt, all_cut_list=BASIC_CUTS
 ):
     """Get a text table of acceptance of N-1 cut acceptance for each cut.
 
@@ -534,8 +489,8 @@ def get_n_minus_1_cut_acc(
     :param all_cut_list: list of all cuts
 
     """
-    mask_salt_all_cuts = apply_cut_lists(events_salt_matched_to_simu, all_cuts=all_cut_list)
-    mask_simu_all_cuts = apply_cut_lists(events_simu_matched_to_salt, all_cuts=all_cut_list)
+    mask_salt_BASIC_CUTS = apply_cut_lists(events_salt_matched_to_simu, BASIC_CUTS=all_cut_list)
+    mask_simu_BASIC_CUTS = apply_cut_lists(events_simu_matched_to_salt, BASIC_CUTS=all_cut_list)
 
     # Initialize a list to store your rows
     table_data = []
@@ -543,16 +498,16 @@ def get_n_minus_1_cut_acc(
     # Loop over each cut and calculate the acceptance values
     for cut_oi in all_cut_list:
         mask_salt_except_cut_oi = apply_n_minus_1_cuts(
-            events_salt_matched_to_simu, cut_oi, all_cuts=all_cut_list
+            events_salt_matched_to_simu, cut_oi, BASIC_CUTS=all_cut_list
         )
         mask_simu_except_cut_oi = apply_n_minus_1_cuts(
-            events_simu_matched_to_salt, cut_oi, all_cuts=all_cut_list
+            events_simu_matched_to_salt, cut_oi, BASIC_CUTS=all_cut_list
         )
         acceptance_salt = (
-            int(np.sum(mask_salt_all_cuts) / np.sum(mask_salt_except_cut_oi) * 100) / 100
+            int(np.sum(mask_salt_BASIC_CUTS) / np.sum(mask_salt_except_cut_oi) * 100) / 100
         )
         acceptance_simu = (
-            int(np.sum(mask_simu_all_cuts) / np.sum(mask_simu_except_cut_oi) * 100) / 100
+            int(np.sum(mask_simu_BASIC_CUTS) / np.sum(mask_simu_except_cut_oi) * 100) / 100
         )
 
         # Add a row for each cut
@@ -566,7 +521,7 @@ def get_n_minus_1_cut_acc(
 
 
 def get_single_cut_acc(
-    events_salt_matched_to_simu, events_simu_matched_to_salt, all_cut_list=ALL_CUTS
+    events_salt_matched_to_simu, events_simu_matched_to_salt, all_cut_list=BASIC_CUTS
 ):
     """Get a text table of acceptance of single cut acceptance for each cut.
 
@@ -604,7 +559,7 @@ def get_single_cut_acc(
 
 def get_cut_eff(
     events,
-    all_cut_list=ALL_CUTS,
+    all_cut_list=BASIC_CUTS,
     n_bins=31,
     coord="cs1",
     plot=True,
@@ -647,9 +602,9 @@ def get_cut_eff(
         result_dict[cut] = np.zeros(n_bins - 1)
         result_dict[cut + "_upper"] = np.zeros(n_bins - 1)
         result_dict[cut + "_lower"] = np.zeros(n_bins - 1)
-    result_dict["all_cuts"] = np.zeros(n_bins - 1)
-    result_dict["all_cuts_upper"] = np.zeros(n_bins - 1)
-    result_dict["all_cuts_lower"] = np.zeros(n_bins - 1)
+    result_dict["BASIC_CUTS"] = np.zeros(n_bins - 1)
+    result_dict["BASIC_CUTS_upper"] = np.zeros(n_bins - 1)
+    result_dict["BASIC_CUTS_lower"] = np.zeros(n_bins - 1)
     result_dict[coord] = np.zeros(n_bins - 1)
 
     for i in range(n_bins - 1):
@@ -659,9 +614,9 @@ def get_cut_eff(
         selected_events = events[(events[coord] >= bins[i]) * (events[coord] < bins[i + 1])]
         selected_events_all_cut = selected_events[apply_cut_lists(selected_events, all_cut_list)]
         interval = binomtest(len(selected_events_all_cut), len(selected_events)).proportion_ci()
-        result_dict["all_cuts"][i] = len(selected_events_all_cut) / len(selected_events)
-        result_dict["all_cuts_upper"][i] = interval.high
-        result_dict["all_cuts_lower"][i] = interval.low
+        result_dict["BASIC_CUTS"][i] = len(selected_events_all_cut) / len(selected_events)
+        result_dict["BASIC_CUTS_upper"][i] = interval.high
+        result_dict["BASIC_CUTS_lower"][i] = interval.low
 
         for cut_oi in all_cut_list:
             if indv_cut_type == "n_minus_1":
@@ -693,11 +648,11 @@ def get_cut_eff(
         )  # +1 for the 'Combined' line
         color_cycle = cycle(colors)
         plt.figure(dpi=150)
-        plt.plot(result_dict[coord], result_dict["all_cuts"], color="k", label="Combined")
+        plt.plot(result_dict[coord], result_dict["BASIC_CUTS"], color="k", label="Combined")
         plt.fill_between(
             result_dict[coord],
-            result_dict["all_cuts_lower"],
-            result_dict["all_cuts_upper"],
+            result_dict["BASIC_CUTS_lower"],
+            result_dict["BASIC_CUTS_upper"],
             color="k",
             alpha=0.3,
         )
@@ -981,65 +936,6 @@ def show_area_bias(
     return result_dict
 
 
-def show_eff2d(
-    events,
-    events_selected,
-    coord=("s1_area", "s2_area"),
-    bins=(np.linspace(0, 100, 101), np.linspace(500, 7000, 101)),
-    title="Matching Acceptance",
-    vmin_vmax=(0, 1),  # New parameter to set color bar range
-    min_counts=100,
-):
-    """Show the acceptance in 2D coordinates.
-
-    :param events: events before some selection
-    :param events_selected: events after some selection
-    :param coord: coordinates to be compared (default: ('s1_area', 's2_area'))
-    :param bins: bins for the coordinates (default: (np.linspace(0, 100, 101), np.linspace(500,
-        7000, 101)))
-    :param title: title of the plot (default: 'Matching Acceptance')
-    :param vmin_vmax: range of color bar (default: (0, 1))
-    :param min_counts: minimum number of counts in a bin to be considered (default: 100)
-    :return: efficiency, xedges, yedges
-
-    """
-    label_dict = {
-        "e_ces": "Simulated CES [keV]",
-        "s1_area": "Simulated S1 Area [PE]",
-        "s2_area": "Simulated S2 Area [PE]",
-        "z": "Z [cm]",
-    }
-
-    # Count the number of events in each bin
-    counts, xedges, yedges = np.histogram2d(events[coord[0]], events[coord[1]], bins=bins)
-    counts_selected, xedges, yedges = np.histogram2d(
-        events_selected[coord[0]], events_selected[coord[1]], bins=bins
-    )
-
-    # Compute efficiency
-    eff = counts_selected / counts
-    eff[np.isnan(eff)] = 0
-    eff[counts < min_counts] = 0
-
-    # Plot
-    plt.figure(dpi=150)
-    plt.imshow(
-        eff.T,
-        origin="lower",
-        extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]],
-        aspect="auto",
-        cmap="viridis",
-        vmin=vmin_vmax[0],  # Set minimum value for color scale
-        vmax=vmin_vmax[1],  # Set maximum value for color scale
-    )
-    plt.colorbar(label="Efficiency")
-    plt.xlabel(label_dict[coord[0]])
-    plt.ylabel(label_dict[coord[1]])
-    plt.title(title)
-    plt.show()
-    return eff, xedges, yedges
-
-
 def show_eff1d(
     events_simu,
     events_simu_matched_to_salt,
@@ -1047,9 +943,9 @@ def show_eff1d(
     coord="e_ces",
     bins=np.linspace(0, 12, 25),
     labels_hist=[
-        "Simulation before matching&cuts",
+        "Simulation before matching & cuts",
         "Simulation after matching",
-        "Simulation after matching&cuts",
+        "Simulation after matching & cuts",
     ],
     labels_eff=["Matching", "Cut (Already Matched)"],
     title="Matching Acceptance and Cut Acceptance",
@@ -1149,6 +1045,65 @@ def show_eff1d(
     plt.show()
 
 
+def show_eff2d(
+    events,
+    events_selected,
+    coord=("s1_area", "s2_area"),
+    bins=(np.linspace(0, 100, 101), np.linspace(500, 7000, 101)),
+    title="Matching Acceptance",
+    vmin_vmax=(0, 1),  # New parameter to set color bar range
+    min_counts=100,
+):
+    """Show the acceptance in 2D coordinates.
+
+    :param events: events before some selection
+    :param events_selected: events after some selection
+    :param coord: coordinates to be compared (default: ('s1_area', 's2_area'))
+    :param bins: bins for the coordinates (default: (np.linspace(0, 100, 101), np.linspace(500,
+        7000, 101)))
+    :param title: title of the plot (default: 'Matching Acceptance')
+    :param vmin_vmax: range of color bar (default: (0, 1))
+    :param min_counts: minimum number of counts in a bin to be considered (default: 100)
+    :return: efficiency, xedges, yedges
+
+    """
+    label_dict = {
+        "e_ces": "Simulated CES [keV]",
+        "s1_area": "Simulated S1 Area [PE]",
+        "s2_area": "Simulated S2 Area [PE]",
+        "z": "Z [cm]",
+    }
+
+    # Count the number of events in each bin
+    counts, xedges, yedges = np.histogram2d(events[coord[0]], events[coord[1]], bins=bins)
+    counts_selected, xedges, yedges = np.histogram2d(
+        events_selected[coord[0]], events_selected[coord[1]], bins=bins
+    )
+
+    # Compute efficiency
+    eff = counts_selected / counts
+    eff[np.isnan(eff)] = 0
+    eff[counts < min_counts] = 0
+
+    # Plot
+    plt.figure(dpi=150)
+    plt.imshow(
+        eff.T,
+        origin="lower",
+        extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]],
+        aspect="auto",
+        cmap="viridis",
+        vmin=vmin_vmax[0],  # Set minimum value for color scale
+        vmax=vmin_vmax[1],  # Set maximum value for color scale
+    )
+    plt.colorbar(label="Efficiency")
+    plt.xlabel(label_dict[coord[0]])
+    plt.ylabel(label_dict[coord[1]])
+    plt.title(title)
+    plt.show()
+    return eff, xedges, yedges
+
+
 def apply_peaks_daq_cuts(st_data, runs, peaks, proximity_extension=int(0.25e6)):
     """
     Analogy to DAQVeto in cutax: https://github.com/XENONnT/cutax/blob/fb9c23cea86b44c0402437189fc606399d4e134c/cutax/cuts/daq_veto.py#L8  # noqa
@@ -1156,7 +1111,7 @@ def apply_peaks_daq_cuts(st_data, runs, peaks, proximity_extension=int(0.25e6)):
     :param st_data: context for data in cutax
     :param runs: ordered runs list
     :param peaks: peaks level data with ordered times
-    :param proximity_extension: extension of the veto proximity cut, default to int(0.25e6)
+    :param proximity_extension: extension of the veto proximity cut (default: int(0.25e6))
     :return: mask_daq_cut mask for veto cuts
     """
     # Load veto_intervals

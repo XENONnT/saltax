@@ -85,10 +85,13 @@ def sxenonnt(
 
     # xenonnt_fuse_full_chain_simulation has a kwargs as argument
     # and full_chain_context is called in it
-    params = {
-        **inspect.signature(context).parameters,
-        **inspect.signature(full_chain_context).parameters,
-    }
+    if context is xenonnt_fuse_full_chain_simulation:
+        params = {
+            **inspect.signature(context).parameters,
+            **inspect.signature(full_chain_context).parameters,
+        }
+    else:
+        params = inspect.signature(context).parameters
     _kwargs = {k: v for k, v in kwargs.items() if k in params}
     st = context(corrections_run_id=runid, cut_list=_cut_list, **_kwargs)
 

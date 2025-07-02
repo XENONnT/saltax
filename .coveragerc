@@ -1,6 +1,10 @@
 # .coveragerc to control coverage.py
+[run]
+# no threading or subprocess support:
+concurrency =
+
 [report]
-omit =
-    saltax/match/*.py
+# omit =
+#     saltax/match/*.py
 
 ignore_errors = True
