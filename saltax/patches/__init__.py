@@ -1,7 +1,6 @@
-from packaging import version
-import straxen
+from ..utils import straxen_version
 
-if version.parse(straxen.__version__.split("-")[0]) < version.parse("3.0.0"):
+if straxen_version() == 2:
     from . import straxen_2
-else:
+elif straxen_version() == 3:
     from . import straxen_3

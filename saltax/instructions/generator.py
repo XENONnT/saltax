@@ -73,8 +73,7 @@ def generate_times(
 
     :param start_time: start time in ns
     :param end_time: end time in ns
-    :param size: rough number of events to generate, default: None i.e. generate events until
-        end_time
+    :param size: rough number of events to generate (default: None)
     :param rate: rate of events in Hz
     :param time_mode: 'uniform' or 'realistic'
     :return: array of event times in ns
@@ -118,9 +117,9 @@ def get_run_start_end(runid, start_end_from_medatata=False, context=None):
     """Get the start and end time of a run in unix time in ns, from RunDB.
 
     :param runid: run number
-    :param start_end_from_medatata: whether use the start and end from raw_records metadata,
-        default: False
-    :param context: strax context, default: None
+    :param start_end_from_medatata: whether use the start and end from raw_records metadata
+        (default: False)
+    :param context: strax context (default: None)
     :return: start time, end time in unix time in ns
 
     """
@@ -145,35 +144,32 @@ def get_run_start_end(runid, start_end_from_medatata=False, context=None):
 
 
 def instr_file_name(
-    recoil,
-    generator_name,
-    mode,
     runid=None,
+    recoil=8,
+    generator_name="flat",
+    mode="all",
     en_range=DEFAULT_EN_RANGE,
     rate=units.s / SALT_TIME_INTERVAL,
     base_dir=BASE_DIR,
-    **kwargs,
 ):
     """Generate the instruction file name based on the runid, recoil, generator_name, mode, and
     rate.
 
-    :param recoil: NEST recoil type
-    :param generator_name: name of the generator
-    :param mode: 's1', 's2', or 'all'
-    :param runid: run number, default: None, which means we
-        are loading data and instruction doesn't matter (strax lineage
-        unaffected)
-    :param en_range: (en_min, en_max) in keV, default: DEFAULT_EN_RANGE as a placeholder
+    :param generator_name: name of the generator (default: 'flat')
+    :param recoil: NEST recoil type (default: 8)
+    :param mode: 's1', 's2', or 'all' (default: 'all')
+    :param runid: run number (default: None)
+    :param en_range: (en_min, en_max) in keV (default: DEFAULT_EN_RANGE)
     :param rate: rate of events in Hz
-    :param base_dir: base directory to save the instruction file,
-        default: BASE_DIR
+    :param base_dir: base directory to save the instruction file (default: BASE_DIR)
     :return: instruction file name
 
     """
     if en_range is not None:
         en_range = str(en_range[0]) + "_" + str(en_range[1])
     else:
-        raise RuntimeError("en_range must be specified, and it can even be placeholder (0,0)")
+        raise RuntimeError("en_range must be specified, and it can even be placeholder (0, 0)")
+
     # FIXME: this will shoot errors if we are on OSG rather than midway
     if runid is None:
         return "Data-loading only, no instruction file needed."
@@ -197,20 +193,18 @@ def generator_se(
     time_mode="uniform",
     start_end_from_medatata=False,
     context=None,
-    **kwargs,
 ):
     """Generate instructions for a run with single electron.
 
     :param runid: run number
-    :param n_tot: total number of events to generate, default: None i.e. generate events until
-        end_time
-    :param rate: rate of events in Hz, default: units.s / SALT_TIME_INTERVAL
-    :param r_range: (r_min, r_max) in cm, default: R_RANGE, defined above
-    :param z_range: (z_min, z_max) in cm, default: Z_RANGE, defined above
-    :param time_mode: 'uniform' or 'realistic', default: 'uniform'
-    :param start_end_from_medatata: whether use the start and end from raw_records metadata,
-        default: False
-    :param context: strax context, default: None
+    :param n_tot: total number of events to generate (default: None)
+    :param rate: rate of events in Hz (default: units.s / SALT_TIME_INTERVAL)
+    :param r_range: (r_min, r_max) in cm (default: R_RANGE)
+    :param z_range: (z_min, z_max) in cm (default: Z_RANGE)
+    :param time_mode: 'uniform' or 'realistic' (default: 'uniform')
+    :param start_end_from_medatata: whether use the start and end from raw_records metadata
+        (default: False)
+    :param context: strax context (default: None)
     :return: instructions in numpy array
 
     """
@@ -242,17 +236,16 @@ def generator_se_bootstrapped(
     xyt_files_at=SE_INSTRUCTIONS_DIR,
     start_end_from_medatata=False,
     context=None,
-    **kwargs,
 ):
     """Generate instructions for a run with single electron.
 
     We will use XYT information from bootstrapped data single electrons to make the simulation more
     realistic
     :param runid: run number
-    :param xyt_files_at: directory to search for instructions of x,y,t information
-    :param start_end_from_medatata: whether use the start and end from raw_records metadata,
-        default: False
-    :param context: strax context, default: None
+    :param xyt_files_at: directory to search for instructions of x, y, t information
+    :param start_end_from_medatata: whether use the start and end from raw_records metadata
+        (default: False)
+    :param context: strax context (default: None)
     :return: instructions in numpy array
 
     """
@@ -309,7 +302,6 @@ def generator_neutron(
     fmap=FIELD_MAP,
     start_end_from_medatata=False,
     context=None,
-    **kwargs,
 ):
     """Generate instructions for a run with AmBe source.
 
@@ -317,15 +309,14 @@ def generator_neutron(
     instruction to feed this function. Each event with a certain event_id in the fed instructions
     will be shifted in time based on the time_mode you specified.
     :param runid: run number
-    :param n_tot: total number of events to generate, default: None i.e. generate events until
-        end_time
-    :param rate: rate of events in Hz, default: units.s / SALT_TIME_INTERVAL
-    :param time_mode: 'uniform' or 'realistic', default: 'uniform'
-    :param neutron_instructions_file: file containing neutron instructions, default: None
-    :param fmap: field map, default: FIELD_MAP, defined above
-    :param start_end_from_medatata: whether use the start and end from raw_records metadata,
-        default: False
-    :param context: strax context, default: None
+    :param n_tot: total number of events to generate (default: None)
+    :param rate: rate of events in Hz (default: units.s / SALT_TIME_INTERVAL)
+    :param time_mode: 'uniform' or 'realistic' (default: 'uniform')
+    :param neutron_instructions_file: file containing neutron instructions (default: None)
+    :param fmap: field map (default: FIELD_MAP)
+    :param start_end_from_medatata: whether use the start and end from raw_records metadata
+        (default: False)
+    :param context: strax context (default: None)
     :return: instructions in numpy array
 
     """
@@ -388,22 +379,24 @@ def generator_ambe(
     time_mode="uniform",
     ambe_instructions_file=AMBE_INSTRUCTIONS_FILE,
     fmap=FIELD_MAP,
-    **kwargs,
+    start_end_from_medatata=False,
+    context=None,
 ):
     """Generate instructions for a run with AmBe source.
 
-    AmBe instruction was first generated by full-chain simulation, and
-    then passing the post-epix instruction to feed this function. Each
-    event with a certain event_id in the fed instructions will be
-    shifted in time based on the time_mode you specified.
+    AmBe instruction was first generated by full-chain simulation, and then passing the post-epix
+    instruction to feed this function. Each event with a certain event_id in the fed instructions
+    will be shifted in time based on the time_mode you specified.
     :param runid: run number
-    :param n_tot: total number of events to generate, default: None i.e.
-        generate events until end_time
-    :param rate: rate of events in Hz, default: units.s / SALT_TIME_INTERVAL
-    :param time_mode: 'uniform' or 'realistic', default: 'uniform'
-    :param ambe_instructions_file: file containing ambe instructions,
-        default: AMBE_INSTRUCTIONS_FILE
-    :param fmap: field map, default: FIELD_MAP, defined above
+    :param n_tot: total number of events to generate (default: None)
+    :param rate: rate of events in Hz (default: units.s / SALT_TIME_INTERVAL)
+    :param time_mode: 'uniform' or 'realistic' (default: 'uniform')
+    :param ambe_instructions_file: file containing ambe instructions (default:
+        AMBE_INSTRUCTIONS_FILE)
+    :param fmap: field map (default: FIELD_MAP)
+    :param start_end_from_medatata: whether use the start and end from raw_records metadata
+        (default: False)
+    :param context: strax context (default: None)
     :return: instructions in numpy array
 
     """
@@ -414,7 +407,8 @@ def generator_ambe(
         time_mode=time_mode,
         neutron_instructions_file=ambe_instructions_file,
         fmap=fmap,
-        **kwargs,
+        start_end_from_medatata=start_end_from_medatata,
+        context=context,
     )
 
 
@@ -425,22 +419,23 @@ def generator_ybe(
     time_mode="uniform",
     ybe_instructions_file=YBE_INSTRUCTIONS_FILE,
     fmap=FIELD_MAP,
-    **kwargs,
+    start_end_from_medatata=False,
+    context=None,
 ):
     """Generate instructions for a run with YBe source.
 
-    YBe instruction was first generated by full-chain simulation, and
-    then passing the post-epix instruction to feed this function. Each
-    event with a certain event_id in the fed instructions will be
-    shifted in time based on the time_mode you specified.
+    YBe instruction was first generated by full-chain simulation, and then passing the post-epix
+    instruction to feed this function. Each event with a certain event_id in the fed instructions
+    will be shifted in time based on the time_mode you specified.
     :param runid: run number
-    :param n_tot: total number of events to generate, default: None i.e.
-        generate events until end_time
-    :param rate: rate of events in Hz, default: units.s / SALT_TIME_INTERVAL
-    :param time_mode: 'uniform' or 'realistic', default: 'uniform'
-    :param ybe_instructions_file: file containing ybe instructions,
-        default: YBE_INSTRUCTIONS_FILE
-    :param fmap: field map, default: FIELD_MAP, defined above
+    :param n_tot: total number of events to generate (default: None)
+    :param rate: rate of events in Hz (default: units.s / SALT_TIME_INTERVAL)
+    :param time_mode: 'uniform' or 'realistic' (default: 'uniform')
+    :param ybe_instructions_file: file containing ybe instructions (default: YBE_INSTRUCTIONS_FILE)
+    :param fmap: field map (default: FIELD_MAP)
+    :param start_end_from_medatata: whether use the start and end from raw_records metadata
+        (default: False)
+    :param context: strax context (default: None)
     :return: instructions in numpy array
 
     """
@@ -451,7 +446,8 @@ def generator_ybe(
         time_mode=time_mode,
         neutron_instructions_file=ybe_instructions_file,
         fmap=fmap,
-        **kwargs,
+        start_end_from_medatata=start_end_from_medatata,
+        context=context,
     )
 
 
@@ -469,25 +465,23 @@ def generator_flat(
     time_mode="uniform",
     start_end_from_medatata=False,
     context=None,
-    **kwargs,
 ):
     """Generate instructions for a run with flat energy spectrum.
 
     :param runid: run number
-    :param en_range: (en_min, en_max) in keV, default: (0.2, 15.0)
-    :param recoil: NEST recoil type, default: 8 (beta ER)
-    :param n_tot: total number of events to generate, default: None i.e. generate events until
-        end_time
-    :param rate: rate of events in Hz, default: units.s / SALT_TIME_INTERVAL
-    :param fmap: field map, default: FIELD_MAP, defined above
-    :param nc: NEST calculator, default: NC, defined above
-    :param r_range: (r_min, r_max) in cm, default: R_RANGE, defined above
-    :param z_range: (z_min, z_max) in cm, default: Z_RANGE, defined above
-    :param mode: 's1', 's2', or 'all', default: 'all'
-    :param time_mode: 'uniform' or 'realistic', default: 'uniform'
-    :param start_end_from_medatata: whether use the start and end from raw_records metadata,
-        default: False
-    :param context: strax context, default: None
+    :param en_range: (en_min, en_max) in keV (default: (0.2, 15.0))
+    :param recoil: NEST recoil type (default: 8)
+    :param n_tot: total number of events to generate (default: None)
+    :param rate: rate of events in Hz (default: units.s / SALT_TIME_INTERVAL)
+    :param fmap: field map (default: FIELD_MAP)
+    :param nc: NEST calculator (default: NC)
+    :param r_range: (r_min, r_max) in cm (default: R_RANGE)
+    :param z_range: (z_min, z_max) in cm (default: Z_RANGE)
+    :param mode: 's1', 's2', or 'all' (default: 'all')
+    :param time_mode: 'uniform' or 'realistic' (default: 'uniform')
+    :param start_end_from_medatata: whether use the start and end from raw_records metadata
+        (default: False)
+    :param context: strax context (default: None)
     :return: instructions in numpy array
 
     """

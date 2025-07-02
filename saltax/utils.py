@@ -1,4 +1,24 @@
 import sys
+from packaging import version
+import straxen
+
+
+def straxen_version():
+    """Get the major version of straxen.
+
+    :return: Major version of straxen as an integer.
+
+    """
+    v = version.parse(straxen.__version__.split("-")[0])
+    if v < version.parse("3.0.0"):
+        return 2
+    elif v >= version.parse("3.0.0") and v < version.parse("4.0.0"):
+        return 3
+    else:
+        raise ValueError(
+            f"Unsupported straxen version: {straxen.__version__}. "
+            "Please use straxen version 2.x or 3.x."
+        )
 
 
 def replace_source(src, olds, news):
