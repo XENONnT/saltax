@@ -1,6 +1,9 @@
 import sys
 from packaging import version
+from utilix import xent_collection
 import straxen
+
+COLL = xent_collection()
 
 
 def straxen_version():
