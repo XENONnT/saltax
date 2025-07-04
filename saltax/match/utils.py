@@ -7,9 +7,9 @@ import numpy as np
 from scipy.stats import binomtest
 import matplotlib.pyplot as plt
 
-import utilix
 import strax
 import saltax
+from saltax.utils import COLL
 
 logging.basicConfig(level=logging.INFO, handlers=[logging.StreamHandler()])
 log = logging.getLogger("saltax.match.utils")
@@ -110,13 +110,12 @@ def get_available_runs(
     :param simu_available: list of available dtypes for simu mode
 
     """
-    rundb = utilix.rundb.xent_collection()
     # Find run modes and duration correspondingly
     modes = []
     durations = []
     for run in runs:
         query = {"number": int(run)}
-        doc = rundb.find_one(query)
+        doc = COLL.find_one(query)
 
         # get mode
         mode = doc["mode"]

@@ -3,10 +3,10 @@ import inspect
 from immutabledict import immutabledict
 import pandas as pd
 
-from utilix import xent_collection
 import straxen
 from fuse.context import full_chain_context, xenonnt_fuse_full_chain_simulation
 import saltax
+from saltax.utils import COLL
 from saltax.instructions.generator import instr_file_name
 from saltax.plugins.records import SCHANNEL_STARTS_AT
 
@@ -28,7 +28,7 @@ def validate_runid(runid):
     :return: None
 
     """
-    doc = xent_collection().find_one({"number": int(runid)})
+    doc = COLL.find_one({"number": int(runid)})
     if doc is None:
         raise ValueError(f"Run {runid} not found in RunDB")
 

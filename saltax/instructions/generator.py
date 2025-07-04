@@ -8,21 +8,15 @@ import pandas as pd
 import nestpy
 import straxen
 from straxen import units
-from utilix import xent_collection
 from fuse.plugins.detector_physics.csv_input import ChunkCsvInput
 
+from saltax.utils import COLL
 from saltax.plugins.csv_input import SALT_TIME_INTERVAL
 
 DEFAULT_EN_RANGE = (0.2, 15.0)  # in unit of keV
-Z_RANGE = (-148.15, 0)  # in unit of cm
-R_RANGE = (0, 66.4)  # in unit of cm
-DOWNLOADER = straxen.MongoDownloader()
+Z_RANGE = (-straxen.tpc_z, 0)  # in unit of cm
+R_RANGE = (0, straxen.tpc_r)  # in unit of cm
 NC = nestpy.NESTcalc(nestpy.DetectorExample_XENON10())
-FIELD_FILE = "fieldmap_2D_B2d75n_C2d75n_G0d3p_A4d9p_T0d9n_PMTs1d3n_FSR0d65p_QPTFE_0d5n_0d4p.json.gz"
-FIELD_MAP = straxen.InterpolatingMap(
-    straxen.get_resource(DOWNLOADER.download_single(FIELD_FILE), fmt="json.gz"),
-    method="RegularGridInterpolator",
-)
 SE_INSTRUCTIONS_DIR = "/project/lgrandi/yuanlq/salt/se_instructions"
 AMBE_INSTRUCTIONS_FILE = "/project/lgrandi/yuanlq/salt/ambe_instructions/minghao_aptinput.csv"
 YBE_INSTRUCTIONS_FILE = (
@@ -32,23 +26,23 @@ YBE_INSTRUCTIONS_FILE = (
 BASE_DIR = os.path.join(
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "generated"
 )
+NEST_RNG = nestpy.RandomGen.rndm()
 
-coll = xent_collection()
 
-
-def generate_vertex(r_range=R_RANGE, z_range=Z_RANGE, size=1):
+def generate_vertex(rng, r_range=R_RANGE, z_range=Z_RANGE, size=1):
     """Generate a random vertex in the TPC volume.
 
+    :param rng: random number generator
     :param r_range: (r_min, r_max) in cm
     :param z_range: (z_min, z_max) in cm
     :param size: number of vertices to generate
     :return: x, y, z coordinates of the vertex
 
     """
-    phi = np.random.uniform(size=size) * 2 * np.pi
-    r = r_range[1] * np.sqrt(np.random.uniform((r_range[0] / r_range[1]) ** 2, 1, size=size))
+    phi = rng.uniform(size=size) * 2 * np.pi
+    r = r_range[1] * np.sqrt(rng.uniform((r_range[0] / r_range[1]) ** 2, 1, size=size))
 
-    z = np.random.uniform(z_range[0], z_range[1], size=size)
+    z = rng.uniform(z_range[0], z_range[1], size=size)
     x = r * np.cos(phi)
     y = r * np.sin(phi)
 
@@ -67,12 +61,13 @@ def constrain_radius(xs, ys, r_max=R_RANGE[-1] - 0.001):
 
 
 def generate_times(
-    start_time, end_time, size=None, rate=units.s / SALT_TIME_INTERVAL, time_mode="uniform"
+    start_time, end_time, rng, size=None, rate=units.s / SALT_TIME_INTERVAL, time_mode="uniform"
 ):
     """Generate an array of event times in the given time range.
 
     :param start_time: start time in ns
     :param end_time: end time in ns
+    :param rng: random number generator
     :param size: rough number of events to generate (default: None)
     :param rate: rate of events in Hz
     :param time_mode: 'uniform' or 'realistic'
@@ -91,7 +86,7 @@ def generate_times(
     # Generating event times from exponential
     # This one doesn't work for salting!!!
     if time_mode == "realistic":
-        dt = np.random.exponential(1 / rate, size=estimated_size - 1)
+        dt = rng.exponential(1 / rate, size=estimated_size - 1)
         times = np.append([0], dt.cumsum()) * units.s
         times = times.round().astype(np.int64)
         times += start_time
@@ -130,7 +125,7 @@ def get_run_start_end(runid, start_end_from_medatata=False, context=None):
         unix_time_start_ns, unix_time_end_ns = metadata["start"], metadata["end"]
     else:
         # Get the datetime of start and end time of the run from RunDB
-        doc = coll.find_one({"number": int(runid)})
+        doc = COLL.find_one({"number": int(runid)})
         if doc is None:
             raise RuntimeError(f"Cannot find runid {runid} in RunDB")
         dt_start = doc["start"].replace(tzinfo=pytz.UTC)
@@ -186,17 +181,18 @@ def instr_file_name(
 
 def generator_se(
     runid,
+    context,
     n_tot=None,
     rate=units.s / SALT_TIME_INTERVAL,
     r_range=R_RANGE,
     z_range=Z_RANGE,
     time_mode="uniform",
     start_end_from_medatata=False,
-    context=None,
 ):
     """Generate instructions for a run with single electron.
 
     :param runid: run number
+    :param context: strax context
     :param n_tot: total number of events to generate (default: None)
     :param rate: rate of events in Hz (default: units.s / SALT_TIME_INTERVAL)
     :param r_range: (r_min, r_max) in cm (default: R_RANGE)
@@ -204,14 +200,16 @@ def generator_se(
     :param time_mode: 'uniform' or 'realistic' (default: 'uniform')
     :param start_end_from_medatata: whether use the start and end from raw_records metadata
         (default: False)
-    :param context: strax context (default: None)
     :return: instructions in numpy array
 
     """
+    rng = np.random.default_rng(seed=int(runid))
     start_time, end_time = get_run_start_end(
         runid, start_end_from_medatata=start_end_from_medatata, context=context
     )
-    times = generate_times(start_time, end_time, size=n_tot, rate=rate, time_mode=time_mode)
+    times = generate_times(
+        start_time, end_time, rng=rng, size=n_tot, rate=rate, time_mode=time_mode
+    )
     n_tot = len(times)
 
     instr = np.zeros(n_tot, dtype=ChunkCsvInput.needed_csv_input_fields())
@@ -220,7 +218,7 @@ def generator_se(
 
     # Generating unoformely distributed events for give R and Z range
     instr["x"], instr["y"], instr["z"] = generate_vertex(
-        r_range=r_range, z_range=z_range, size=n_tot
+        rng=rng, r_range=r_range, z_range=z_range, size=n_tot
     )
 
     # And assigning quanta
@@ -233,19 +231,19 @@ def generator_se(
 
 def generator_se_bootstrapped(
     runid,
+    context,
     xyt_files_at=SE_INSTRUCTIONS_DIR,
     start_end_from_medatata=False,
-    context=None,
 ):
     """Generate instructions for a run with single electron.
 
     We will use XYT information from bootstrapped data single electrons to make the simulation more
     realistic
     :param runid: run number
+    :param context: strax context
     :param xyt_files_at: directory to search for instructions of x, y, t information
     :param start_end_from_medatata: whether use the start and end from raw_records metadata
         (default: False)
-    :param context: strax context (default: None)
     :return: instructions in numpy array
 
     """
@@ -295,13 +293,12 @@ def generator_se_bootstrapped(
 
 def generator_neutron(
     runid,
+    context,
     n_tot=None,
     rate=units.s / SALT_TIME_INTERVAL,
     time_mode="uniform",
     neutron_instructions_file=None,
-    fmap=FIELD_MAP,
     start_end_from_medatata=False,
-    context=None,
 ):
     """Generate instructions for a run with AmBe source.
 
@@ -309,27 +306,29 @@ def generator_neutron(
     instruction to feed this function. Each event with a certain event_id in the fed instructions
     will be shifted in time based on the time_mode you specified.
     :param runid: run number
+    :param context: strax context
     :param n_tot: total number of events to generate (default: None)
     :param rate: rate of events in Hz (default: units.s / SALT_TIME_INTERVAL)
     :param time_mode: 'uniform' or 'realistic' (default: 'uniform')
     :param neutron_instructions_file: file containing neutron instructions (default: None)
-    :param fmap: field map (default: FIELD_MAP)
     :param start_end_from_medatata: whether use the start and end from raw_records metadata
         (default: False)
-    :param context: strax context (default: None)
     :return: instructions in numpy array
 
     """
     # determine time offsets to shift neutron instructions
+    rng = np.random.default_rng(seed=int(runid))
     start_time, end_time = get_run_start_end(
         runid, start_end_from_medatata=start_end_from_medatata, context=context
     )
-    times_offset = generate_times(start_time, end_time, size=n_tot, rate=rate, time_mode=time_mode)
+    times_offset = generate_times(
+        start_time, end_time, rng=rng, size=n_tot, rate=rate, time_mode=time_mode
+    )
     n_tot = len(times_offset)
 
     # bootstrap instructions
     neutron_instructions = pd.read_csv(neutron_instructions_file)
-    neutron_event_numbers = np.random.choice(
+    neutron_event_numbers = rng.choice(
         np.unique(neutron_instructions.event_number), n_tot, replace=True
     )
 
@@ -357,6 +356,7 @@ def generator_neutron(
             selected_neutron["type"] == 2
         ]
         instr_i["excitons"] = selected_neutron["n_excitons"]
+        fmap = straxen.URLConfig.evaluate_dry(context.config["efield_map"])
         instr_i["e_field"] = fmap(
             np.array(
                 [
@@ -374,13 +374,12 @@ def generator_neutron(
 
 def generator_ambe(
     runid,
+    context,
     n_tot=None,
     rate=units.s / SALT_TIME_INTERVAL,
     time_mode="uniform",
     ambe_instructions_file=AMBE_INSTRUCTIONS_FILE,
-    fmap=FIELD_MAP,
     start_end_from_medatata=False,
-    context=None,
 ):
     """Generate instructions for a run with AmBe source.
 
@@ -393,7 +392,6 @@ def generator_ambe(
     :param time_mode: 'uniform' or 'realistic' (default: 'uniform')
     :param ambe_instructions_file: file containing ambe instructions (default:
         AMBE_INSTRUCTIONS_FILE)
-    :param fmap: field map (default: FIELD_MAP)
     :param start_end_from_medatata: whether use the start and end from raw_records metadata
         (default: False)
     :param context: strax context (default: None)
@@ -402,25 +400,23 @@ def generator_ambe(
     """
     return generator_neutron(
         runid=runid,
+        context=context,
         n_tot=n_tot,
         rate=rate,
         time_mode=time_mode,
         neutron_instructions_file=ambe_instructions_file,
-        fmap=fmap,
         start_end_from_medatata=start_end_from_medatata,
-        context=context,
     )
 
 
 def generator_ybe(
     runid,
+    context,
     n_tot=None,
     rate=units.s / SALT_TIME_INTERVAL,
     time_mode="uniform",
     ybe_instructions_file=YBE_INSTRUCTIONS_FILE,
-    fmap=FIELD_MAP,
     start_end_from_medatata=False,
-    context=None,
 ):
     """Generate instructions for a run with YBe source.
 
@@ -428,52 +424,49 @@ def generator_ybe(
     instruction to feed this function. Each event with a certain event_id in the fed instructions
     will be shifted in time based on the time_mode you specified.
     :param runid: run number
+    :param context: strax context
     :param n_tot: total number of events to generate (default: None)
     :param rate: rate of events in Hz (default: units.s / SALT_TIME_INTERVAL)
     :param time_mode: 'uniform' or 'realistic' (default: 'uniform')
     :param ybe_instructions_file: file containing ybe instructions (default: YBE_INSTRUCTIONS_FILE)
-    :param fmap: field map (default: FIELD_MAP)
     :param start_end_from_medatata: whether use the start and end from raw_records metadata
         (default: False)
-    :param context: strax context (default: None)
     :return: instructions in numpy array
 
     """
     return generator_neutron(
         runid=runid,
+        context=context,
         n_tot=n_tot,
         rate=rate,
         time_mode=time_mode,
         neutron_instructions_file=ybe_instructions_file,
-        fmap=fmap,
         start_end_from_medatata=start_end_from_medatata,
-        context=context,
     )
 
 
 def generator_flat(
     runid,
+    context,
     en_range=DEFAULT_EN_RANGE,
     recoil=8,
     n_tot=None,
     rate=units.s / SALT_TIME_INTERVAL,
-    fmap=FIELD_MAP,
     nc=NC,
     r_range=R_RANGE,
     z_range=Z_RANGE,
     mode="all",
     time_mode="uniform",
     start_end_from_medatata=False,
-    context=None,
 ):
     """Generate instructions for a run with flat energy spectrum.
 
     :param runid: run number
+    :param context: strax context
     :param en_range: (en_min, en_max) in keV (default: (0.2, 15.0))
     :param recoil: NEST recoil type (default: 8)
     :param n_tot: total number of events to generate (default: None)
     :param rate: rate of events in Hz (default: units.s / SALT_TIME_INTERVAL)
-    :param fmap: field map (default: FIELD_MAP)
     :param nc: NEST calculator (default: NC)
     :param r_range: (r_min, r_max) in cm (default: R_RANGE)
     :param z_range: (z_min, z_max) in cm (default: Z_RANGE)
@@ -481,14 +474,16 @@ def generator_flat(
     :param time_mode: 'uniform' or 'realistic' (default: 'uniform')
     :param start_end_from_medatata: whether use the start and end from raw_records metadata
         (default: False)
-    :param context: strax context (default: None)
     :return: instructions in numpy array
 
     """
+    rng = np.random.default_rng(seed=int(runid))
     start_time, end_time = get_run_start_end(
         runid, start_end_from_medatata=start_end_from_medatata, context=context
     )
-    times = generate_times(start_time, end_time, size=n_tot, rate=rate, time_mode=time_mode)
+    times = generate_times(
+        start_time, end_time, rng=rng, size=n_tot, rate=rate, time_mode=time_mode
+    )
     n_tot = len(times)
 
     instr = np.zeros(n_tot, dtype=ChunkCsvInput.needed_csv_input_fields())
@@ -497,17 +492,20 @@ def generator_flat(
 
     # Generating unoformely distributed events for give R and Z range
     instr["x"], instr["y"], instr["z"] = generate_vertex(
-        r_range=r_range, z_range=z_range, size=n_tot
+        rng=rng, r_range=r_range, z_range=z_range, size=n_tot
     )
 
     # Making energy
-    instr["ed"] = np.random.uniform(en_range[0], en_range[1], size=n_tot)
+    instr["ed"] = rng.uniform(en_range[0], en_range[1], size=n_tot)
     instr["nestid"] = recoil
 
     # Getting local field from field map
+    fmap = straxen.URLConfig.evaluate_dry(context.config["efield_map"])
     instr["e_field"] = fmap(np.array([np.sqrt(instr["x"] ** 2 + instr["y"] ** 2), instr["z"]]).T)
 
     # And generating quantas from nest
+    NEST_RNG.set_seed(int(runid))
+    NEST_RNG.lock_seed()
     for i in range(n_tot):
         y = nc.GetYields(
             interaction=nestpy.INTERACTION_TYPE(instr["nestid"][i]),
@@ -518,6 +516,7 @@ def generator_flat(
         instr["photons"][i] = quantas.photons
         instr["electrons"][i] = quantas.electrons
         instr["excitons"][i] = quantas.excitons
+    NEST_RNG.unlock_seed()
 
     # Selecting event types
     if mode == "s1":
