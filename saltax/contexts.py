@@ -1,3 +1,4 @@
+import os
 import logging
 import inspect
 from immutabledict import immutabledict
@@ -179,6 +180,7 @@ def sxenonnt(
                 context=st,
                 **straxen.filter_kwargs(generator_func, kwargs),
             )
+            os.makedirs(os.path.dirname(input_file), exist_ok=True)
             pd.DataFrame(instr).to_csv(input_file, index=False)
             log.info(f"Instructions saved to {input_file}")
 
