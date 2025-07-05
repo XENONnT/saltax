@@ -18,13 +18,13 @@ QOS = config.get("slurm", "qos")
 ACCOUNT = config.get("slurm", "account")
 MEM_PER_CPU = config.getint("slurm", "mem_per_cpu")
 CONTAINER = config.get("job", "container")
-if config.has_option("job", "bind"):
-    BIND = config.get("job", "bind").split(",")
+if config.has_option("slurm", "bind"):
+    BIND = config.get("slurm", "bind").split(",")
 else:
     BIND = None  # type: ignore
 CPUS_PER_TASK = config.getint("slurm", "cpus_per_task")
-if config.has_option("job", "bypass_validation"):
-    BYPASS_VALIDATION = config.get("job", "bypass_validation").split(",")
+if config.has_option("slurm", "bypass_validation"):
+    BYPASS_VALIDATION = config.get("slurm", "bypass_validation").split(",")
 else:
     BYPASS_VALIDATION = None  # type: ignore
 
