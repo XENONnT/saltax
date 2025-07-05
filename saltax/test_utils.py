@@ -28,6 +28,7 @@ def get_test_context(saltax_mode):
         saltax_mode=saltax_mode,
         # lowest possible version to modify as less as possible
         corrections_version="global_v10",
+        output_folder="./strax_test_data",
     )
     st.apply_xedocs_configs(version="global_ONLINE")
     # Patch tf_model_mlp to be compatible with keras version
@@ -59,6 +60,7 @@ def generate_instr(context):
     """Generate an instruction file for a given runid and test context."""
     input_file = instr_file_name(
         runid=nt_test_run_id,
+        output_folder=".",
     )
     instr = generator_flat(
         runid=nt_test_run_id,
