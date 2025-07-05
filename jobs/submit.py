@@ -2,7 +2,7 @@ import os
 import time
 import configparser
 
-import utilix
+from utilix import batchq
 
 config = configparser.ConfigParser()
 config.read("config.ini")
@@ -10,20 +10,28 @@ config.read("config.ini")
 MAX_NUM_SUBMIT = config.getint("utilix", "max_num_submit")
 T_SLEEP = config.getfloat("utilix", "t_sleep")
 USER = config.get("slurm", "username")
-ACCOUNT = config.get("slurm", "account")
 LOG_DIR = config.get("slurm", "log_dir")
-CONTAINER = config.get("job", "container")
 RUNIDS = [int(runid) for runid in config.get("job", "runids").split(",")]
 JOB_TITLE = config.get("slurm", "job_title")
 PARTITION = config.get("slurm", "partition")
 QOS = config.get("slurm", "qos")
+ACCOUNT = config.get("slurm", "account")
 MEM_PER_CPU = config.getint("slurm", "mem_per_cpu")
+CONTAINER = config.get("job", "container")
+if config.has_option("job", "bind"):
+    BIND = config.get("job", "bind").split(",")
+else:
+    BIND = None  # type: ignore
 CPUS_PER_TASK = config.getint("slurm", "cpus_per_task")
+if config.has_option("job", "bypass_validation"):
+    BYPASS_VALIDATION = config.get("job", "bypass_validation").split(",")
+else:
+    BYPASS_VALIDATION = None  # type: ignore
 
 os.makedirs(LOG_DIR, exist_ok=True)
 
 
-class Submit(object):
+class Submit:
     def name(self):
         return self.__class__.__name__
 
@@ -60,7 +68,7 @@ class Submit(object):
         print(jobstring)
 
         # Modify here for the log name
-        utilix.batchq.submit_job(
+        batchq.submit_job(
             jobstring=jobstring,
             log=f"{LOG_DIR}/{jobname}.log",
             partition=PARTITION,
@@ -70,7 +78,9 @@ class Submit(object):
             dry_run=False,
             mem_per_cpu=MEM_PER_CPU,
             container=CONTAINER,
+            bind=BIND,
             cpus_per_task=CPUS_PER_TASK,
+            bypass_validation=BYPASS_VALIDATION,
         )
 
 
