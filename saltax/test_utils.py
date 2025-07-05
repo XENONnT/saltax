@@ -59,6 +59,7 @@ def generate_instr(context):
     """Generate an instruction file for a given runid and test context."""
     input_file = instr_file_name(
         runid=nt_test_run_id,
+        output_folder=".",
     )
     instr = generator_flat(
         runid=nt_test_run_id,

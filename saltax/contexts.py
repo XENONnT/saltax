@@ -40,6 +40,7 @@ def sxenonnt(
     recoil=8,
     simu_mode="all",
     context=xenonnt_fuse_full_chain_simulation,
+    output_folder="./fuse_data",
     cut_list=None,
     unblind=True,
     **kwargs,
@@ -53,6 +54,7 @@ def sxenonnt(
     :param recoil: NEST recoil type (default: 8)
     :param simu_mode: 's1', 's2', or 'all' (default: 'all')
     :param context: strax context to use (default: xenonnt_fuse_full_chain_simulation)
+    :param output_folder: Folder to save output files (default: './fuse_data')
     :param cut_list: Cut list to use (default: None)
     :param unblind: Whether to bypass any kind of blinding (default: True)
     :param kwargs: Extra options to pass to strax.Context or generator
@@ -93,7 +95,9 @@ def sxenonnt(
     else:
         params = inspect.signature(context).parameters
     _kwargs = {k: v for k, v in kwargs.items() if k in params}
-    st = context(corrections_run_id=runid, cut_list=_cut_list, **_kwargs)
+    st = context(
+        corrections_run_id=runid, output_folder=output_folder, cut_list=_cut_list, **_kwargs
+    )
 
     # Register deregistered plugins when replacing DAQReader by PMTResponseAndDAQ
     st.register(
@@ -156,6 +160,7 @@ def sxenonnt(
         recoil=recoil,
         generator_name=generator_name,
         mode=simu_mode,
+        output_folder=output_folder,
         **straxen.filter_kwargs(instr_file_name, kwargs),
     )
 

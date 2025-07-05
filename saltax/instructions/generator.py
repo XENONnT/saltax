@@ -23,9 +23,6 @@ YBE_INSTRUCTIONS_FILE = (
     "/project2/lgrandi/ghusheng/ybe_instrutions/"
     "ybe_wfsim_instructions_6806_events_time_modified.csv"
 )
-BASE_DIR = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "generated"
-)
 NEST_RNG = nestpy.RandomGen.rndm()
 
 
@@ -145,7 +142,7 @@ def instr_file_name(
     mode="all",
     en_range=DEFAULT_EN_RANGE,
     rate=units.s / SALT_TIME_INTERVAL,
-    base_dir=BASE_DIR,
+    output_folder=None,
 ):
     """Generate the instruction file name based on the runid, recoil, generator_name, mode, and
     rate.
@@ -156,7 +153,7 @@ def instr_file_name(
     :param runid: run number (default: None)
     :param en_range: (en_min, en_max) in keV (default: DEFAULT_EN_RANGE)
     :param rate: rate of events in Hz
-    :param base_dir: base directory to save the instruction file (default: BASE_DIR)
+    :param output_folder: output directory to save the instruction file (default: None)
     :return: instruction file name
 
     """
@@ -169,10 +166,15 @@ def instr_file_name(
     if runid is None:
         return "Data-loading only, no instruction file needed."
     else:
+        if output_folder is None:
+            raise RuntimeError(
+                "output_folder must be specified to generate instruction file name. "
+                "It is usually the same as the output folder of the strax context."
+            )
         rate = int(rate)
         runid = str(runid).zfill(6)
         filename = os.path.join(
-            base_dir,
+            output_folder,
             "-".join([runid, str(recoil), generator_name, en_range, mode, str(rate)]) + ".csv",
         )
 
