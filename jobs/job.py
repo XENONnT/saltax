@@ -2,6 +2,7 @@ import os
 import sys
 import gc
 import time
+import shutil
 import configparser
 import logging
 from functools import wraps
@@ -19,7 +20,6 @@ TO_PROCESS_DTYPES_EV = [
     "peaklet_classification",
     "merged_s2s",
     "peak_basics",
-    "events",
     "peak_positions_mlp",
     "peak_positions_gcn",
     "peak_positions_cnn",
@@ -28,7 +28,6 @@ TO_PROCESS_DTYPES_EV = [
     "event_pattern_fit",
     "event_shadow",
     "event_ambience",
-    "event_n_channel",
     "veto_intervals",
 ]
 TO_PROCESS_DTYPES_SE = [
@@ -55,12 +54,13 @@ def load_config():
     config = configparser.ConfigParser()
     config.read("config.ini")
     settings = {
-        "output_folder": config.get("job", "output_folder"),
         "saltax_mode": config.get("job", "saltax_mode"),
-        "simu_config_version": config.get("job", "simu_config_version"),
         "generator_name": config.get("job", "generator_name"),
         "recoil": config.getint("job", "recoil"),
         "simu_mode": config.get("job", "simu_mode"),
+        "output_folder": config.get("job", "output_folder"),
+        "corrections_version": config.get("job", "corrections_version"),
+        "simulation_config": config.get("job", "simulation_config"),
         "rate": float(config.get("job", "rate", fallback=0)) or None,
         "en_range": parse_en_range(config.get("job", "en_range", fallback="")),
         "process_data": config.getboolean("job", "process_data"),
@@ -93,11 +93,12 @@ def create_context(settings, runid):
     st = saltax.contexts.sxenonnt(
         runid=runid,
         saltax_mode=settings["saltax_mode"],
-        output_folder=settings["output_folder"],
-        simu_config_version=settings["simu_config_version"],
         generator_name=settings["generator_name"],
         recoil=settings["recoil"],
         simu_mode=settings["simu_mode"],
+        output_folder=settings["output_folder"],
+        corrections_version=settings["corrections_version"],
+        simulation_config=settings["simulation_config"],
         rate=settings["rate"] if settings["rate"] else None,
         en_range=settings["en_range"] if settings["en_range"] else None,
         unblind=True,
@@ -117,13 +118,10 @@ def get_data_types(settings):
         to_process_dtypes = TO_PROCESS_DTYPES_EV
 
     # Decide whether to skip records
-    to_process_dtypes = (
-        ["raw_records_simu", "records"] + to_process_dtypes
-        if not settings["skip_records"]
-        else to_process_dtypes
-    )
-
-    return to_process_dtypes
+    if settings["skip_records"]:
+        return to_process_dtypes
+    else:
+        return ["raw_records_simu", "records"] + to_process_dtypes
 
 
 def process_data_types(st, runid, data_types):
@@ -144,7 +142,7 @@ def delete_records_if_needed(settings, runid, st):
         records_name = str(st.key_for(runid, "records"))
         records_path = os.path.join(settings["output_folder"], records_name)
         if os.path.exists(records_path):
-            os.rmdir(records_path)
+            shutil.rmtree(records_path)
             gc.collect()
             logging.info(f"Deleted records for run {runid} in saltax mode salt.")
 
