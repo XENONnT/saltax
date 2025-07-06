@@ -129,7 +129,7 @@ def process_data_types(st, runid, data_types):
     for dt in data_types:
         logging.info(f"Making {dt}.")
         try:
-            st.make(runid, dt, save=(dt), progress_bar=True)
+            st.make(runid, dt, save=dt, progress_bar=True)
             logging.info(f"Done with {dt}.")
         except NotImplementedError as e:
             logging.error(f"Error for data type {dt}: {str(e)}")
