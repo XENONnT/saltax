@@ -195,4 +195,6 @@ def sxenonnt(
     if unblind:
         st.set_config({"event_info_function": "disabled"})
 
+    st.set_context_config({"forbid_creation_of": straxen.daqreader.DAQReader.provides})
+
     return st
