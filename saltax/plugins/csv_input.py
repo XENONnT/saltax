@@ -33,8 +33,6 @@ class SChunkCsvInput(FuseBasePlugin):
     provides = "microphysics_summary"
     data_kind = "interactions_in_roi"
 
-    save_when = strax.SaveWhen.TARGET
-
     def infer_dtype(self):
         return microphysics_summary_fields + strax.time_fields
 
