@@ -486,8 +486,8 @@ def get_n_minus_1_cut_acc(
     :param all_cut_list: list of all cuts
 
     """
-    mask_salt_all_cuts = apply_cut_lists(events_salt_matched_to_simu, BASIC_CUTS=all_cut_list)
-    mask_simu_all_cuts = apply_cut_lists(events_simu_matched_to_salt, BASIC_CUTS=all_cut_list)
+    mask_salt_all_cuts = apply_cut_lists(events_salt_matched_to_simu, all_cut_list=all_cut_list)
+    mask_simu_all_cuts = apply_cut_lists(events_simu_matched_to_salt, all_cut_list=all_cut_list)
 
     # Initialize a list to store your rows
     table_data = []
