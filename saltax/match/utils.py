@@ -432,15 +432,15 @@ def compare_templates(
     plt.show()
 
 
-def apply_n_minus_1_cuts(events_with_cuts, cut_oi, BASIC_CUTS=BASIC_CUTS_EXCEPT_S2PatternS1Width):
+def apply_n_minus_1_cuts(events_with_cuts, cut_oi, all_cuts=BASIC_CUTS_EXCEPT_S2PatternS1Width):
     """Apply N-1 cuts to the events, where N is the number of cuts.
 
     :param events_with_cuts: events with cuts
     :param cut_oi: the cut to be left out for examination
-    :param BASIC_CUTS: all cuts
+    :param all_cuts: all cuts
 
     """
-    other_cuts = [cut for cut in BASIC_CUTS if cut != cut_oi]
+    other_cuts = [cut for cut in all_cuts if cut != cut_oi]
     mask = np.ones(len(events_with_cuts), dtype=bool)
 
     for cut in other_cuts:
@@ -449,12 +449,12 @@ def apply_n_minus_1_cuts(events_with_cuts, cut_oi, BASIC_CUTS=BASIC_CUTS_EXCEPT_
     return mask
 
 
-def apply_single_cut(events_with_cuts, cut_oi, BASIC_CUTS=None):
+def apply_single_cut(events_with_cuts, cut_oi, all_cuts=None):
     """Apply a single cut to the events.
 
     :param events_with_cuts: events with cuts
     :param cut_oi: the cut to be applied
-    :param BASIC_CUTS: pseudo parameter, not really used
+    :param all_cuts: pseudo parameter, not really used
 
     """
     mask = np.ones(len(events_with_cuts), dtype=bool)
@@ -463,15 +463,15 @@ def apply_single_cut(events_with_cuts, cut_oi, BASIC_CUTS=None):
     return mask
 
 
-def apply_cut_lists(events_with_cuts, BASIC_CUTS=BASIC_CUTS_EXCEPT_S2PatternS1Width):
+def apply_cut_lists(events_with_cuts, all_cuts=BASIC_CUTS_EXCEPT_S2PatternS1Width):
     """Apply a list of cuts to the events.
 
     :param events_with_cuts: events with cuts
-    :param BASIC_CUTS: list of cuts to be applied
+    :param all_cuts: list of cuts to be applied
 
     """
     mask = np.ones(len(events_with_cuts), dtype=bool)
-    for cut in BASIC_CUTS:
+    for cut in all_cuts:
         mask &= events_with_cuts[cut]
     return mask
 
@@ -486,8 +486,8 @@ def get_n_minus_1_cut_acc(
     :param all_cut_list: list of all cuts
 
     """
-    mask_salt_BASIC_CUTS = apply_cut_lists(events_salt_matched_to_simu, BASIC_CUTS=all_cut_list)
-    mask_simu_BASIC_CUTS = apply_cut_lists(events_simu_matched_to_salt, BASIC_CUTS=all_cut_list)
+    mask_salt_all_cuts = apply_cut_lists(events_salt_matched_to_simu, BASIC_CUTS=all_cut_list)
+    mask_simu_all_cuts = apply_cut_lists(events_simu_matched_to_salt, BASIC_CUTS=all_cut_list)
 
     # Initialize a list to store your rows
     table_data = []
@@ -495,16 +495,16 @@ def get_n_minus_1_cut_acc(
     # Loop over each cut and calculate the acceptance values
     for cut_oi in all_cut_list:
         mask_salt_except_cut_oi = apply_n_minus_1_cuts(
-            events_salt_matched_to_simu, cut_oi, BASIC_CUTS=all_cut_list
+            events_salt_matched_to_simu, cut_oi, all_cuts=all_cut_list
         )
         mask_simu_except_cut_oi = apply_n_minus_1_cuts(
-            events_simu_matched_to_salt, cut_oi, BASIC_CUTS=all_cut_list
+            events_simu_matched_to_salt, cut_oi, all_cuts=all_cut_list
         )
         acceptance_salt = (
-            int(np.sum(mask_salt_BASIC_CUTS) / np.sum(mask_salt_except_cut_oi) * 100) / 100
+            int(np.sum(mask_salt_all_cuts) / np.sum(mask_salt_except_cut_oi) * 100) / 100
         )
         acceptance_simu = (
-            int(np.sum(mask_simu_BASIC_CUTS) / np.sum(mask_simu_except_cut_oi) * 100) / 100
+            int(np.sum(mask_simu_all_cuts) / np.sum(mask_simu_except_cut_oi) * 100) / 100
         )
 
         # Add a row for each cut
@@ -581,7 +581,14 @@ def get_cut_eff(
     :return: a dictionary of acceptance values
 
     """
-    coord_units = {"s1_area": "[PE]", "s2_area": "[PE]", "cs1": "[PE]", "cs2": "[PE]", "z": "[cm]"}
+    coord_units = {
+        "s1_area": "[PE]",
+        "s2_area": "[PE]",
+        "cs1": "[PE]",
+        "cs2": "[PE]",
+        "z": "[cm]",
+        "e_ces": "[keV]",
+    }
     if bin_range is not None:
         bins = np.linspace(bin_range[0], bin_range[1], n_bins)
     else:
@@ -599,9 +606,9 @@ def get_cut_eff(
         result_dict[cut] = np.zeros(n_bins - 1)
         result_dict[cut + "_upper"] = np.zeros(n_bins - 1)
         result_dict[cut + "_lower"] = np.zeros(n_bins - 1)
-    result_dict["BASIC_CUTS"] = np.zeros(n_bins - 1)
-    result_dict["BASIC_CUTS_upper"] = np.zeros(n_bins - 1)
-    result_dict["BASIC_CUTS_lower"] = np.zeros(n_bins - 1)
+    result_dict["all_cuts"] = np.zeros(n_bins - 1)
+    result_dict["all_cuts_upper"] = np.zeros(n_bins - 1)
+    result_dict["all_cuts_lower"] = np.zeros(n_bins - 1)
     result_dict[coord] = np.zeros(n_bins - 1)
 
     for i in range(n_bins - 1):
@@ -611,9 +618,9 @@ def get_cut_eff(
         selected_events = events[(events[coord] >= bins[i]) * (events[coord] < bins[i + 1])]
         selected_events_all_cut = selected_events[apply_cut_lists(selected_events, all_cut_list)]
         interval = binomtest(len(selected_events_all_cut), len(selected_events)).proportion_ci()
-        result_dict["BASIC_CUTS"][i] = len(selected_events_all_cut) / len(selected_events)
-        result_dict["BASIC_CUTS_upper"][i] = interval.high
-        result_dict["BASIC_CUTS_lower"][i] = interval.low
+        result_dict["all_cuts"][i] = len(selected_events_all_cut) / len(selected_events)
+        result_dict["all_cuts_upper"][i] = interval.high
+        result_dict["all_cuts_lower"][i] = interval.low
 
         for cut_oi in all_cut_list:
             if indv_cut_type == "n_minus_1":
@@ -645,11 +652,11 @@ def get_cut_eff(
         )  # +1 for the 'Combined' line
         color_cycle = cycle(colors)
         plt.figure(dpi=150)
-        plt.plot(result_dict[coord], result_dict["BASIC_CUTS"], color="k", label="Combined")
+        plt.plot(result_dict[coord], result_dict["all_cuts"], color="k", label="Combined")
         plt.fill_between(
             result_dict[coord],
-            result_dict["BASIC_CUTS_lower"],
-            result_dict["BASIC_CUTS_upper"],
+            result_dict["all_cuts_lower"],
+            result_dict["all_cuts_upper"],
             color="k",
             alpha=0.3,
         )
