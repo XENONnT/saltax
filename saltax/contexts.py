@@ -49,7 +49,7 @@ def sxenonnt(
     """Return a strax context for XENONnT data analysis with saltax.
 
     :param runid: run number. Must exist in RunDB if you use this context to compute
-        raw_records_simu, or use None for data- loading only.
+        raw_records_simu, or use None for data-loading only.
     :param saltax_mode: 'data', 'simu', or 'salt'.
     :param generator_name: Instruction mode to use (default: 'flat')
     :param recoil: NEST recoil type (default: 8)
@@ -97,7 +97,10 @@ def sxenonnt(
         params = inspect.signature(context).parameters
     _kwargs = {k: v for k, v in kwargs.items() if k in params}
     st = context(
-        corrections_run_id=runid, output_folder=output_folder, cut_list=_cut_list, **_kwargs
+        output_folder=output_folder,
+        cut_list=_cut_list,
+        run_without_proper_run_id=True,
+        **_kwargs,
     )
 
     # Register deregistered plugins when replacing DAQReader by PMTResponseAndDAQ
