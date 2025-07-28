@@ -62,7 +62,6 @@ def sxenonnt(
     :return: strax context
 
     """
-
     if runid is None:
         log.warning(
             "Since you specified runid=None, "
