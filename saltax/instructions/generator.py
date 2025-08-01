@@ -1,4 +1,5 @@
 import os
+import logging
 import pytz
 import pickle
 from tqdm import tqdm
@@ -12,6 +13,9 @@ from fuse.plugins.detector_physics.csv_input import ChunkCsvInput
 
 from saltax.utils import COLL
 from saltax.plugins.csv_input import SALT_TIME_INTERVAL
+
+logging.basicConfig(level=logging.INFO, handlers=[logging.StreamHandler()])
+log = logging.getLogger("saltax.instructions.generator")
 
 DEFAULT_EN_RANGE = (0.2, 15.0)  # in unit of keV
 Z_RANGE = (-straxen.tpc_z, 0)  # in unit of cm
@@ -296,6 +300,7 @@ def generator_se_bootstrapped(
 def generator_neutron(
     runid,
     context,
+    recoil=0,
     n_tot=None,
     rate=units.s / SALT_TIME_INTERVAL,
     time_mode="uniform",
@@ -328,22 +333,41 @@ def generator_neutron(
     )
     n_tot = len(times_offset)
 
-    # bootstrap instructions
     neutron_instructions = pd.read_csv(neutron_instructions_file)
-    neutron_event_numbers = rng.choice(
-        np.unique(neutron_instructions.event_number), n_tot, replace=True
+
+    # check recoil
+    unique_recoil = np.unique(neutron_instructions["recoil"])
+    if not np.all(unique_recoil == recoil):
+        log.warning(
+            f"Recoil in neutron instructions ({unique_recoil}) "
+            f"does not match the requested recoil ({recoil})."
+        )
+
+    # bootstrap instructions
+    if not np.all(np.diff(neutron_instructions["event_number"]) >= 0):
+        raise RuntimeError(
+            "Neutron instructions must be sorted by event_number in ascending order."
+        )
+    event_numbers, event_indices, event_counts = np.unique(
+        neutron_instructions["event_number"],
+        return_index=True,
+        return_counts=True,
     )
+    event_indices = np.append(event_indices, len(neutron_instructions))
+    neutron_event_numbers = rng.choice(len(event_numbers), n_tot, replace=True)
 
     # assign instructions
-    instr = np.zeros(0, dtype=ChunkCsvInput.needed_csv_input_fields())
+    instr = []
+    fmap = straxen.URLConfig.evaluate_dry(context.config["efield_map"])
     for i in tqdm(range(n_tot)):
         # bootstrapped neutron instruction
-        selected_neutron = neutron_instructions[
-            neutron_instructions["event_number"] == neutron_event_numbers[i]
-        ]
+        _i = neutron_event_numbers[i]
+        selected_neutron = neutron_instructions[event_indices[_i] : event_indices[_i + 1]]
         # instruction for i-th event
         instr_i = np.zeros(len(selected_neutron), dtype=ChunkCsvInput.needed_csv_input_fields())
         instr_i["t"] = times_offset[i] + selected_neutron["time"]
+        if i < n_tot - 1 and instr_i["t"].max() > times_offset[i + 1]:
+            raise RuntimeError("Neutron instructions overlap with the next event.")
         instr_i["eventid"] = i + 1
         instr_i["cluster_id"] = len(instr) + np.arange(len(selected_neutron))
         instr_i["x"] = selected_neutron["x"]
@@ -358,7 +382,6 @@ def generator_neutron(
             selected_neutron["type"] == 2
         ]
         instr_i["excitons"] = selected_neutron["n_excitons"]
-        fmap = straxen.URLConfig.evaluate_dry(context.config["efield_map"])
         instr_i["e_field"] = fmap(
             np.array(
                 [
@@ -369,7 +392,8 @@ def generator_neutron(
         )
 
         # concatenate instr
-        instr = np.concatenate((instr, instr_i))
+        instr.append(instr_i)
+    instr = np.hstack(instr)
 
     return instr
 
@@ -377,6 +401,7 @@ def generator_neutron(
 def generator_ambe(
     runid,
     context,
+    recoil=0,
     n_tot=None,
     rate=units.s / SALT_TIME_INTERVAL,
     time_mode="uniform",
@@ -414,6 +439,7 @@ def generator_ambe(
 def generator_ybe(
     runid,
     context,
+    recoil=0,
     n_tot=None,
     rate=units.s / SALT_TIME_INTERVAL,
     time_mode="uniform",
@@ -439,6 +465,7 @@ def generator_ybe(
     return generator_neutron(
         runid=runid,
         context=context,
+        recoil=recoil,
         n_tot=n_tot,
         rate=rate,
         time_mode=time_mode,
