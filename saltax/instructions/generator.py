@@ -395,7 +395,8 @@ def generator_neutron(
         ).T
     )
 
-    if np.any(np.diff(instr["t"]) < 0):
+    ind = np.cumsum(event_counts[_indices])[:-1]
+    if np.any(instr["t"][ind] - instr["t"][ind - 1] < 0):
         raise RuntimeError("Neutron instructions overlap with the next event.")
 
     return instr
