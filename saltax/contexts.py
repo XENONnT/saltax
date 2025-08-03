@@ -34,6 +34,38 @@ def validate_runid(runid):
         raise ValueError(f"Run {runid} not found in RunDB")
 
 
+def instruction_generation(st, runid):
+    # Specify simulation instructions
+    input_file = instr_file_name(
+        runid=runid,
+        **straxen.filter_kwargs(instr_file_name, st.instruction_kwargs),
+    )
+
+    runid = str(runid).zfill(6)
+    # Try to load instruction from file and generate if not found
+    try:
+        instr = pd.read_csv(input_file)
+        log.info("Loaded instructions from file", input_file)
+    except FileNotFoundError:
+        log.info(f"Instruction file {input_file} not found. Generating instructions...")
+        instr = st.generator_func(
+            runid=runid,
+            context=st,
+            **straxen.filter_kwargs(st.generator_func, st.instruction_kwargs),
+        )
+        os.makedirs(os.path.dirname(input_file), exist_ok=True)
+        pd.DataFrame(instr).to_csv(input_file, index=False)
+        log.info(f"Instructions saved to {input_file}")
+
+    # Load instructions into config
+    st.set_config(
+        {
+            "input_file": input_file,
+            "raw_records_file_size_target": MAX_RAW_RECORDS_FILE_SIZE_MB,
+        }
+    )
+
+
 def sxenonnt(
     runid=None,
     saltax_mode="salt",
@@ -156,44 +188,17 @@ def sxenonnt(
     st.deregister_plugins_with_missing_dependencies()
 
     # Get salt generator
-    generator_func = getattr(saltax.instructions.generator, "generator_" + generator_name)
-
-    # Specify simulation instructions
-    input_file = instr_file_name(
-        runid=runid,
-        recoil=recoil,
-        generator_name=generator_name,
-        mode=simu_mode,
-        output_folder=output_folder,
-        **straxen.filter_kwargs(instr_file_name, kwargs),
-    )
+    st.instruction_kwargs = {
+        "output_folder": output_folder,
+        "generator_name": generator_name,
+        "mode": simu_mode,
+        "recoil": recoil,
+    }
+    st.generator_func = getattr(saltax.instructions.generator, "generator_" + generator_name)
 
     # If runid is not None, then we need to either load instruction or generate it
     if runid is not None:
-        runid = str(runid).zfill(6)
-        # Try to load instruction from file and generate if not found
-        try:
-            instr = pd.read_csv(input_file)
-            log.info("Loaded instructions from file", input_file)
-        except FileNotFoundError:
-            log.info(f"Instruction file {input_file} not found. Generating instructions...")
-            instr = generator_func(
-                runid=runid,
-                recoil=recoil,
-                context=st,
-                **straxen.filter_kwargs(generator_func, kwargs),
-            )
-            os.makedirs(os.path.dirname(input_file), exist_ok=True)
-            pd.DataFrame(instr).to_csv(input_file, index=False)
-            log.info(f"Instructions saved to {input_file}")
-
-        # Load instructions into config
-        st.set_config(
-            {
-                "input_file": input_file,
-                "raw_records_file_size_target": MAX_RAW_RECORDS_FILE_SIZE_MB,
-            }
-        )
+        instruction_generation(st, runid)
 
     if unblind:
         st.set_config({"event_info_function": "disabled"})

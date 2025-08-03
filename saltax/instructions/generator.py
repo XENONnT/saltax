@@ -2,7 +2,6 @@ import os
 import logging
 import pytz
 import pickle
-from tqdm import tqdm
 import numpy as np
 import pandas as pd
 
@@ -333,7 +332,7 @@ def generator_neutron(
     )
     n_tot = len(times_offset)
 
-    neutron_instructions = pd.read_csv(neutron_instructions_file)
+    neutron_instructions = pd.read_csv(neutron_instructions_file).to_records()
 
     # check recoil
     unique_recoil = np.unique(neutron_instructions["recoil"])
@@ -354,46 +353,51 @@ def generator_neutron(
         return_counts=True,
     )
     event_indices = np.append(event_indices, len(neutron_instructions))
-    neutron_event_numbers = rng.choice(len(event_numbers), n_tot, replace=True)
+
+    _indices = rng.choice(len(event_numbers), size=n_tot, replace=True)
+    indices = np.hstack([np.arange(event_indices[i], event_indices[i + 1]) for i in _indices])
+
+    fmap = straxen.URLConfig.evaluate_dry(context.config["efield_map"])
 
     # assign instructions
-    instr = []
-    fmap = straxen.URLConfig.evaluate_dry(context.config["efield_map"])
-    for i in tqdm(range(n_tot)):
-        # bootstrapped neutron instruction
-        _i = neutron_event_numbers[i]
-        selected_neutron = neutron_instructions[event_indices[_i] : event_indices[_i + 1]]
-        # instruction for i-th event
-        instr_i = np.zeros(len(selected_neutron), dtype=ChunkCsvInput.needed_csv_input_fields())
-        instr_i["t"] = times_offset[i] + selected_neutron["time"]
-        if i < n_tot - 1 and instr_i["t"].max() > times_offset[i + 1]:
-            raise RuntimeError("Neutron instructions overlap with the next event.")
-        instr_i["eventid"] = i + 1
-        instr_i["cluster_id"] = len(instr) + np.arange(len(selected_neutron))
-        instr_i["x"] = selected_neutron["x"]
-        instr_i["y"] = selected_neutron["y"]
-        instr_i["z"] = selected_neutron["z"]
-        instr_i["nestid"] = selected_neutron["recoil"]
-        instr_i["ed"] = selected_neutron["e_dep"]
-        instr_i["photons"][selected_neutron["type"] == 1] = selected_neutron["amp"][
-            selected_neutron["type"] == 1
-        ]
-        instr_i["electrons"][selected_neutron["type"] == 2] = selected_neutron["amp"][
-            selected_neutron["type"] == 2
-        ]
-        instr_i["excitons"] = selected_neutron["n_excitons"]
-        instr_i["e_field"] = fmap(
-            np.array(
-                [
-                    np.sqrt(selected_neutron["x"] ** 2 + selected_neutron["y"] ** 2),
-                    selected_neutron["z"],
-                ]
-            ).T
-        )
+    instr = np.zeros(len(indices), dtype=ChunkCsvInput.needed_csv_input_fields())
+    instr["eventid"] = np.repeat(np.arange(n_tot), event_counts[_indices])
+    instr["cluster_id"] = np.arange(len(instr))
 
-        # concatenate instr
-        instr.append(instr_i)
-    instr = np.hstack(instr)
+    instr["t"] = np.repeat(times_offset, event_counts[_indices])
+    instr["t"] += neutron_instructions["time"][indices]
+
+    instr["x"] = neutron_instructions["x"][indices]
+    instr["y"] = neutron_instructions["y"][indices]
+    instr["z"] = neutron_instructions["z"][indices]
+
+    instr["nestid"] = neutron_instructions["recoil"][indices]
+    instr["ed"] = neutron_instructions["e_dep"][indices]
+
+    instr["photons"] = np.where(
+        neutron_instructions["type"][indices] == 1,
+        neutron_instructions["amp"][indices],
+        0,
+    )
+    instr["electrons"] = np.where(
+        neutron_instructions["type"][indices] == 2,
+        neutron_instructions["amp"][indices],
+        0,
+    )
+    instr["excitons"] = neutron_instructions["n_excitons"][indices]
+
+    instr["e_field"] = fmap(
+        np.array(
+            [
+                np.sqrt(instr["x"] ** 2 + instr["y"] ** 2),
+                instr["z"],
+            ]
+        ).T
+    )
+
+    ind = np.cumsum(event_counts[_indices])[:-1]
+    if np.any(instr["t"][ind] - instr["t"][ind - 1] < 0):
+        raise RuntimeError("Neutron instructions overlap with the next event.")
 
     return instr
 
