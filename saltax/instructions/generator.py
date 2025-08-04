@@ -1,7 +1,6 @@
 import os
 import logging
 import pytz
-import pickle
 import numpy as np
 import pandas as pd
 
@@ -20,7 +19,7 @@ DEFAULT_EN_RANGE = (0.2, 15.0)  # in unit of keV
 Z_RANGE = (-straxen.tpc_z, 0)  # in unit of cm
 R_RANGE = (0, straxen.tpc_r)  # in unit of cm
 NC = nestpy.NESTcalc(nestpy.DetectorExample_XENON10())
-SE_INSTRUCTIONS_DIR = "/project/lgrandi/yuanlq/salt/se_instructions"
+SE_INSTRUCTIONS_FILE = "/project/lgrandi/yuanlq/salt/se_instructions.npz"
 AMBE_INSTRUCTIONS_FILE = "/project/lgrandi/yuanlq/salt/ambe_instructions/minghao_aptinput.csv"
 YBE_INSTRUCTIONS_FILE = (
     "/project2/lgrandi/ghusheng/ybe_instrutions/"
@@ -218,7 +217,7 @@ def generator_se(
     n_tot = len(times)
 
     instr = np.zeros(n_tot, dtype=ChunkCsvInput.needed_csv_input_fields())
-    instr["eventid"] = instr["cluster_id"] = np.arange(1, n_tot + 1)
+    instr["eventid"] = instr["cluster_id"] = np.arange(n_tot)
     instr["t"] = times
 
     # Generating unoformely distributed events for give R and Z range
@@ -237,7 +236,7 @@ def generator_se(
 def generator_se_bootstrapped(
     runid,
     context,
-    xyt_files_at=SE_INSTRUCTIONS_DIR,
+    se_instructions_file=SE_INSTRUCTIONS_FILE,
     start_end_from_medatata=False,
 ):
     """Generate instructions for a run with single electron.
@@ -246,6 +245,7 @@ def generator_se_bootstrapped(
     realistic
     :param runid: run number
     :param context: strax context
+    :param se_instructions_file: file containing se instructions (default: SE_INSTRUCTIONS_FILE)
     :param xyt_files_at: directory to search for instructions of x, y, t information
     :param start_end_from_medatata: whether use the start and end from raw_records metadata
         (default: False)
@@ -254,22 +254,18 @@ def generator_se_bootstrapped(
     """
     # load instructions
     runid = str(runid).zfill(6)
-    with open(os.path.join(xyt_files_at, "se_xs_dict.pkl"), "rb") as f:
-        xs = pickle.load(f)[runid]
-    with open(os.path.join(xyt_files_at, "se_ys_dict.pkl"), "rb") as f:
-        ys = pickle.load(f)[runid]
-    with open(os.path.join(xyt_files_at, "se_ts_dict.pkl"), "rb") as f:
-        ts = pickle.load(f)[runid]
+    se_instructions = np.load(se_instructions_file)[runid]
 
     # stay in runtime range
     start_time, end_time = get_run_start_end(
         runid, start_end_from_medatata=start_end_from_medatata, context=context
     )
-    mask_in_run = ts < (end_time - 1 / 20 * units.s)  # empirical patch to stay in run
-    mask_in_run &= ts > (start_time + 1 / 20 * units.s)  # empirical patch to stay in run
-    xs = xs[mask_in_run]
-    ys = ys[mask_in_run]
-    ts = ts[mask_in_run]
+    # empirical patch to stay in run
+    mask_in_run = se_instructions["t"] < (end_time - 1 / 20 * units.s)
+    mask_in_run &= se_instructions["t"] > (start_time + 1 / 20 * units.s)
+    xs = se_instructions["x"][mask_in_run]
+    ys = se_instructions["y"][mask_in_run]
+    ts = se_instructions["t"][mask_in_run]
 
     # clean up nan
     mask_is_nan = np.isnan(xs) + np.isnan(ys) + np.isnan(ts)
@@ -282,7 +278,7 @@ def generator_se_bootstrapped(
 
     n_tot = len(ts)
     instr = np.zeros(n_tot, dtype=ChunkCsvInput.needed_csv_input_fields())
-    instr["eventid"] = instr["cluster_id"] = np.arange(1, n_tot + 1)
+    instr["eventid"] = instr["cluster_id"] = np.arange(n_tot)
     instr["t"] = ts
     instr["x"] = xs
     instr["y"] = ys
@@ -520,7 +516,7 @@ def generator_flat(
     n_tot = len(times)
 
     instr = np.zeros(n_tot, dtype=ChunkCsvInput.needed_csv_input_fields())
-    instr["eventid"] = instr["cluster_id"] = np.arange(1, n_tot + 1)
+    instr["eventid"] = instr["cluster_id"] = np.arange(n_tot)
     instr["t"] = times
 
     # Generating unoformely distributed events for give R and Z range
