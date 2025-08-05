@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 
 import nestpy
+import utilix
 import straxen
 from straxen import units
 from fuse.plugins.detector_physics.csv_input import ChunkCsvInput
@@ -19,12 +20,9 @@ DEFAULT_EN_RANGE = (0.2, 15.0)  # in unit of keV
 Z_RANGE = (-straxen.tpc_z, 0)  # in unit of cm
 R_RANGE = (0, straxen.tpc_r)  # in unit of cm
 NC = nestpy.NESTcalc(nestpy.DetectorExample_XENON10())
-SE_INSTRUCTIONS_FILE = "/project/lgrandi/yuanlq/salt/se_instructions.npz"
-AMBE_INSTRUCTIONS_FILE = "/project/lgrandi/yuanlq/salt/ambe_instructions/minghao_aptinput.csv"
-YBE_INSTRUCTIONS_FILE = (
-    "/project2/lgrandi/ghusheng/ybe_instrutions/"
-    "ybe_wfsim_instructions_6806_events_time_modified.csv"
-)
+SE_INSTRUCTIONS_FILE = "se_instructions.npz"
+AMBE_INSTRUCTIONS_FILE = "minghao_aptinput.csv"
+YBE_INSTRUCTIONS_FILE = "ybe_wfsim_instructions_6806_events_time_modified.csv"
 NEST_RNG = nestpy.RandomGen.rndm()
 
 
@@ -239,7 +237,9 @@ def generator_se_bootstrapped(
     """
     # load instructions
     run_id = str(run_id).zfill(6)
-    se_instructions = np.load(se_instructions_file)[run_id]
+    downloader = utilix.mongo_storage.MongoDownloader()
+    path = downloader.download_single(se_instructions_file)
+    se_instructions = np.load(path)[run_id]
 
     # stay in runtime range
     start_time, end_time = get_run_start_end(run_id)
@@ -305,7 +305,9 @@ def generator_neutron(
     )
     n_tot = len(times_offset)
 
-    neutron_instructions = pd.read_csv(neutron_instructions_file).to_records()
+    downloader = utilix.mongo_storage.MongoDownloader()
+    path = downloader.download_single(neutron_instructions_file)
+    neutron_instructions = pd.read_csv(path).to_records()
 
     # check recoil
     unique_recoil = np.unique(neutron_instructions["recoil"])
