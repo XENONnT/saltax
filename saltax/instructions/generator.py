@@ -175,7 +175,7 @@ def instr_file_name(
     )
 
     if chunk_number is not None:
-        filename = filename.replace(".csv", f"_{chunk_number[0]}_{chunk_number[-1]+1}.csv")
+        filename = filename.replace(".csv", f"_{chunk_number[0]}_{chunk_number[-1] + 1}.csv")
 
     return filename
 
