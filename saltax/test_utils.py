@@ -1,12 +1,10 @@
 import os
-import pandas as pd
 import strax
 import straxen
 from straxen.test_utils import _get_fake_daq_reader, download_test_data, nt_test_run_id
 
 import saltax
 from saltax.utils import straxen_version
-from saltax.instructions.generator import instr_file_name, generator_flat
 
 TEST_DATA_TYPES = [
     "microphysics_summary",
@@ -52,18 +50,4 @@ def get_test_context(saltax_mode):
         strax.DataDirectory("./strax_test_data", deep_scan=True, provide_run_metadata=True)
     ]
     assert st.is_stored(nt_test_run_id, "raw_records"), os.listdir(st.storage[-1].path)
-    st.set_config({"input_file": generate_instr()})
     return st
-
-
-def generate_instr():
-    """Generate an instruction file for a given run_id."""
-    input_file = instr_file_name(
-        run_id=nt_test_run_id,
-        output_folder=".",
-    )
-    instr = generator_flat(
-        run_id=nt_test_run_id,
-    )
-    pd.DataFrame(instr).to_csv(input_file, index=False)
-    return input_file
