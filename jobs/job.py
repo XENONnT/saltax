@@ -88,10 +88,10 @@ def parse_en_range(en_range_str):
     return None
 
 
-def create_context(settings, runid):
-    """Create the context for the given settings and runid, and patch storage if needed."""
+def create_context(settings, run_id):
+    """Create the context for the given settings and run_id, and patch storage if needed."""
     st = saltax.contexts.sxenonnt(
-        runid=runid,
+        run_id=run_id,
         saltax_mode=settings["saltax_mode"],
         generator_name=settings["generator_name"],
         recoil=settings["recoil"],
@@ -124,27 +124,27 @@ def get_data_types(settings):
         return ["raw_records_simu", "records"] + to_process_dtypes
 
 
-def process_data_types(st, runid, data_types):
-    """Process the data types for the given context and runid."""
+def process_data_types(st, run_id, data_types):
+    """Process the data types for the given context and run_id."""
     for dt in data_types:
         logging.info(f"Making {dt}.")
         try:
-            st.make(runid, dt, save=dt, progress_bar=True)
+            st.make(run_id, dt, save=dt, progress_bar=True)
             logging.info(f"Done with {dt}.")
         except NotImplementedError as e:
             logging.error(f"Error for data type {dt}: {str(e)}")
         gc.collect()
 
 
-def delete_records_if_needed(settings, runid, st):
+def delete_records_if_needed(settings, run_id, st):
     """Delete records if needed."""
     if settings["delete_records"]:
-        records_name = str(st.key_for(runid, "records"))
+        records_name = str(st.key_for(run_id, "records"))
         records_path = os.path.join(settings["output_folder"], records_name)
         if os.path.exists(records_path):
             shutil.rmtree(records_path)
             gc.collect()
-            logging.info(f"Deleted records for run {runid} in saltax mode salt.")
+            logging.info(f"Deleted records for run {run_id} in saltax mode salt.")
 
 
 def timeit(func):
@@ -164,44 +164,44 @@ def timeit(func):
 @timeit
 def main():
     print_versions()
-    _, runid = sys.argv
-    runid = str(runid).zfill(6)
+    _, run_id = sys.argv
+    run_id = str(run_id).zfill(6)
 
     # Process the saltax desired mode
     logging.info("Loading context...")
     settings = load_config()
-    st = create_context(settings, runid)
+    st = create_context(settings, run_id)
     data_types = get_data_types(settings)
     print_settings(settings)
-    process_data_types(st, runid, data_types)
+    process_data_types(st, run_id, data_types)
 
     # Process data-only mode if required
     if settings["process_data"] and settings["saltax_mode"] == "salt":
         logging.info("====================")
-        logging.info(f"Now starting data-only context for run {runid}")
+        logging.info(f"Now starting data-only context for run {run_id}")
         settings_temp = settings.copy()
         settings_temp["saltax_mode"] = "data"
-        st_data = create_context(settings_temp, runid)
+        st_data = create_context(settings_temp, run_id)
         print_settings(settings_temp)
-        process_data_types(st_data, runid, data_types)
+        process_data_types(st_data, run_id, data_types)
         logging.info("Finished processing for data-only mode.")
 
     # Process simu-only mode if required
     if settings["process_simu"] and settings["saltax_mode"] == "salt":
         logging.info("====================")
-        logging.info(f"Now starting simu-only context for run {runid}")
+        logging.info(f"Now starting simu-only context for run {run_id}")
         settings_temp = settings.copy()
         settings_temp["saltax_mode"] = "simu"
-        st_simu = create_context(settings_temp, runid)
+        st_simu = create_context(settings_temp, run_id)
         print_settings(settings_temp)
-        process_data_types(st_simu, runid, data_types)
+        process_data_types(st_simu, run_id, data_types)
         logging.info("Finished processing for simu-only mode.")
 
     # Delete records if needed
-    delete_records_if_needed(settings, runid, st)
+    delete_records_if_needed(settings, run_id, st)
 
     logging.info("====================")
-    logging.info(f"Finished all computations for run {runid}.")
+    logging.info(f"Finished all computations for run {run_id}.")
     logging.info("Exiting.")
 
 

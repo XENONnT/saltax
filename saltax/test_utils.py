@@ -24,7 +24,7 @@ TEST_DATA_TYPES = [
 def get_test_context(saltax_mode):
     """Get a test context for the given saltax mode."""
     st = saltax.contexts.sxenonnt(
-        runid=nt_test_run_id,
+        run_id=nt_test_run_id,
         saltax_mode=saltax_mode,
         # lowest possible version to modify as less as possible
         corrections_version="global_v10",
@@ -52,20 +52,18 @@ def get_test_context(saltax_mode):
         strax.DataDirectory("./strax_test_data", deep_scan=True, provide_run_metadata=True)
     ]
     assert st.is_stored(nt_test_run_id, "raw_records"), os.listdir(st.storage[-1].path)
-    st.set_config({"input_file": generate_instr(st)})
+    st.set_config({"input_file": generate_instr()})
     return st
 
 
-def generate_instr(context):
-    """Generate an instruction file for a given runid and test context."""
+def generate_instr():
+    """Generate an instruction file for a given run_id."""
     input_file = instr_file_name(
-        runid=nt_test_run_id,
+        run_id=nt_test_run_id,
         output_folder=".",
     )
     instr = generator_flat(
-        runid=nt_test_run_id,
-        context=context,
-        start_end_from_medatata=True,
+        run_id=nt_test_run_id,
     )
     pd.DataFrame(instr).to_csv(input_file, index=False)
     return input_file

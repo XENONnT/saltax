@@ -86,7 +86,7 @@ def test_match():
         st_salt=st["salt"],
         st_simu=st["simu"],
         st_data=st["data"],
-        runid=nt_test_run_id,
+        run_id=nt_test_run_id,
         events_simu=events_simu_matched_to_salt[mask_simu_cut],
         events_salt=events_salt_matched_to_simu[mask_salt_cut],
     )
