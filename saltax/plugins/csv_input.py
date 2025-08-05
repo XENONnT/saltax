@@ -88,7 +88,7 @@ class SChunkCsvInput(FuseBasePlugin):
         instr_file_name = saltax.instructions.generator.instr_file_name
         input_file = instr_file_name(
             run_id=self.run_id,
-            chunk_number=self.chunk_number,
+            chunk_number=getattr(self, "chunk_number", None),
             **straxen.filter_kwargs(
                 instr_file_name,
                 {**self.generator_kwargs, "generator_name": self.generator_name},
