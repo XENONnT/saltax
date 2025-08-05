@@ -4,7 +4,7 @@ import straxen
 from straxen.test_utils import _get_fake_daq_reader, download_test_data, nt_test_run_id
 
 import saltax
-from saltax.utils import straxen_version
+from saltax.utils import straxen_version, setattr_module
 
 TEST_DATA_TYPES = [
     "microphysics_summary",
@@ -50,4 +50,12 @@ def get_test_context(saltax_mode):
         strax.DataDirectory("./strax_test_data", deep_scan=True, provide_run_metadata=True)
     ]
     assert st.is_stored(nt_test_run_id, "raw_records"), os.listdir(st.storage[-1].path)
+
+    def get_run_start_end(run_id):
+        metadata = st.get_metadata(run_id, "raw_records")
+        return metadata["start"], metadata["end"]
+
+    mod = saltax.instructions.generator.get_run_start_end.__module__
+    setattr_module(mod, "get_run_start_end", get_run_start_end)
+
     return st
