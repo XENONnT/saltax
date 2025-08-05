@@ -64,11 +64,11 @@ def find_runs_with_rawdata(
     return runs
 
 
-def is_stored_dtypes(st, runid, dtypes):
+def is_stored_dtypes(st, run_id, dtypes):
     """Check if all dtypes are stored for a run.
 
     :param st: saltax context
-    :param runid: runid
+    :param run_id: run_id
     :param dtypes: list of dtypes
     :return: True if all dtypes are stored, False otherwise
 
@@ -77,15 +77,15 @@ def is_stored_dtypes(st, runid, dtypes):
         return True
     else:
         for dtype in dtypes:
-            if not st.is_stored(runid, dtype):
+            if not st.is_stored(run_id, dtype):
                 return False
         return True
 
 
 def sort_runs(runs):
-    """Sort the runs in time order based on runid :param runs: list of runs' str.
+    """Sort the runs in time order based on run_id :param runs: list of runs' str.
 
-    :return: ordered runlist based on runid number
+    :return: ordered runlist based on run_id number
 
     """
     runs_number = []
@@ -140,16 +140,16 @@ def get_available_runs(
     available_runs = []
     table_data = []
     for mode, runids in modes_dict.items():
-        for runid in runids:
-            if is_stored_dtypes(st_salt, runid, salt_available) and is_stored_dtypes(
-                st_simu, runid, simu_available
+        for run_id in runids:
+            if is_stored_dtypes(st_salt, run_id, salt_available) and is_stored_dtypes(
+                st_simu, run_id, simu_available
             ):
-                duration = durations_dict.get(runid, "N/A")  # Get duration or 'N/A' if not found
-                table_data.append([mode, runid, duration])
-                available_runs.append(runid)
+                duration = durations_dict.get(run_id, "N/A")  # Get duration or 'N/A' if not found
+                table_data.append([mode, run_id, duration])
+                available_runs.append(run_id)
 
     # Print table using tabulate
-    print(tabulate(table_data, headers=["mode", "runid", "duration [min]"]))
+    print(tabulate(table_data, headers=["mode", "run_id", "duration [min]"]))
     print("=============================")
     print("The runs below are available:")
     print(available_runs)

@@ -1,14 +1,13 @@
-import os
 import logging
 import inspect
 from immutabledict import immutabledict
-import pandas as pd
 
 import straxen
+from straxen import units
 from fuse.context import full_chain_context, xenonnt_fuse_full_chain_simulation
 import saltax
 from saltax.utils import COLL
-from saltax.instructions.generator import instr_file_name
+from saltax.plugins.csv_input import SALT_TIME_INTERVAL
 from saltax.plugins.records import SCHANNEL_STARTS_AT
 
 logging.basicConfig(level=logging.INFO, handlers=[logging.StreamHandler()])
@@ -22,56 +21,25 @@ MAX_RAW_RECORDS_FILE_SIZE_MB = 1e9
 SALTAX_MODES = ["data", "simu", "salt"]
 
 
-def validate_runid(runid):
-    """Validate runid in RunDB to see if you can use it for computation.
+def validate_runid(run_id):
+    """Validate run_id in RunDB to see if you can use it for computation.
 
-    :param runid: run number
+    :param run_id: run number
     :return: None
 
     """
-    doc = COLL.find_one({"number": int(runid)})
+    doc = COLL.find_one({"number": int(run_id)})
     if doc is None:
-        raise ValueError(f"Run {runid} not found in RunDB")
-
-
-def instruction_generation(st, runid):
-    # Specify simulation instructions
-    input_file = instr_file_name(
-        runid=runid,
-        **straxen.filter_kwargs(instr_file_name, st.instruction_kwargs),
-    )
-
-    runid = str(runid).zfill(6)
-    # Try to load instruction from file and generate if not found
-    try:
-        instr = pd.read_csv(input_file)
-        log.info("Loaded instructions from file", input_file)
-    except FileNotFoundError:
-        log.info(f"Instruction file {input_file} not found. Generating instructions...")
-        instr = st.generator_func(
-            runid=runid,
-            context=st,
-            **straxen.filter_kwargs(st.generator_func, st.instruction_kwargs),
-        )
-        os.makedirs(os.path.dirname(input_file), exist_ok=True)
-        pd.DataFrame(instr).to_csv(input_file, index=False)
-        log.info(f"Instructions saved to {input_file}")
-
-    # Load instructions into config
-    st.set_config(
-        {
-            "input_file": input_file,
-            "raw_records_file_size_target": MAX_RAW_RECORDS_FILE_SIZE_MB,
-        }
-    )
+        raise ValueError(f"Run {run_id} not found in RunDB")
 
 
 def sxenonnt(
-    runid=None,
+    run_id=None,
     saltax_mode="salt",
     generator_name="flat",
     recoil=8,
     simu_mode="all",
+    rate=units.s / SALT_TIME_INTERVAL,
     context=xenonnt_fuse_full_chain_simulation,
     output_folder="./fuse_data",
     cut_list=None,
@@ -80,7 +48,7 @@ def sxenonnt(
 ):
     """Return a strax context for XENONnT data analysis with saltax.
 
-    :param runid: run number. Must exist in RunDB if you use this context to compute
+    :param run_id: run number. Must exist in RunDB if you use this context to compute
         raw_records_simu, or use None for data-loading only.
     :param saltax_mode: 'data', 'simu', or 'salt'.
     :param generator_name: Instruction mode to use (default: 'flat')
@@ -95,15 +63,15 @@ def sxenonnt(
 
     """
 
-    if runid is None:
+    if run_id is None:
         log.warning(
-            "Since you specified runid=None, "
+            "Since you specified run_id=None, "
             "this context will not be able to compute raw_records_simu."
         )
         log.warning("Welcome to data-loading only mode!")
     else:
-        validate_runid(runid)
-        log.warning(f"Welcome to computation mode which only works for run {runid}!")
+        validate_runid(run_id)
+        log.warning(f"Welcome to computation mode which only works for run {run_id}!")
 
     if saltax_mode not in SALTAX_MODES:
         raise ValueError(f"saltax_mode must be one of {SALTAX_MODES} but got {saltax_mode}.")
@@ -187,21 +155,29 @@ def sxenonnt(
     # Deregister plugins with missing dependencies
     st.deregister_plugins_with_missing_dependencies()
 
-    # Get salt generator
-    st.instruction_kwargs = {
-        "output_folder": output_folder,
-        "generator_name": generator_name,
-        "mode": simu_mode,
-        "recoil": recoil,
-    }
-    st.generator_func = getattr(saltax.instructions.generator, "generator_" + generator_name)
-
-    # If runid is not None, then we need to either load instruction or generate it
-    if runid is not None:
-        instruction_generation(st, runid)
+    # Set config about instruction generation
+    st.set_config(
+        {
+            "generator_name": generator_name,
+            "generator_kwargs": {
+                **kwargs,
+                "mode": simu_mode,
+                "recoil": recoil,
+                "rate": rate,
+                "output_folder": output_folder,
+            },
+        }
+    )
 
     if unblind:
         st.set_config({"event_info_function": "disabled"})
+
+    st.set_config(
+        {
+            "deterministic_seed": True,
+            "raw_records_file_size_target": MAX_RAW_RECORDS_FILE_SIZE_MB,
+        }
+    )
 
     st.set_context_config({"forbid_creation_of": straxen.daqreader.DAQReader.provides})
 

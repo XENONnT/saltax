@@ -7,7 +7,7 @@ def plot_event_wf(
     st_salt,
     st_simu,
     st_data,
-    runid,
+    run_id,
     events_simu,
     events_salt=None,
     event_ext_window_ns=2.4e6,
@@ -23,7 +23,7 @@ def plot_event_wf(
     :param st_salt: saltax context for salt mode
     :param st_simu: saltax context for simu mode
     :param st_data: saltax context for data mode
-    :param runid: runid of the event, example: '066666'
+    :param run_id: run_id of the event, example: '066666'
     :param events_simu: simu event_info.
     :param events_salt: salt event_info matched to events_simu. None means event level information
         from sprinkled dataset won't be used (default: None)
@@ -39,7 +39,7 @@ def plot_event_wf(
         ), "events_salt and events_simu should have the same length, \
             since they are expected to 1-1 matched"
 
-    print("Loading peaks and lone_hits for run %s event %s" % (runid, ind))
+    print("Loading peaks and lone_hits for run %s event %s" % (run_id, ind))
 
     # Get time ranges in indices for events, S1 and S2
     extended_simu_event_timerange_ns = (
@@ -78,28 +78,28 @@ def plot_event_wf(
     for context_mode in context_dict.keys():
         st = context_dict[context_mode]
         for target in ["lone_hits", "peaklets", "peaklet_classification", "merged_s2s"]:
-            assert st.is_stored(runid, target), "Data not stored for %s in %s mode" % (
-                st.key_for(runid, target),
+            assert st.is_stored(run_id, target), "Data not stored for %s in %s mode" % (
+                st.key_for(run_id, target),
                 str(context_mode),
             )
     # Actual data loading
     peaks_salt_selected = st_salt.get_array(
-        runid, "peaks", time_range=extended_simu_event_timerange_ns, progress_bar=False
+        run_id, "peaks", time_range=extended_simu_event_timerange_ns, progress_bar=False
     )
     peaks_simu_selected = st_simu.get_array(
-        runid, "peaks", time_range=extended_simu_event_timerange_ns, progress_bar=False
+        run_id, "peaks", time_range=extended_simu_event_timerange_ns, progress_bar=False
     )
     peaks_data_selected = st_data.get_array(
-        runid, "peaks", time_range=extended_simu_event_timerange_ns, progress_bar=False
+        run_id, "peaks", time_range=extended_simu_event_timerange_ns, progress_bar=False
     )
     lhs_salt_selected = st_salt.get_array(
-        runid, "lone_hits", time_range=extended_simu_event_timerange_ns, progress_bar=False
+        run_id, "lone_hits", time_range=extended_simu_event_timerange_ns, progress_bar=False
     )
     lhs_simu_selected = st_simu.get_array(
-        runid, "lone_hits", time_range=extended_simu_event_timerange_ns, progress_bar=False
+        run_id, "lone_hits", time_range=extended_simu_event_timerange_ns, progress_bar=False
     )
     lhs_data_selected = st_data.get_array(
-        runid, "lone_hits", time_range=extended_simu_event_timerange_ns, progress_bar=False
+        run_id, "lone_hits", time_range=extended_simu_event_timerange_ns, progress_bar=False
     )
 
     # Get waveforms for the event
@@ -107,7 +107,7 @@ def plot_event_wf(
     total_length = int(
         (extended_simu_event_timerange_ns[1] - extended_simu_event_timerange_ns[0]) / 10
     )
-    to_pes = st_data.get_single_plugin(runid, "peaklets").to_pe
+    to_pes = st_data.get_single_plugin(run_id, "peaklets").to_pe
     # Initialize waveforms
     wf_salt_s1 = np.zeros(total_length)
     wf_simu_s1 = np.zeros(total_length)
@@ -240,7 +240,7 @@ def plot_event_wf(
         ax1.set_title(
             "Run %s Event %s: Simu/Sprk S1=%s/%sPE, Simu/Sprk S2=%s/%sPE"
             % (
-                runid,
+                run_id,
                 ind,
                 int(10 * events_simu["s1_area"][ind]) / 10,
                 int(10 * events_salt["s1_area"][ind]) / 10,
@@ -252,7 +252,7 @@ def plot_event_wf(
         ax1.set_title(
             "Run %s Event %s: Simu S1=%sPE, S2=%sPE"
             % (
-                runid,
+                run_id,
                 ind,
                 int(10 * events_simu["s1_area"][ind]) / 10,
                 int(10 * events_simu["s2_area"][ind]) / 10,

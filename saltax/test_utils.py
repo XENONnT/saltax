@@ -1,12 +1,10 @@
 import os
-import pandas as pd
 import strax
 import straxen
 from straxen.test_utils import _get_fake_daq_reader, download_test_data, nt_test_run_id
 
 import saltax
-from saltax.utils import straxen_version
-from saltax.instructions.generator import instr_file_name, generator_flat
+from saltax.utils import straxen_version, setattr_module
 
 TEST_DATA_TYPES = [
     "microphysics_summary",
@@ -24,7 +22,7 @@ TEST_DATA_TYPES = [
 def get_test_context(saltax_mode):
     """Get a test context for the given saltax mode."""
     st = saltax.contexts.sxenonnt(
-        runid=nt_test_run_id,
+        run_id=nt_test_run_id,
         saltax_mode=saltax_mode,
         # lowest possible version to modify as less as possible
         corrections_version="global_v10",
@@ -52,20 +50,12 @@ def get_test_context(saltax_mode):
         strax.DataDirectory("./strax_test_data", deep_scan=True, provide_run_metadata=True)
     ]
     assert st.is_stored(nt_test_run_id, "raw_records"), os.listdir(st.storage[-1].path)
-    st.set_config({"input_file": generate_instr(st)})
+
+    def get_run_start_end(run_id):
+        metadata = st.get_metadata(run_id, "raw_records")
+        return metadata["start"], metadata["end"]
+
+    mod = saltax.instructions.generator.get_run_start_end.__module__
+    setattr_module(mod, "get_run_start_end", get_run_start_end)
+
     return st
-
-
-def generate_instr(context):
-    """Generate an instruction file for a given runid and test context."""
-    input_file = instr_file_name(
-        runid=nt_test_run_id,
-        output_folder=".",
-    )
-    instr = generator_flat(
-        runid=nt_test_run_id,
-        context=context,
-        start_end_from_medatata=True,
-    )
-    pd.DataFrame(instr).to_csv(input_file, index=False)
-    return input_file
