@@ -20,7 +20,7 @@ DEFAULT_EN_RANGE = (0.2, 15.0)  # in unit of keV
 Z_RANGE = (-straxen.tpc_z, 0)  # in unit of cm
 R_RANGE = (0, straxen.tpc_r)  # in unit of cm
 NC = nestpy.NESTcalc(nestpy.DetectorExample_XENON10())
-SE_INSTRUCTIONS_FILE = "se_instructions.npz"
+SE_INSTRUCTIONS_FILE = "se_instructions.csv"
 AMBE_INSTRUCTIONS_FILE = "minghao_aptinput.csv"
 YBE_INSTRUCTIONS_FILE = "ybe_wfsim_instructions_6806_events_time_modified.csv"
 NEST_RNG = nestpy.RandomGen.rndm()
@@ -239,7 +239,8 @@ def generator_se_bootstrapped(
     run_id = str(run_id).zfill(6)
     downloader = utilix.mongo_storage.MongoDownloader()
     path = downloader.download_single(se_instructions_file)
-    se_instructions = np.load(path)[run_id]
+    se_instructions = pd.read_csv(path).to_records(index=False)
+    se_instructions = se_instructions[se_instructions["run_id"] == int(run_id)]
 
     # stay in runtime range
     start_time, end_time = get_run_start_end(run_id)
@@ -307,7 +308,7 @@ def generator_neutron(
 
     downloader = utilix.mongo_storage.MongoDownloader()
     path = downloader.download_single(neutron_instructions_file)
-    neutron_instructions = pd.read_csv(path).to_records()
+    neutron_instructions = pd.read_csv(path).to_records(index=False)
 
     # check recoil
     unique_recoil = np.unique(neutron_instructions["recoil"])
