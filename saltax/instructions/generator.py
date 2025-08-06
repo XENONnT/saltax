@@ -1,10 +1,13 @@
 import os
 import logging
 import pytz
+import tarfile
+import tempfile
 import numpy as np
 import pandas as pd
 
 import nestpy
+import utilix
 import straxen
 from straxen import units
 from fuse.plugins.detector_physics.csv_input import ChunkCsvInput
@@ -19,13 +22,31 @@ DEFAULT_EN_RANGE = (0.2, 15.0)  # in unit of keV
 Z_RANGE = (-straxen.tpc_z, 0)  # in unit of cm
 R_RANGE = (0, straxen.tpc_r)  # in unit of cm
 NC = nestpy.NESTcalc(nestpy.DetectorExample_XENON10())
-SE_INSTRUCTIONS_FILE = "/project/lgrandi/yuanlq/salt/se_instructions.npz"
-AMBE_INSTRUCTIONS_FILE = "/project/lgrandi/yuanlq/salt/ambe_instructions/minghao_aptinput.csv"
-YBE_INSTRUCTIONS_FILE = (
-    "/project2/lgrandi/ghusheng/ybe_instrutions/"
-    "ybe_wfsim_instructions_6806_events_time_modified.csv"
-)
+SE_INSTRUCTIONS_FILE = "se_instructions.csv.gz"
+AMBE_INSTRUCTIONS_FILE = "minghao_aptinput.csv.gz"
+YBE_INSTRUCTIONS_FILE = "ybe_wfsim_instructions_6806_events_time_modified.csv"
 NEST_RNG = nestpy.RandomGen.rndm()
+
+
+def load_csv_gz(instructions_file):
+    """Load a CSV file from utilix storage, which can be gzipped or not.
+
+    :param instructions_file: name of the file to load
+    :return: instructions in numpy record array
+
+    """
+    downloader = utilix.mongo_storage.MongoDownloader()
+    path = downloader.download_single(instructions_file)
+    if instructions_file.endswith(".csv.gz"):
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            tar = tarfile.open(path, mode="r:gz")
+            tar.extractall(path=tmpdirname)
+            instructions = pd.read_csv(
+                os.path.join(tmpdirname, instructions_file.replace("csv.gz", "csv"))
+            ).to_records(index=False)
+    else:
+        instructions = pd.read_csv(path).to_records(index=False)
+    return instructions
 
 
 def generate_vertex(rng, r_range=R_RANGE, z_range=Z_RANGE, size=1):
@@ -239,7 +260,8 @@ def generator_se_bootstrapped(
     """
     # load instructions
     run_id = str(run_id).zfill(6)
-    se_instructions = np.load(se_instructions_file)[run_id]
+    se_instructions = load_csv_gz(se_instructions_file)
+    se_instructions = se_instructions[se_instructions["run_id"] == int(run_id)]
 
     # stay in runtime range
     start_time, end_time = get_run_start_end(run_id)
@@ -305,7 +327,7 @@ def generator_neutron(
     )
     n_tot = len(times_offset)
 
-    neutron_instructions = pd.read_csv(neutron_instructions_file).to_records()
+    neutron_instructions = load_csv_gz(neutron_instructions_file)
 
     # check recoil
     unique_recoil = np.unique(neutron_instructions["recoil"])
