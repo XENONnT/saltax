@@ -119,6 +119,11 @@ class SChunkCsvInput(FuseBasePlugin):
 
     def compute(self, raw_records, start, end):
         chunk_data = self.csv_file_reader.output_chunk(start, end)
+
+        # If no data in this chunk, the dtype is not known
+        if len(chunk_data) == 0:
+            return self.empty_result()
+
         chunk_data["time"] = chunk_data["t"]
         chunk_data["endtime"] = chunk_data["time"]
         chunk_data = chunk_data.to_records(index=False)
