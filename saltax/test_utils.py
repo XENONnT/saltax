@@ -22,7 +22,6 @@ TEST_DATA_TYPES = [
 def get_test_context(saltax_mode):
     """Get a test context for the given saltax mode."""
     st = saltax.contexts.sxenonnt(
-        run_id=nt_test_run_id,
         saltax_mode=saltax_mode,
         # lowest possible version to modify as less as possible
         corrections_version="global_v10",
