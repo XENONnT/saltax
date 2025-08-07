@@ -11,7 +11,7 @@ MAX_NUM_SUBMIT = config.getint("utilix", "max_num_submit")
 T_SLEEP = config.getfloat("utilix", "t_sleep")
 USER = config.get("slurm", "username")
 LOG_DIR = config.get("slurm", "log_dir")
-RUNIDS = [int(run_id) for run_id in config.get("job", "runids").split(",")]
+RUN_IDS = [int(run_id) for run_id in config.get("job", "run_ids").split(",")]
 JOB_TITLE = config.get("slurm", "job_title")
 PARTITION = config.get("slurm", "partition")
 QOS = config.get("slurm", "qos")
@@ -87,7 +87,7 @@ class Submit:
 p = Submit()
 
 # Modify here for the runs to process
-loop_over = RUNIDS
+loop_over = RUN_IDS
 print("Going to process these runs:", loop_over)
 print("Number of runs to process: ", len(loop_over))
 print("Your log files are in: ", LOG_DIR)

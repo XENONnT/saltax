@@ -6,7 +6,6 @@ import straxen
 from straxen import units
 from fuse.context import full_chain_context, xenonnt_fuse_full_chain_simulation
 import saltax
-from saltax.utils import COLL
 from saltax.plugins.csv_input import SALT_TIME_INTERVAL
 from saltax.plugins.records import SCHANNEL_STARTS_AT
 
@@ -21,20 +20,7 @@ MAX_RAW_RECORDS_FILE_SIZE_MB = 1e9
 SALTAX_MODES = ["data", "simu", "salt"]
 
 
-def validate_runid(run_id):
-    """Validate run_id in RunDB to see if you can use it for computation.
-
-    :param run_id: run number
-    :return: None
-
-    """
-    doc = COLL.find_one({"number": int(run_id)})
-    if doc is None:
-        raise ValueError(f"Run {run_id} not found in RunDB")
-
-
 def sxenonnt(
-    run_id=None,
     saltax_mode="salt",
     generator_name="flat",
     recoil=8,
@@ -62,16 +48,6 @@ def sxenonnt(
     :return: strax context
 
     """
-
-    if run_id is None:
-        log.warning(
-            "Since you specified run_id=None, "
-            "this context will not be able to compute raw_records_simu."
-        )
-        log.warning("Welcome to data-loading only mode!")
-    else:
-        validate_runid(run_id)
-        log.warning(f"Welcome to computation mode which only works for run {run_id}!")
 
     if saltax_mode not in SALTAX_MODES:
         raise ValueError(f"saltax_mode must be one of {SALTAX_MODES} but got {saltax_mode}.")

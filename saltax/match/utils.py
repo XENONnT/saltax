@@ -139,8 +139,8 @@ def get_available_runs(
     # Prepare data for tabulate
     available_runs = []
     table_data = []
-    for mode, runids in modes_dict.items():
-        for run_id in runids:
+    for mode, run_ids in modes_dict.items():
+        for run_id in run_ids:
             if is_stored_dtypes(st_salt, run_id, salt_available) and is_stored_dtypes(
                 st_simu, run_id, simu_available
             ):
