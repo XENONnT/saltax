@@ -25,19 +25,22 @@ mod = find_peaks.__module__
 src = inspect.getsource(find_peaks)
 olds = [
     """@export
-""",
+"""
+
+   ,
     "cache=True",
     """
         area_per_channel[hit["channel"]] += hit_area_pe
-""",
+"""\
+   ,
 ]
 news = [
     "",
     "cache=False",
-    """
-        # Manually shift channels for area_per_channel
-        area_per_channel[hit["channel"] % SCHANNEL_STARTS_AT] += hit_area_pe
-""",
+    """# Manually shift channels for area_per_channel area_per_channel[hit["channel"] %
+    SCHANNEL_STARTS_AT] += hit_area_pe"""
+
+   ,
 ]
 src = replace_source(src, olds, news)
 exec(src)
@@ -48,20 +51,24 @@ mod = sum_waveform.__module__
 src = inspect.getsource(sum_waveform)
 olds = [
     """@export
-""",
+"""
+   ,
     "cache=True",
     """
             ch = h["channel"]
-""",
+"""\
+   ,
     """
             p["saturated_channel"][ch] |= is_saturated
-""",
-    """
-                if ch < n_top_channels:
-""",
+"""\
+   ,
+    """If ch < n_top_channels:"""
+
+   ,
     """
             area_per_channel[ch] += area_pe
-""",
+"""\
+   ,
 ]
 news = [
     "",
@@ -70,16 +77,18 @@ news = [
             # Shift salted channel
             ch = h["channel"]
             ch_shifted = ch % SCHANNEL_STARTS_AT
-""",
-    """
-            p["saturated_channel"][ch_shifted] |= is_saturated
-""",
+"""\
+   ,
+    """p["saturated_channel"][ch_shifted] |= is_saturated."""
+
+   ,
     """
                 if ch_shifted < n_top_channels:
-""",
-    """
-            area_per_channel[ch_shifted] += area_pe
-""",
+"""\
+   ,
+    """area_per_channel[ch_shifted] += area_pe."""
+
+   ,
 ]
 src = replace_source(src, olds, news)
 exec(src)
@@ -89,8 +98,9 @@ setattr_module(mod, "sum_waveform", sum_waveform)
 mod = peak_saturation_correction.__module__
 src = inspect.getsource(peak_saturation_correction)
 olds = [
-    """Correct the area and per pmt area of peaks from saturation.
-""",
+    """Correct the area and per pmt area of peaks from saturation."""
+
+   ,
     """
             ch = r["channel"]
             if channel_saturated[ch]:
@@ -98,14 +108,19 @@ olds = [
                 b_index[ch, np.argmin(b_index[ch])] = record_i
             else:
                 b_sumwf[slice(*b_slice)] += r["data"][slice(*r_slice)] * to_pe[ch]
-""",
+"""\
+   ,
 ]
 news = [
     """WARNING: This probably doesn't work when we have the salted channel also saturated!!!
-    We will be using only the real TPC channels to correct the saturation!!! This is dangerous
-    if you are salting things outside WIMP/LowER regions!!!
-    Correct the area and per pmt area of peaks from saturation.
-""",
+
+    We will be using only the real TPC channels to correct the saturation!!! This is dangerous if
+    you are salting things outside WIMP/LowER regions!!! Correct the area and per pmt area of peaks
+    from saturation.
+
+    """
+
+   ,
     """
             # Shift channels to handle salted channels
             ch = r["channel"]
@@ -116,7 +131,8 @@ news = [
                 b_index[ch_shifted, np.argmin(b_index[ch_shifted])] = record_i
             else:
                 b_sumwf[slice(*b_slice)] += r["data"][slice(*r_slice)] * to_pe[ch]
-""",
+"""\
+   ,
 ]
 src = replace_source(src, olds, news)
 exec(src)
@@ -128,12 +144,14 @@ src = inspect.getsource(Peaklets.compute)
 olds = [
     """
         sorted_hit_channels = hitlets["channel"][hit_max_times_argsort]
-""",
+"""\
+   ,
 ]
 news = [
     """
         sorted_hit_channels = hitlets["channel"][hit_max_times_argsort] % SCHANNEL_STARTS_AT
-""",
+"""\
+   ,
 ]
 src = replace_source(src, olds, news)
 src = textwrap.dedent(src)
@@ -148,13 +166,15 @@ olds = [
     """
             peaklet["first_channel"] = sorted_hitlets[0]["channel"]
             peaklet["last_channel"] = sorted_hitlets[-1]["channel"]
-""",
+"""\
+   ,
 ]
 news = [
     """
             peaklet["first_channel"] = sorted_hitlets[0]["channel"] % SCHANNEL_STARTS_AT
             peaklet["last_channel"] = sorted_hitlets[-1]["channel"] % SCHANNEL_STARTS_AT
-""",
+"""\
+   ,
 ]
 src = replace_source(src, olds, news)
 src = textwrap.dedent(src)

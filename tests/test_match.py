@@ -7,7 +7,6 @@ from saltax.test_utils import TEST_DATA_TYPES, get_test_context
 
 def test_match():
     """Test match module."""
-
     # Init contexts for both salt and simu modes
     st = {}
     for saltax_mode in ["salt", "simu", "data"]:

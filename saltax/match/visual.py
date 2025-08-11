@@ -36,7 +36,8 @@ def plot_event_wf(
     if events_salt is not None:
         assert len(events_salt) == len(
             events_simu
-        ), "events_salt and events_simu should have the same length, \
+        ),\
+           "events_salt and events_simu should have the same length, \
             since they are expected to 1-1 matched"
 
     print("Loading peaks and lone_hits for run %s event %s" % (run_id, ind))
