@@ -100,7 +100,8 @@ def generate_times(
     assert time_mode in [
         "realistic",
         "uniform",
-    ], "time_mode must be either \
+    ],\
+       "time_mode must be either \
         'realistic' or 'uniform'"
 
     # Generating event times from exponential
