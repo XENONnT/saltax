@@ -4,7 +4,7 @@ from immutabledict import immutabledict
 
 import straxen
 from straxen import units
-from fuse.context import full_chain_context, xenonnt_fuse_full_chain_simulation
+from fuse.context import xenonnt_fuse_full_chain_simulation
 import saltax
 from saltax.plugins.csv_input import SALT_TIME_INTERVAL
 from saltax.plugins.records import SCHANNEL_STARTS_AT
@@ -62,15 +62,7 @@ def sxenonnt(
             log.warning("cutax is not installed, no cutlist will be registered.")
             _cut_list = None
 
-    # xenonnt_fuse_full_chain_simulation has a kwargs as argument
-    # and full_chain_context is called in it
-    if context is xenonnt_fuse_full_chain_simulation:
-        params = {
-            **inspect.signature(context).parameters,
-            **inspect.signature(full_chain_context).parameters,
-        }
-    else:
-        params = inspect.signature(context).parameters
+    params = inspect.signature(context).parameters
     _kwargs = {k: v for k, v in kwargs.items() if k in params}
     st = context(
         output_folder=output_folder,
