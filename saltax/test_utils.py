@@ -23,6 +23,7 @@ def get_test_context(saltax_mode):
     """Get a test context for the given saltax mode."""
     st = saltax.contexts.sxenonnt(
         saltax_mode=saltax_mode,
+        simulation_config="sr1_dev",
         # lowest possible version to modify as less as possible
         corrections_version="global_v10",
         output_folder="./strax_test_data",
