@@ -232,13 +232,13 @@ def load_peaks(runs, st_salt, st_simu, plugins=("peak_basics", "peak_positions_m
     return peaks_simu, peaks_salt, inds_dict
 
 
-def load_events(runs, st_salt, st_simu, plugins=("event_info",), **kwargs):
+def load_events(runs, st_salt, st_simu, plugins=("event_info", "cuts_basic"), **kwargs):
     """Load events from the runs and do basic filtering suggeted by saltax.match.match_events :param
     runs: list of runs.
 
     :param st_salt: saltax context for salt mode
     :param st_simu: saltax context for simu mode
-    :param plugins: plugins to be loaded (default: ('event_info',))
+    :param plugins: plugins to be loaded (default: ('event_info', 'cuts_basic'))
     :param kwargs: arguments for saltax.match.match_events, i.e. event_window_fuzz,
     :return: events_simu: events from simulated dataset, filtered out those who miss S1
     :return: events_salt: events from sprinkled dataset

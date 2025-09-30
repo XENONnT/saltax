@@ -15,6 +15,7 @@ TEST_DATA_TYPES = [
     "events",
     "event_basics",
     "event_info",
+    "cuts_basic",
 ]
 
 

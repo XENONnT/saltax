@@ -52,24 +52,9 @@ def sxenonnt(
     if saltax_mode not in SALTAX_MODES:
         raise ValueError(f"saltax_mode must be one of {SALTAX_MODES} but got {saltax_mode}.")
 
-    # Do not register cut_list if it is None and cutax is not installed
-    if cut_list is None:
-        try:
-            import cutax
-
-            _cut_list = cutax.BasicCuts
-        except ImportError:
-            log.warning("cutax is not installed, no cutlist will be registered.")
-            _cut_list = None
-
     params = inspect.signature(context).parameters
     _kwargs = {k: v for k, v in kwargs.items() if k in params}
-    st = context(
-        output_folder=output_folder,
-        cut_list=_cut_list,
-        run_without_proper_run_id=True,
-        **_kwargs,
-    )
+    st = context(output_folder=output_folder, run_without_proper_run_id=True, **_kwargs)
 
     # Register deregistered plugins when replacing DAQReader by PMTResponseAndDAQ
     st.register(
@@ -111,14 +96,20 @@ def sxenonnt(
     )
     st.set_config({"channel_map": channel_map})
 
+    # Do not register cut_list if cutax is not installed
     try:
         import cutax
 
         # Register cuts plugins
         for p in cutax.contexts.EXTRA_PLUGINS:
             st.register(p)
+
+        if cut_list is None:
+            st.register_cut_list(cutax.BasicCuts)
+        else:
+            st.register_cut_list(cut_list)
     except ImportError:
-        pass
+        log.warning("cutax is not installed, no cutlist will be registered.")
 
     # Deregister plugins with missing dependencies
     st.deregister_plugins_with_missing_dependencies()
