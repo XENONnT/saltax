@@ -28,6 +28,7 @@ def get_test_context(saltax_mode):
         corrections_version="global_v10",
         output_folder="./strax_test_data",
     )
+    assert "cut_daq_veto" in st._plugin_class_registry
     st.apply_xedocs_configs(version="global_ONLINE")
     # Patch tf_model_mlp to be compatible with keras version
     if straxen_version() == 3:
