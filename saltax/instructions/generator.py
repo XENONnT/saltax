@@ -35,8 +35,11 @@ def load_csv_gz(instructions_file):
     :return: instructions in numpy record array
 
     """
-    downloader = utilix.mongo_storage.MongoDownloader()
-    path = downloader.download_single(instructions_file)
+    if os.path.exists(instructions_file):
+        path = instructions_file
+    else:
+        downloader = utilix.mongo_storage.MongoDownloader()
+        path = downloader.download_single(instructions_file)
     if instructions_file.endswith(".csv.gz"):
         with tempfile.TemporaryDirectory() as tmpdirname:
             tar = tarfile.open(path, mode="r:gz")
