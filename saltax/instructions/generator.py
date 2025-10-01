@@ -356,6 +356,9 @@ def generator_mc(
     event_indices = np.append(event_indices, len(instructions))
 
     _indices = rng.choice(len(event_numbers), size=n_tot, replace=True)
+    t0 = np.array(
+        [instructions["time"][event_indices[i] : event_indices[i + 1]].min() for i in _indices]
+    )
     indices = np.hstack([np.arange(event_indices[i], event_indices[i + 1]) for i in _indices])
 
     # assign instructions
@@ -364,7 +367,7 @@ def generator_mc(
     instr["cluster_id"] = np.arange(len(instr))
 
     instr["t"] = np.repeat(times_offset, event_counts[_indices])
-    instr["t"] += instructions["time"][indices]
+    instr["t"] += instructions["time"][indices] - np.repeat(t0, event_counts[_indices])
 
     instr["x"] = instructions["x"][indices]
     instr["y"] = instructions["y"][indices]
