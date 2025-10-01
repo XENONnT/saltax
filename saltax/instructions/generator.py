@@ -334,6 +334,7 @@ def generator_mc(
     n_tot = len(times_offset)
 
     instructions = load_csv_gz(instructions_file)
+    instructions = np.sort(instructions, order=["event_number", "time"], kind="mergesort")
 
     # check recoil
     unique_recoil = np.unique(instructions["recoil"])
