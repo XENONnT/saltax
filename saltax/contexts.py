@@ -23,7 +23,7 @@ SALTAX_MODES = ["data", "simu", "salt"]
 def sxenonnt(
     saltax_mode="salt",
     generator_name="flat",
-    recoil=8,
+    nestid=8,
     simu_mode="all",
     rate=units.s / SALT_TIME_INTERVAL,
     context=xenonnt_fuse_full_chain_simulation,
@@ -38,7 +38,7 @@ def sxenonnt(
         raw_records_simu, or use None for data-loading only.
     :param saltax_mode: 'data', 'simu', or 'salt'.
     :param generator_name: Instruction mode to use (default: 'flat')
-    :param recoil: NEST recoil type (default: 8)
+    :param nestid: NEST recoil type (default: 8)
     :param simu_mode: 's1', 's2', or 'all' (default: 'all')
     :param context: strax context to use (default: xenonnt_fuse_full_chain_simulation)
     :param output_folder: Folder to save output files (default: './fuse_data')
@@ -121,7 +121,7 @@ def sxenonnt(
             "generator_kwargs": {
                 **kwargs,
                 "mode": simu_mode,
-                "recoil": recoil,
+                "nestid": nestid,
                 "rate": rate,
                 "output_folder": output_folder,
             },

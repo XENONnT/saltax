@@ -153,7 +153,7 @@ def get_run_start_end(run_id):
 
 def instr_file_name(
     run_id=None,
-    recoil=8,
+    nestid=8,
     generator_name="flat",
     mode="all",
     en_range=DEFAULT_EN_RANGE,
@@ -161,11 +161,11 @@ def instr_file_name(
     output_folder=None,
     chunk_number=None,
 ):
-    """Generate the instruction file name based on the run_id, recoil, generator_name, mode, and
+    """Generate the instruction file name based on the run_id, nestid, generator_name, mode, and
     rate.
 
     :param generator_name: name of the generator (default: 'flat')
-    :param recoil: NEST recoil type (default: 8)
+    :param nestid: NEST recoil type (default: 8)
     :param mode: 's1', 's2', or 'all' (default: 'all')
     :param run_id: run number (default: None)
     :param en_range: (en_min, en_max) in keV (default: DEFAULT_EN_RANGE)
@@ -194,7 +194,7 @@ def instr_file_name(
     rate = int(rate)
     filename = os.path.join(
         output_folder,
-        "-".join([run_id, str(recoil), generator_name, en_range, mode, str(rate)]) + ".csv",
+        "-".join([run_id, str(nestid), generator_name, en_range, mode, str(rate)]) + ".csv",
     )
 
     if chunk_number is not None:
@@ -302,7 +302,7 @@ def generator_se_bootstrapped(
 def generator_mc(
     run_id,
     efield_map,
-    recoil=0,
+    nestid=0,
     n_tot=None,
     rate=units.s / SALT_TIME_INTERVAL,
     nc=NC,
@@ -336,12 +336,12 @@ def generator_mc(
     instructions = load_csv_gz(instructions_file)
     instructions = np.sort(instructions, order=["event_number", "time"], kind="mergesort")
 
-    # check recoil
-    unique_recoil = np.unique(instructions["recoil"])
-    if not np.all(unique_recoil == recoil):
+    # check nestid
+    unique_nestid = np.unique(instructions["nestid"])
+    if not np.all(unique_nestid == nestid):
         log.warning(
-            f"Recoil in instructions ({unique_recoil}) "
-            f"does not match the requested recoil ({recoil})."
+            f"NEST ID in instructions ({unique_nestid}) "
+            f"does not match the requested nestid ({nestid})."
         )
 
     # bootstrap instructions
@@ -416,7 +416,7 @@ def generator_mc(
 def generator_ambe(
     run_id,
     efield_map,
-    recoil=0,
+    nestid=0,
     n_tot=None,
     rate=units.s / SALT_TIME_INTERVAL,
     nc=NC,
@@ -452,7 +452,7 @@ def generator_ambe(
 def generator_ybe(
     run_id,
     efield_map,
-    recoil=0,
+    nestid=0,
     n_tot=None,
     rate=units.s / SALT_TIME_INTERVAL,
     nc=NC,
@@ -475,7 +475,7 @@ def generator_ybe(
     return generator_mc(
         run_id=run_id,
         efield_map=efield_map,
-        recoil=recoil,
+        nestid=nestid,
         n_tot=n_tot,
         rate=rate,
         nc=nc,
@@ -489,7 +489,7 @@ def generator_flat(
     run_id,
     efield_map,
     en_range=DEFAULT_EN_RANGE,
-    recoil=8,
+    nestid=8,
     n_tot=None,
     rate=units.s / SALT_TIME_INTERVAL,
     nc=NC,
@@ -502,7 +502,7 @@ def generator_flat(
 
     :param run_id: run number
     :param en_range: (en_min, en_max) in keV (default: (0.2, 15.0))
-    :param recoil: NEST recoil type (default: 8)
+    :param nestid: NEST recoil type (default: 8)
     :param n_tot: total number of events to generate (default: None)
     :param rate: rate of events in Hz (default: units.s / SALT_TIME_INTERVAL)
     :param nc: NEST calculator (default: NC)
@@ -531,7 +531,7 @@ def generator_flat(
 
     # Making energy
     instr["ed"] = rng.uniform(en_range[0], en_range[1], size=n_tot)
-    instr["nestid"] = recoil
+    instr["nestid"] = nestid
 
     # Getting local field from field map
     instr["e_field"] = efield_map(
