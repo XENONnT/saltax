@@ -56,7 +56,7 @@ def load_config():
     settings = {
         "saltax_mode": config.get("job", "saltax_mode"),
         "generator_name": config.get("job", "generator_name"),
-        "recoil": config.getint("job", "recoil"),
+        "nestid": config.getint("job", "nestid"),
         "simu_mode": config.get("job", "simu_mode"),
         "output_folder": config.get("job", "output_folder"),
         "corrections_version": config.get("job", "corrections_version"),
@@ -94,7 +94,7 @@ def create_context(settings, run_id):
         run_id=run_id,
         saltax_mode=settings["saltax_mode"],
         generator_name=settings["generator_name"],
-        recoil=settings["recoil"],
+        nestid=settings["nestid"],
         simu_mode=settings["simu_mode"],
         output_folder=settings["output_folder"],
         corrections_version=settings["corrections_version"],
