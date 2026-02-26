@@ -1,170 +1,92 @@
-import numpy as np
-from tqdm import tqdm
-import numpy as np
-import matplotlib.pyplot as plt
+import os
+import logging
+from glob import glob
 from tabulate import tabulate
 from itertools import cycle
-import saltax
+import numpy as np
 from scipy.stats import binomtest
-import utilix
-import strax
-from glob import glob
+import matplotlib.pyplot as plt
 
-ALL_CUTS = np.array(
-    [
-        "cut_daq_veto",
-        "cut_interaction_exists",
-        "cut_main_is_valid_triggering_peak",
-        "cut_run_boundaries",
-        "cut_s1_area_fraction_top",
-        "cut_s1_max_pmt",
-        "cut_s1_pattern_bottom",
-        "cut_s1_pattern_top",
-        "cut_s1_single_scatter",
-        "cut_s1_tightcoin_3fold",
-        "cut_s1_width",
-        "cut_s2_pattern",
-        "cut_s2_recon_pos_diff",
-        "cut_s2_single_scatter",
-        "cut_s2_width",
-        "cut_cs2_area_fraction_top",
-        "cut_shadow",
-        "cut_ambience",
-    ]
-)
-ALL_CUTS_MINIMAL = np.array(
-    [
-        "cut_daq_veto",
-        "cut_interaction_exists",
-        "cut_main_is_valid_triggering_peak",
-        "cut_run_boundaries",
-    ]
-)
-ALL_CUTS_EXCEPT_S2PatternS1Width = np.array(
-    [
-        "cut_daq_veto",
-        "cut_interaction_exists",
-        "cut_main_is_valid_triggering_peak",
-        "cut_run_boundaries",
-        "cut_s1_area_fraction_top",
-        "cut_s1_max_pmt",
-        "cut_s1_pattern_bottom",
-        "cut_s1_pattern_top",
-        "cut_s1_single_scatter",
-        "cut_s1_tightcoin_3fold",
-        "cut_s2_recon_pos_diff",
-        "cut_s2_single_scatter",
-        "cut_s2_width",
-        "cut_cs2_area_fraction_top",
-        "cut_shadow",
-        "cut_ambience",
-    ]
-)
-AmBe_CUTS_EXCEPT_S2Pattern = np.array(
-    [
-        "cut_daq_veto",
-        "cut_interaction_exists",
-        "cut_main_is_valid_triggering_peak",
-        "cut_run_boundaries",
-        "cut_s1_area_fraction_top",
-        "cut_s1_max_pmt",
-        "cut_s1_pattern_bottom",
-        "cut_s1_pattern_top",
-        "cut_s1_single_scatter",
-        "cut_s1_tightcoin_3fold",
-        "cut_s1_width",
-        "cut_s2_recon_pos_diff",
-        "cut_s2_single_scatter",
-        "cut_s2_width",
-        "cut_cs2_area_fraction_top",
-    ]
-)
-AmBe_CUTS_EXCEPT_S2PatternS1Width = np.array(
-    [
-        "cut_daq_veto",
-        "cut_interaction_exists",
-        "cut_main_is_valid_triggering_peak",
-        "cut_run_boundaries",
-        "cut_s1_area_fraction_top",
-        "cut_s1_max_pmt",
-        "cut_s1_pattern_bottom",
-        "cut_s1_pattern_top",
-        "cut_s1_single_scatter",
-        "cut_s1_tightcoin_3fold",
-        "cut_s2_recon_pos_diff",
-        "cut_s2_single_scatter",
-        "cut_s2_width",
-        "cut_cs2_area_fraction_top",
-    ]
-)
-AmBe_CUTS = np.array(
-    [
-        "cut_daq_veto",
-        "cut_interaction_exists",
-        "cut_main_is_valid_triggering_peak",
-        "cut_run_boundaries",
-        "cut_s1_area_fraction_top",
-        "cut_s1_max_pmt",
-        "cut_s1_pattern_bottom",
-        "cut_s1_pattern_top",
-        "cut_s1_single_scatter",
-        "cut_s1_tightcoin_3fold",
-        "cut_s1_width",
-        "cut_s2_pattern",
-        "cut_s2_recon_pos_diff",
-        "cut_s2_single_scatter",
-        "cut_s2_width",
-        "cut_cs2_area_fraction_top",
-    ]
-)
+import strax
+import saltax
+from saltax.utils import COLL
+
+logging.basicConfig(level=logging.INFO, handlers=[logging.StreamHandler()])
+log = logging.getLogger("saltax.match.utils")
+
+try:
+    import cutax
+
+    MINIMAL_CUTS = [c.cut_name for c in cutax.cut_lists.MinimalCuts.cuts]
+    BASIC_CUTS = [c.cut_name for c in cutax.cut_lists.BasicCuts.cuts]
+    try:
+        AmBe_CUTS = [c.cut_name for c in cutax.cut_lists.AmBeNRSelectionSR1.basic_cuts]
+    except AttributeError:
+        AmBe_CUTS = ["cut_interaction_exists"]
+except ImportError:
+    log.warning("cutax is not installed, will only use 'cut_interaction_exists'.")
+    MINIMAL_CUTS = ["cut_interaction_exists"]
+    BASIC_CUTS = ["cut_interaction_exists"]
+    AmBe_CUTS = ["cut_interaction_exists"]
+
+BASIC_CUTS_EXCEPT_S2PatternS1Width = BASIC_CUTS.copy()
+if "cut_s2_pattern" in BASIC_CUTS_EXCEPT_S2PatternS1Width:
+    BASIC_CUTS_EXCEPT_S2PatternS1Width.remove("cut_s2_pattern")
+if "cut_s1_width" in BASIC_CUTS_EXCEPT_S2PatternS1Width:
+    BASIC_CUTS_EXCEPT_S2PatternS1Width.remove("cut_s1_width")
+AmBe_CUTS_EXCEPT_S2Pattern = AmBe_CUTS.copy()
+if "cut_s2_pattern" in AmBe_CUTS_EXCEPT_S2Pattern:
+    AmBe_CUTS_EXCEPT_S2Pattern.remove("cut_s2_pattern")
+AmBe_CUTS_EXCEPT_S2PatternS1Width = AmBe_CUTS_EXCEPT_S2Pattern.copy()
+if "cut_s1_width" in AmBe_CUTS_EXCEPT_S2PatternS1Width:
+    AmBe_CUTS_EXCEPT_S2PatternS1Width.remove("cut_s1_width")
 
 
 def find_runs_with_rawdata(
     rawdata_folders=[
-        "/project/lgrandi/yuanlq/salt/raw_records/",
-        "/scratch/midway2/yuanlq/salt/raw_records/",
-        "/scratch/midway3/yuanlq/salt/raw_records/",
+        "/project/lgrandi/yuanlq/salt/raw_records",
+        "/scratch/midway2/yuanlq/salt/raw_records",
+        "/scratch/midway3/yuanlq/salt/raw_records",
     ]
 ):
+    """Find runs with real raw_records data in the specified folders."""
     # Find the files that correspond to strax data
     files_found = []
     for folder in rawdata_folders:
-        _files_found = glob(folder + "0*")
+        _files_found = glob(os.path.join(folder, "*-raw_records-rfzvpzj4mf"))
         files_found += _files_found
 
     # Find the runs that have standard raw_records available
     runs = []
     for f in files_found:
-        _f = f.split("/")[-1]
-        runid, datatype, shash = _f.split("-")
-        if datatype == "raw_records" and shash == "rfzvpzj4mf":
-            runs.append(runid)
+        runs.append(os.path.basename(f).split("-")[0])
     runs = np.array(runs)
     return runs
 
 
-def is_stored_dtypes(st, runid, dtypes):
+def is_stored_dtypes(st, run_id, dtypes):
     """Check if all dtypes are stored for a run.
 
     :param st: saltax context
-    :param runid: runid
+    :param run_id: run_id
     :param dtypes: list of dtypes
     :return: True if all dtypes are stored, False otherwise
+
     """
     if not len(dtypes):
         return True
     else:
         for dtype in dtypes:
-            if not st.is_stored(runid, dtype):
+            if not st.is_stored(run_id, dtype):
                 return False
         return True
 
 
 def sort_runs(runs):
-    """Sort the runs in time order based on runid :param runs: list of runs'
-    str.
+    """Sort the runs in time order based on run_id :param runs: list of runs' str.
 
-    :return: ordered runlist based on runid number
+    :return: ordered runlist based on run_id number
+
     """
     runs_number = []
     for r in runs:
@@ -186,14 +108,14 @@ def get_available_runs(
     :param st_simu: saltax context for simu mode
     :param salt_available: list of available dtypes for salt mode
     :param simu_available: list of available dtypes for simu mode
+
     """
-    rundb = utilix.rundb.xent_collection()
     # Find run modes and duration correspondingly
     modes = []
     durations = []
     for run in runs:
         query = {"number": int(run)}
-        doc = rundb.find_one(query)
+        doc = COLL.find_one(query)
 
         # get mode
         mode = doc["mode"]
@@ -217,17 +139,17 @@ def get_available_runs(
     # Prepare data for tabulate
     available_runs = []
     table_data = []
-    for mode, runids in modes_dict.items():
-        for runid in runids:
-            if is_stored_dtypes(st_salt, runid, salt_available) and is_stored_dtypes(
-                st_simu, runid, simu_available
+    for mode, run_ids in modes_dict.items():
+        for run_id in run_ids:
+            if is_stored_dtypes(st_salt, run_id, salt_available) and is_stored_dtypes(
+                st_simu, run_id, simu_available
             ):
-                duration = durations_dict.get(runid, "N/A")  # Get duration or 'N/A' if not found
-                table_data.append([mode, runid, duration])
-                available_runs.append(runid)
+                duration = durations_dict.get(run_id, "N/A")  # Get duration or 'N/A' if not found
+                table_data.append([mode, run_id, duration])
+                available_runs.append(run_id)
 
     # Print table using tabulate
-    print(tabulate(table_data, headers=["mode", "runid", "duration [min]"]))
+    print(tabulate(table_data, headers=["mode", "run_id", "duration [min]"]))
     print("=============================")
     print("The runs below are available:")
     print(available_runs)
@@ -259,19 +181,18 @@ def add_run_id_field(array, run_id_value, field_name='run_id', field_dtype='U10'
     return new_array
 
 def load_peaks(runs, st_salt, st_simu, plugins=("peak_basics", "peak_positions_mlp"), **kwargs):
-    """Load peaks from the runs and find matching indices for salted and
-    simulated peaks.
+    """Load peaks from the runs and find matching indices for salted and simulated peaks.
 
     :param runs: list of runs.
     :param st_salt: saltax context for salt mode
     :param st_simu: saltax context for simu mode
-    :param plugins: plugins to be loaded, default to ('peak_basics',
-        'peak_positions_mlp')
+    :param plugins: plugins to be loaded (default: ('peak_basics', 'peak_positions_mlp'))
     :param kwargs: arguments for saltax.match_peaks, i.e. window_length
     :return: peaks_simu: peaks from simulated dataset
     :return: peaks_salt: peaks from sprinkled dataset
-    :return: inds_dict: dictionary of indices of peaks from sprinkled or
-        filtered simulated dataset, regarding matching peaks
+    :return: inds_dict: dictionary of indices of peaks from sprinkled or filtered simulated dataset,
+        regarding matching peaks
+
     """
     # Order runs so we have monotonically increasing time stamps
     runs = sort_runs(runs)
@@ -288,7 +209,7 @@ def load_peaks(runs, st_salt, st_simu, plugins=("peak_basics", "peak_positions_m
     len_simu_so_far = 0
     len_salt_so_far = 0
     for i, run in enumerate(runs):
-        print("Loading run %s" % (run))
+        print(f"Loading run {run}")
 
         # Load plugins for both salt and simu
         peaks_simu_i = st_simu.get_array(run, plugins, progress_bar=False)
@@ -301,7 +222,7 @@ def load_peaks(runs, st_salt, st_simu, plugins=("peak_basics", "peak_positions_m
             ind_simu_peak_lost_i,
             ind_salt_peak_split_i,
             ind_simu_peak_split_i,
-        ) = saltax.match_peaks(peaks_simu_i, peaks_salt_i, **kwargs)
+        ) = saltax.match.match_peaks(peaks_simu_i, peaks_salt_i, **kwargs)
 
         # Load the indices into the dictionary
         inds_dict["ind_salt_peak_found"] = np.concatenate(
@@ -336,21 +257,18 @@ def load_peaks(runs, st_salt, st_simu, plugins=("peak_basics", "peak_positions_m
 
 
 def load_events(runs, st_salt, st_simu, plugins=("event_info", "cuts_basic"), **kwargs):
-    """Load events from the runs and do basic filtering suggeted by
-    saltax.match_events :param runs: list of runs.
+    """Load events from the runs and do basic filtering suggeted by saltax.match.match_events :param
+    runs: list of runs.
 
     :param st_salt: saltax context for salt mode
     :param st_simu: saltax context for simu mode
-    :param plugins: plugins to be loaded, default to ('event_info',
-        'cuts_basic')
-    :param kwargs: arguments for saltax.match_events, i.e.
-        event_window_fuzz,
-    :return: events_simu: events from simulated dataset, filtered out
-        those who miss S1
+    :param plugins: plugins to be loaded (default: ('event_info', 'cuts_basic'))
+    :param kwargs: arguments for saltax.match.match_events, i.e. event_window_fuzz,
+    :return: events_simu: events from simulated dataset, filtered out those who miss S1
     :return: events_salt: events from sprinkled dataset
-    :return inds_dict: dictionary of indices of events from sprinkled or
-        filtered simulated dataset, regarding matching events or s1 or
-        s2
+    :return inds_dict: dictionary of indices of events from sprinkled or filtered simulated dataset,
+        regarding matching events or s1 or s2
+
     """
     # Order runs so we have monotonically increasing time stamps
     runs = sort_runs(runs)
@@ -374,7 +292,7 @@ def load_events(runs, st_salt, st_simu, plugins=("event_info", "cuts_basic"), **
     len_simu_so_far = 0
     len_salt_so_far = 0
     for i, run in enumerate(runs):
-        print("Loading run %s" % (run))
+        print(f"Loading run {run}")
 
         # Load plugins for both salt and simu
         events_simu_i = add_run_id_field(st_simu.get_array(run, plugins, progress_bar=False), run)
@@ -395,7 +313,7 @@ def load_events(runs, st_salt, st_simu, plugins=("event_info", "cuts_basic"), **
             ind_simu_s2_found_i,
             ind_salt_s2_made_alt_i,
             ind_simu_s2_made_alt_i,
-        ) = saltax.match_events(events_simu_i, events_salt_i, **kwargs)
+        ) = saltax.match.match_events(events_simu_i, events_salt_i, **kwargs)
 
         # Load the indices into the dictionary
         inds_dict["ind_salt_event_found"] = np.concatenate(
@@ -458,12 +376,11 @@ def compare_templates(
 ):
     """Visually compare the cs1-cs2 templates of salted and simulated events.
 
-    :param events_salt_matched_to_simu: events from saltax matched to
-        simulation, with equal length
-    :param events_simu_matched_to_salt: events from simulation matched
-        to saltax, with equal length
+    :param events_salt_matched_to_simu: events from saltax matched to simulation, with equal length
+    :param events_simu_matched_to_salt: events from simulation matched to saltax, with equal length
     :param n_bins: number of bins for cs1
     :param title: title of the plot
+
     """
     cs1_bins = np.linspace(0, 100, n_bins)
     salt_med = []
@@ -539,14 +456,15 @@ def compare_templates(
     plt.show()
 
 
-def apply_n_minus_1_cuts(events_with_cuts, cut_oi, all_cuts=ALL_CUTS_EXCEPT_S2PatternS1Width):
+def apply_n_minus_1_cuts(events_with_cuts, cut_oi, all_cuts=BASIC_CUTS_EXCEPT_S2PatternS1Width):
     """Apply N-1 cuts to the events, where N is the number of cuts.
 
     :param events_with_cuts: events with cuts
     :param cut_oi: the cut to be left out for examination
     :param all_cuts: all cuts
+
     """
-    other_cuts = all_cuts[all_cuts != cut_oi]
+    other_cuts = [cut for cut in all_cuts if cut != cut_oi]
     mask = np.ones(len(events_with_cuts), dtype=bool)
 
     for cut in other_cuts:
@@ -561,6 +479,7 @@ def apply_single_cut(events_with_cuts, cut_oi, all_cuts=None):
     :param events_with_cuts: events with cuts
     :param cut_oi: the cut to be applied
     :param all_cuts: pseudo parameter, not really used
+
     """
     mask = np.ones(len(events_with_cuts), dtype=bool)
     for cut in [cut_oi]:
@@ -568,11 +487,12 @@ def apply_single_cut(events_with_cuts, cut_oi, all_cuts=None):
     return mask
 
 
-def apply_cut_lists(events_with_cuts, all_cuts=ALL_CUTS_EXCEPT_S2PatternS1Width):
+def apply_cut_lists(events_with_cuts, all_cuts=BASIC_CUTS_EXCEPT_S2PatternS1Width):
     """Apply a list of cuts to the events.
 
     :param events_with_cuts: events with cuts
     :param all_cuts: list of cuts to be applied
+
     """
     mask = np.ones(len(events_with_cuts), dtype=bool)
     for cut in all_cuts:
@@ -581,15 +501,14 @@ def apply_cut_lists(events_with_cuts, all_cuts=ALL_CUTS_EXCEPT_S2PatternS1Width)
 
 
 def get_n_minus_1_cut_acc(
-    events_salt_matched_to_simu, events_simu_matched_to_salt, all_cut_list=ALL_CUTS
+    events_salt_matched_to_simu, events_simu_matched_to_salt, all_cut_list=BASIC_CUTS
 ):
     """Get a text table of acceptance of N-1 cut acceptance for each cut.
 
-    :param events_salt_matched_to_simu: events from saltax matched to
-        simulation, with equal length
-    :param events_simu_matched_to_salt: events from simulation matched
-        to saltax, with equal length
+    :param events_salt_matched_to_simu: events from saltax matched to simulation, with equal length
+    :param events_simu_matched_to_salt: events from simulation matched to saltax, with equal length
     :param all_cut_list: list of all cuts
+
     """
     mask_salt_all_cuts = apply_cut_lists(events_salt_matched_to_simu, all_cuts=all_cut_list)
     mask_simu_all_cuts = apply_cut_lists(events_simu_matched_to_salt, all_cuts=all_cut_list)
@@ -623,15 +542,14 @@ def get_n_minus_1_cut_acc(
 
 
 def get_single_cut_acc(
-    events_salt_matched_to_simu, events_simu_matched_to_salt, all_cut_list=ALL_CUTS
+    events_salt_matched_to_simu, events_simu_matched_to_salt, all_cut_list=BASIC_CUTS
 ):
     """Get a text table of acceptance of single cut acceptance for each cut.
 
-    :param events_salt_matched_to_simu: events from saltax matched to
-        simulation, with equal length
-    :param events_simu_matched_to_salt: events from simulation matched
-        to saltax, with equal length
+    :param events_salt_matched_to_simu: events from saltax matched to simulation, with equal length
+    :param events_simu_matched_to_salt: events from simulation matched to saltax, with equal length
     :param all_cut_list: list of all cuts
+
     """
     mask_salt_no_cuts = np.ones(len(events_salt_matched_to_simu), dtype=bool)
     mask_simu_no_cuts = np.ones(len(events_simu_matched_to_salt), dtype=bool)
@@ -662,30 +580,30 @@ def get_single_cut_acc(
 
 def get_cut_eff(
     events,
-    all_cut_list=ALL_CUTS,
+    all_cut_list=BASIC_CUTS,
     n_bins=31,
     coord="cs1",
     plot=True,
     indv_cut_type="n_minus_1",
     title="N-1 Cut Acceptance Measured in SR1 AmBe",
     bbox_to_anchor=(0.5, 1.50),
-    bin_range=None
+    bin_range=None,
 ):
-    """Get the acceptance with corresponding Clopper-Pearson uncertainty of
-    each cut, as a function of a coordinate.
+    """Get the acceptance with corresponding Clopper-Pearson uncertainty of each cut, as a function
+    of a coordinate.
 
     :param events: events
     :param all_cut_list: list of all cuts
     :param n_bins: number of bins for the coordinate
-    :param coord: coordinate to be binned, default to 'cs1'
-    :param plot: whether to plot the acceptance, default to True
-    :param indv_cut_type: type of cut to be applied, default to
-        'n_minus_1', can also be 'single'
+    :param coord: coordinate to be binned (default: 'cs1')
+    :param plot: whether to plot the acceptance (default: True)
+    :param indv_cut_type: type of cut to be applied, can be 'n_minus_1' and 'single' (default:
+        'n_minus_1')
     :param title: title of the plot
-    :param bbox_to_anchor: position of the legend, default to (0.5,
-        1.50)
-    :param bin_range: range of the coordinate, default to None
+    :param bbox_to_anchor: position of the legend (default: (0.5, 1.50))
+    :param bin_range: range of the coordinate (default: None)
     :return: a dictionary of acceptance values
+
     """
     coord_units = {"s1_area": "[PE]", "s2_area": "[PE]", "cs1": "[PE]", "cs2": "[PE]", "z": "[cm]", 'e_ces': "[keV]"}
     if bin_range is not None:
@@ -809,8 +727,8 @@ def compare_2d(
     :param label1: label for the second dataset
     :param xlabel: x-axis label
     :param ylabel: y-axis label
-    :param coords: coordinates to be compared, default to ['z',
-        's2_range_50p_area']
+    :param coords: coordinates to be compared (default: ['z', 's2_range_50p_area'])
+
     """
     events0_med = []
     events1_med = []
@@ -873,11 +791,11 @@ def compare_bands(salt, simu, title, coords=["z", "s2_range_50p_area"], n_bins=1
     :param salt: events from the first dataset
     :param simu: events from the second dataset
     :param title: title of the plot
-    :param coords: coordinates to be compared, default to ['z',
-        's2_range_50p_area'], can choose from ['z', 's1_area',
-        's2_area', 's1_range_50p_area', 's1_range_90p_area',
-        's1_rise_time', 's2_range_50p_area', 's2_range_90p_area']
-    :param n_bins: number of bins for each coordinate, default to 16
+    :param coords: coordinates to be compared, can choose from ['z', 's1_area', 's2_area',
+        's1_range_50p_area', 's1_range_90p_area', 's1_rise_time', 's2_range_50p_area',
+        's2_range_90p_area'] (default: ['z', 's2_range_50p_area'])
+    :param n_bins: number of bins for each coordinate (default: 16)
+
     """
     BINS = {
         "z": np.linspace(-134, -13, n_bins),
@@ -918,24 +836,33 @@ def compare_bands(salt, simu, title, coords=["z", "s2_range_50p_area"], n_bins=1
 
 
 def show_area_bias(
-    salt, simu, title, fraction=False, coord="s1_area", s1s2="s1", n_bins=16, ylim=(-5, 20,),
-    bin_range=None
+    salt,
+    simu,
+    title,
+    fraction=False,
+    coord="s1_area",
+    s1s2="s1",
+    n_bins=16,
+    ylim=(
+        -5,
+        20,
+    ),
+    bin_range=None,
 ):
     """Show the bias due to ambience interference VS a coordinate.
 
     :param salt: events from the first dataset
     :param simu: events from the second dataset
     :param title: title of the plot
-    :param fraction: whether to show the bias in fraction, default to
-        False
-    :param coord: coordinate to be compared, default to 's1_area', can
-        choose from ['z', 's1_area', 's2_area', 's1_range_50p_area',
-        's1_range_90p_area', 's1_rise_time', 's2_range_50p_area',
-        's2_range_90p_area']
-    :param s1s2: s1 or s2, default to 's1'
-    :param n_bins: number of bins for the coordinate, default to 16
-    :param ylim: y-axis limits, default to (-5,20)
-    :param bin_range: range of the bins, default to None
+    :param fraction: whether to show the bias in fraction (default: False)
+    :param coord: coordinate to be compared, can choose from ['z', 's1_area', 's2_area',
+        's1_range_50p_area', 's1_range_90p_area', 's1_rise_time', 's2_range_50p_area',
+        's2_range_90p_area'] (default: 's1_area')
+    :param s1s2: 's1' or 's2' (default: 's1')
+    :param n_bins: number of bins for the coordinate (default: 16)
+    :param ylim: y-axis limits (default: (-5, 20))
+    :param bin_range: range of the bins (default: None)
+
     """
     BINS = {
         "z": np.linspace(-134, -13, n_bins),
@@ -1006,9 +933,9 @@ def show_area_bias(
     plt.plot(bins_mid, bias_2sig_l, color="tab:blue", linestyle="dashed", alpha=0.5, label="2Sig")
     plt.plot(bins_mid, bias_2sig_u, color="tab:blue", linestyle="dashed", alpha=0.5)
     if not fraction:
-        plt.ylabel("Change in %s Area [PE]" % (s1s2))
+        plt.ylabel(f"Change in {s1s2} Area [PE]")
     else:
-        plt.ylabel("Change in %s Area [%%]" % (s1s2))
+        plt.ylabel(f"Change in {s1s2} Area [%%]")
     plt.xlabel(coord + units_dict[coord])
     plt.xlim(bins[0], bins[-1])
     plt.legend()
@@ -1018,14 +945,14 @@ def show_area_bias(
     plt.show()
 
     result_dict = {}
-    result_dict['coord'] = coord
-    result_dict['s1s2'] = s1s2
-    result_dict['bins_mid'] = bins_mid
-    result_dict['bias_med'] = bias_med
-    result_dict['bias_1sig_u'] = bias_1sig_u
-    result_dict['bias_1sig_l'] = bias_1sig_l
-    result_dict['bias_2sig_u'] = bias_2sig_u
-    result_dict['bias_2sig_l'] = bias_2sig_l
+    result_dict["coord"] = coord
+    result_dict["s1s2"] = s1s2
+    result_dict["bins_mid"] = bins_mid
+    result_dict["bias_med"] = bias_med
+    result_dict["bias_1sig_u"] = bias_1sig_u
+    result_dict["bias_1sig_l"] = bias_1sig_l
+    result_dict["bias_2sig_u"] = bias_2sig_u
+    result_dict["bias_2sig_l"] = bias_2sig_l
 
     return result_dict
 
@@ -1099,9 +1026,9 @@ def show_eff1d(
     coord="e_ces",
     bins=np.linspace(0, 12, 25),
     labels_hist=[
-        "Simulation before matching&cuts",
+        "Simulation before matching & cuts",
         "Simulation after matching",
-        "Simulation after matching&cuts",
+        "Simulation after matching & cuts",
     ],
     labels_eff=["Matching", "Cut (Already Matched)"],
     title="Matching Acceptance and Cut Acceptance",
@@ -1109,16 +1036,13 @@ def show_eff1d(
     """Show the acceptance of matching and cuts in 1D coordinates.
 
     :param events_simu: events from the simulated dataset
-    :param events_simu_matched_to_salt: events from the simulated
-        dataset matched to sprinkled
-    :param mask_salt_cut: mask of the sprinkled dataset with cuts,
-        default to None
-    :param coord: coordinate to be compared, default to 'e_ces', can
-        choose from ['e_ces', 's1_area', 's2_area']
-    :param bins: bins for the coordinate, default to
-        np.linspace(0,12,25)
-    :param title: title of the plot, default to "Matching Acceptance and
-        Cut Acceptance"
+    :param events_simu_matched_to_salt: events from the simulated dataset matched to sprinkled
+    :param mask_salt_cut: mask of the sprinkled dataset with cuts (default: None)
+    :param coord: coordinate to be compared, can choose from ['e_ces', 's1_area', 's2_area']
+        (default: 'e_ces')
+    :param bins: bins for the coordinate (default: np.linspace(0, 12, 25))
+    :param title: title of the plot (default: 'Matching Acceptance and Cut Acceptance')
+
     """
     xlabel_dict = {
         "e_ces": "Simulated CES [keV]",
@@ -1204,14 +1128,73 @@ def show_eff1d(
     plt.show()
 
 
+def show_eff2d(
+    events,
+    events_selected,
+    coord=("s1_area", "s2_area"),
+    bins=(np.linspace(0, 100, 101), np.linspace(500, 7000, 101)),
+    title="Matching Acceptance",
+    vmin_vmax=(0, 1),  # New parameter to set color bar range
+    min_counts=100,
+):
+    """Show the acceptance in 2D coordinates.
+
+    :param events: events before some selection
+    :param events_selected: events after some selection
+    :param coord: coordinates to be compared (default: ('s1_area', 's2_area'))
+    :param bins: bins for the coordinates (default: (np.linspace(0, 100, 101), np.linspace(500,
+        7000, 101)))
+    :param title: title of the plot (default: 'Matching Acceptance')
+    :param vmin_vmax: range of color bar (default: (0, 1))
+    :param min_counts: minimum number of counts in a bin to be considered (default: 100)
+    :return: efficiency, xedges, yedges
+
+    """
+    label_dict = {
+        "e_ces": "Simulated CES [keV]",
+        "s1_area": "Simulated S1 Area [PE]",
+        "s2_area": "Simulated S2 Area [PE]",
+        "z": "Z [cm]",
+    }
+
+    # Count the number of events in each bin
+    counts, xedges, yedges = np.histogram2d(events[coord[0]], events[coord[1]], bins=bins)
+    counts_selected, xedges, yedges = np.histogram2d(
+        events_selected[coord[0]], events_selected[coord[1]], bins=bins
+    )
+
+    # Compute efficiency
+    eff = counts_selected / counts
+    eff[np.isnan(eff)] = 0
+    eff[counts < min_counts] = 0
+
+    # Plot
+    plt.figure(dpi=150)
+    plt.imshow(
+        eff.T,
+        origin="lower",
+        extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]],
+        aspect="auto",
+        cmap="viridis",
+        vmin=vmin_vmax[0],  # Set minimum value for color scale
+        vmax=vmin_vmax[1],  # Set maximum value for color scale
+    )
+    plt.colorbar(label="Efficiency")
+    plt.xlabel(label_dict[coord[0]])
+    plt.ylabel(label_dict[coord[1]])
+    plt.title(title)
+    plt.show()
+    return eff, xedges, yedges
+
+
 def apply_peaks_daq_cuts(st_data, runs, peaks, proximity_extension=int(0.25e6)):
     """
-    Analogy to DAQVeto in cutax: https://github.com/XENONnT/cutax/blob/fb9c23cea86b44c0402437189fc606399d4e134c/cutax/cuts/daq_veto.py#L8
+    Analogy to DAQVeto in cutax: https://github.com/XENONnT/cutax/blob/fb9c23cea86b44c0402437189fc606399d4e134c/cutax/cuts/daq_veto.py#L8  # noqa
     Apply cuts based on veto_intervals, using strax.touching_windows
     :param st_data: context for data in cutax
     :param runs: ordered runs list
     :param peaks: peaks level data with ordered times
-    :param proximity_extension: extension of the veto proximity cut, default to int(0.25e6)
+    :param proximity_extension: extension of the veto proximity cut (default: int(0.25e6))
     :return: mask_daq_cut mask for veto cuts
     """
     # Load veto_intervals

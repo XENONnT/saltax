@@ -1,5 +1,3 @@
-import numpy as np
-import time
 import os
 
 import sys
@@ -14,21 +12,28 @@ config.read("config.ini")
 MAX_NUM_SUBMIT = config.getint("utilix", "max_num_submit")
 T_SLEEP = config.getfloat("utilix", "t_sleep")
 USER = config.get("slurm", "username")
-ACCOUNT = config.get("slurm", "account")
 LOG_DIR = config.get("slurm", "log_dir")
-CONTAINER = config.get("job", "container")
-RUNIDS = config.get("job", "runids")
+RUN_IDS = [int(run_id) for run_id in config.get("job", "run_ids").split(",")]
 JOB_TITLE = config.get("slurm", "job_title")
 PARTITION = config.get("slurm", "partition")
 QOS = config.get("slurm", "qos")
+ACCOUNT = config.get("slurm", "account")
 MEM_PER_CPU = config.getint("slurm", "mem_per_cpu")
+CONTAINER = config.get("job", "container")
+if config.has_option("slurm", "bind"):
+    BIND = config.get("slurm", "bind").split(",")
+else:
+    BIND = None  # type: ignore
 CPUS_PER_TASK = config.getint("slurm", "cpus_per_task")
+if config.has_option("slurm", "bypass_validation"):
+    BYPASS_VALIDATION = config.get("slurm", "bypass_validation").split(",")
+else:
+    BYPASS_VALIDATION = None  # type: ignore
 
-RUNIDS = [int(runid) for runid in RUNIDS.split(",")]
 os.makedirs(LOG_DIR, exist_ok=True)
 
 
-class Submit(object):
+class Submit:
     def name(self):
         return self.__class__.__name__
 
@@ -61,13 +66,13 @@ class Submit(object):
         """Submit a single job."""
         jobname = JOB_TITLE + "_{:03}".format(loop_item)
         # Modify here for the script to run
-        jobstring = "python job.py %s" % (loop_item)
+        jobstring = f"python job.py {loop_item}"
         print(jobstring)
 
         # Modify here for the log name
-        utilix.batchq.submit_job(
+        batchq.submit_job(
             jobstring=jobstring,
-            log="%s/%s.log" % (LOG_DIR, jobname),
+            log=f"{LOG_DIR}/{jobname}.log",
             partition=PARTITION,
             qos=QOS,
             account=ACCOUNT,
@@ -75,14 +80,16 @@ class Submit(object):
             dry_run=False,
             mem_per_cpu=MEM_PER_CPU,
             container=CONTAINER,
+            bind=BIND,
             cpus_per_task=CPUS_PER_TASK,
+            bypass_validation=BYPASS_VALIDATION,
         )
 
 
 p = Submit()
 
 # Modify here for the runs to process
-loop_over = RUNIDS
+loop_over = RUN_IDS
 print("Going to process these runs:", loop_over)
 print("Number of runs to process: ", len(loop_over))
 print("Your log files are in: ", LOG_DIR)

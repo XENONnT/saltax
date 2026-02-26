@@ -1,0 +1,49 @@
+[tool]
+[tool.poetry]
+name = "saltax"
+version = "0.2.3"
+description = "Salting MC into straxen"
+readme = "README.md"
+authors = [
+  "Lanqing Yuan",
+  "Dacheng Xu",
+]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "License :: OSI Approved :: MIT License",
+  "Natural Language :: English",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Intended Audience :: Science/Research",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Topic :: Scientific/Engineering :: Physics",
+]
+repository = "https://github.com/XENONnT/saltax"
+
+[tool.poetry.dependencies]
+python = ">=3.9,<3.13"
+strax = "*"
+straxen = "*"
+xenon-fuse = ">=1.6.0"
+tabulate = "*"
+numpy = "*"
+numba = "*"
+pandas = "*"
+scipy = "*"
+
+[build-system]
+requires = ["poetry-core>=1.0.8", "setuptools>=61.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 100
+preview = true
+
+[tool.docformatter]
+recursive = true
+in-place = true
+style = "sphinx"
+wrap-summaries = 100
+wrap-descriptions = 100
+blank = true

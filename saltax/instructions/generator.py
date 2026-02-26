@@ -1,47 +1,71 @@
+import os
+import logging
+import pytz
+import tarfile
+import tempfile
 import numpy as np
 import pandas as pd
-import nestpy
-import wfsim
-import pytz
-import straxen
-from zoneinfo import ZoneInfo
-from utilix import xent_collection
-import datetime
-import os
-import pickle
-from tqdm import tqdm
 
+import nestpy
+import utilix
+import straxen
+from straxen import units
+from fuse.plugins.detector_physics.csv_input import ChunkCsvInput
+
+from saltax.utils import COLL
+from saltax.plugins.csv_input import SALT_TIME_INTERVAL
+
+logging.basicConfig(level=logging.INFO, handlers=[logging.StreamHandler()])
+log = logging.getLogger("saltax.instructions.generator")
 
 DEFAULT_EN_RANGE = (0.2, 15.0)  # in unit of keV
-SALT_TIME_INTERVAL = 2e7  # in unit of ns. The number should be way bigger then full drift time
-Z_RANGE = (-148.15, 0)  # in unit of cm
-R_RANGE = (0, 66.4)  # in unit of cm
-DOWNLOADER = straxen.MongoDownloader()
+Z_RANGE = (-straxen.tpc_z, 0)  # in unit of cm
+R_RANGE = (0, straxen.tpc_r)  # in unit of cm
 NC = nestpy.NESTcalc(nestpy.DetectorExample_XENON10())
-FIELD_FILE = "fieldmap_2D_B2d75n_C2d75n_G0d3p_A4d9p_T0d9n_PMTs1d3n_FSR0d65p_QPTFE_0d5n_0d4p.json.gz"
-FIELD_MAP = straxen.InterpolatingMap(
-    straxen.get_resource(DOWNLOADER.download_single(FIELD_FILE), fmt="json.gz"),
-    method="RegularGridInterpolator",
-)
-SE_INSTRUCTIONS_DIR = "/project/lgrandi/yuanlq/salt/se_instructions/"
-AMBE_INSTRUCTIONS_FILE = "/project/lgrandi/yuanlq/salt/ambe_instructions/minghao_aptinput.csv"
-YBE_INSTRUCTIONS_FILE = "/project2/lgrandi/ghusheng/ybe_instrutions/ybe_wfsim_instructions_6806_events_time_modified.csv"
-# BASE_DIR = "/project2/lgrandi/yuanlq/shared/saltax_instr/"
-BASE_DIR = os.path.abspath(__file__)[:-12] + "../../generated/"
+SE_INSTRUCTIONS_FILE = "se_instructions.csv.gz"
+AMBE_INSTRUCTIONS_FILE = "minghao_aptinput.csv.gz"
+YBE_INSTRUCTIONS_FILE = "ybe_wfsim_instructions_6806_events_time_modified.csv"
+NEST_RNG = nestpy.RandomGen.rndm()
 
 
-def generate_vertex(r_range=R_RANGE, z_range=Z_RANGE, size=1):
+def load_csv_gz(instructions_file):
+    """Load a CSV file from utilix storage, which can be gzipped or not.
+
+    :param instructions_file: name of the file to load
+    :return: instructions in numpy record array
+
+    """
+    if os.path.exists(instructions_file):
+        path = instructions_file
+    else:
+        downloader = utilix.mongo_storage.MongoDownloader()
+        path = downloader.download_single(instructions_file)
+    if instructions_file.endswith(".csv.gz"):
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            tar = tarfile.open(path, mode="r:gz")
+            tar.extractall(path=tmpdirname)
+            instructions = pd.read_csv(
+                os.path.join(tmpdirname, instructions_file.replace("csv.gz", "csv"))
+            ).to_records(index=False)
+    else:
+        instructions = pd.read_csv(path).to_records(index=False)
+    return instructions
+
+
+def generate_vertex(rng, r_range=R_RANGE, z_range=Z_RANGE, size=1):
     """Generate a random vertex in the TPC volume.
 
+    :param rng: random number generator
     :param r_range: (r_min, r_max) in cm
     :param z_range: (z_min, z_max) in cm
     :param size: number of vertices to generate
     :return: x, y, z coordinates of the vertex
-    """
-    phi = np.random.uniform(size=size) * 2 * np.pi
-    r = r_range[1] * np.sqrt(np.random.uniform((r_range[0] / r_range[1]) ** 2, 1, size=size))
 
-    z = np.random.uniform(z_range[0], z_range[1], size=size)
+    """
+    phi = rng.uniform(size=size) * 2 * np.pi
+    r = r_range[1] * np.sqrt(rng.uniform((r_range[0] / r_range[1]) ** 2, 1, size=size))
+
+    z = rng.uniform(z_range[0], z_range[1], size=size)
     x = r * np.cos(phi)
     y = r * np.sin(phi)
 
@@ -60,45 +84,45 @@ def constrain_radius(xs, ys, r_max=R_RANGE[-1] - 0.001):
 
 
 def generate_times(
-    start_time, end_time, size=None, rate=1e9 / SALT_TIME_INTERVAL, time_mode="uniform"
+    start_time, end_time, rng, size=None, rate=units.s / SALT_TIME_INTERVAL, time_mode="uniform"
 ):
     """Generate an array of event times in the given time range.
 
     :param start_time: start time in ns
     :param end_time: end time in ns
-    :param size: rough number of events to generate, default: None i.e.
-        generate events until end_time
+    :param rng: random number generator
+    :param size: rough number of events to generate (default: None)
     :param rate: rate of events in Hz
     :param time_mode: 'uniform' or 'realistic'
     :return: array of event times in ns
+
     """
     total_time_ns = end_time - start_time
-    estimated_size = int(total_time_ns * rate / 1e9)
+    estimated_size = int(total_time_ns * rate / units.s)
 
     assert time_mode in [
         "realistic",
         "uniform",
-    ], "time_mode must be either \
-        'realistic' or 'uniform'"
+    ], "time_mode must be either 'realistic' or 'uniform'"
 
     # Generating event times from exponential
     # This one doesn't work for salting!!!
     if time_mode == "realistic":
-        dt = np.random.exponential(1 / rate, size=estimated_size - 1)
-        times = np.append([0], dt.cumsum()) * 1e9
+        dt = rng.exponential(1 / rate, size=estimated_size - 1)
+        times = np.append([0], dt.cumsum()) * units.s
         times = times.round().astype(np.int64)
         times += start_time
 
     # Generating event times from uniform
     elif time_mode == "uniform":
         dt = (1 / rate) * np.ones(estimated_size - 1)
-        times = np.append([0], dt.cumsum()) * 1e9
+        times = np.append([0], dt.cumsum()) * units.s
         times = times.round().astype(np.int64)
         times += start_time
 
     # Removing events that are too close to the start or end of the run
-    times = times[times < (end_time - 1 / rate * 1e9)]
-    times = times[times > (start_time + 1 / rate * 1e9)]
+    times = times[times < (end_time - 1 / rate * units.s)]
+    times = times[times > (start_time + 1 / rate * units.s)]
 
     if size is None:
         return times
@@ -106,193 +130,149 @@ def generate_times(
         return times[: min(int(size), len(times))]
 
 
-def get_run_start_end(runid):
+def get_run_start_end(run_id):
     """Get the start and end time of a run in unix time in ns, from RunDB.
 
-    :param runid: run number in integer
+    :param run_id: run number
     :return: start time, end time in unix time in ns
+
     """
     # Get the datetime of start and end time of the run from RunDB
-    assert type(runid) == int, "runid must be an integer"
-    try:
-        doc = xent_collection().find_one({"number": runid})
-    except:
-        raise RuntimeError("Cannot find runid %d in RunDB" % (runid))
+    doc = COLL.find_one({"number": int(run_id)})
     if doc is None:
-        raise RuntimeError("Cannot find runid %d in RunDB" % (runid))
-    dt_start, dt_end = doc["start"], doc["end"]
-
-    # Get timezones
-    chicago_tz = ZoneInfo("America/Chicago")
-    utc_tz = pytz.utc
-
-    # Transform the datetime to Chicago time
-    dt_start_year, dt_end_year = dt_start.year, dt_end.year
-    dt_start_month, dt_end_month = dt_start.month, dt_end.month
-    dt_start_day, dt_end_day = dt_start.day, dt_end.day
-    dt_start_hour, dt_end_hour = dt_start.hour, dt_end.hour
-    dt_start_minute, dt_end_minute = dt_start.minute, dt_end.minute
-    dt_start_second, dt_end_second = dt_start.second, dt_end.second
-    dt_start_ms, dt_end_ms = dt_start.microsecond, dt_end.microsecond
-    dt_start_transformed = datetime.datetime(
-        dt_start_year,
-        dt_start_month,
-        dt_start_day,
-        dt_start_hour,
-        dt_start_minute,
-        dt_start_second,
-        dt_start_ms,
-        tzinfo=utc_tz,
-    ).astimezone(chicago_tz)
-    dt_end_transformed = datetime.datetime(
-        dt_end_year,
-        dt_end_month,
-        dt_end_day,
-        dt_end_hour,
-        dt_end_minute,
-        dt_end_second,
-        dt_end_ms,
-        tzinfo=utc_tz,
-    ).astimezone(chicago_tz)
+        raise RuntimeError(f"Cannot find run_id {run_id} in RunDB")
+    dt_start = doc["start"].replace(tzinfo=pytz.UTC)
+    dt_end = doc["end"].replace(tzinfo=pytz.UTC)
 
     # Transform the datetime to unix time in ns
-    unix_time_start_ns = int(
-        dt_start_transformed.timestamp() * 1e9 + dt_start_transformed.microsecond * 1000
-    )
-    unix_time_end_ns = int(
-        dt_end_transformed.timestamp() * 1e9 + dt_end_transformed.microsecond * 1000
-    )
+    unix_time_start_ns = int(dt_start.timestamp() * units.s)
+    unix_time_end_ns = int(dt_end.timestamp() * units.s)
 
     return unix_time_start_ns, unix_time_end_ns
 
 
 def instr_file_name(
-    recoil,
-    generator_name,
-    mode,
-    runid=None,
+    run_id=None,
+    nestid=8,
+    generator_name="flat",
+    mode="all",
     en_range=DEFAULT_EN_RANGE,
-    rate=1e9 / SALT_TIME_INTERVAL,
-    base_dir=BASE_DIR,
-    **kwargs
+    rate=units.s / SALT_TIME_INTERVAL,
+    output_folder=None,
+    chunk_number=None,
 ):
-    """Generate the instruction file name based on the runid, recoil,
-    generator_name, mode, and rate.
+    """Generate the instruction file name based on the run_id, nestid, generator_name, mode, and
+    rate.
 
-    :param recoil: NEST recoil type
-    :param generator_name: name of the generator
-    :param mode: 's1', 's2', or 'all'
-    :param runid: run number in integer, default: None, which means we
-        are loading data and instruction doesn't matter (strax lineage
-        unaffected)
-    :param en_range: (en_min, en_max) in keV, default: DEFAULT_EN_RANGE as a placeholder
+    :param generator_name: name of the generator (default: 'flat')
+    :param nestid: NEST recoil type (default: 8)
+    :param mode: 's1', 's2', or 'all' (default: 'all')
+    :param run_id: run number (default: None)
+    :param en_range: (en_min, en_max) in keV (default: DEFAULT_EN_RANGE)
     :param rate: rate of events in Hz
-    :param base_dir: base directory to save the instruction file,
-        default: BASE_DIR
+    :param output_folder: output directory to save the instruction file (default: None)
     :return: instruction file name
-    """
-    if en_range is not None:
-        en_range = str(en_range[0]) + "_" + str(en_range[1])
-    else:
-        raise RuntimeError("en_range must be specified, and it can even be placeholder (0,0)")
-    # FIXME: this will shoot errors if we are on OSG rather than midway
-    if runid is None:
-        return "Data-loading only, no instruction file needed."
-    else:
-        if base_dir[-1] != "/":
-            base_dir += "/"
 
-        rate = int(rate)
-        runid = str(runid).zfill(6)
-        filename = (
-            BASE_DIR
-            + runid
-            + "-"
-            + str(recoil)
-            + "-"
-            + generator_name
-            + "-"
-            + en_range
-            + "-"
-            + mode
-            + "-"
-            + str(rate)
-            + ".csv"
+    """
+    if en_range is None:
+        raise RuntimeError("en_range must be specified, and it can even be placeholder (0, 0)")
+
+    if run_id is None:
+        raise RuntimeError(
+            "run_id must be specified to generate instruction file name. "
+            "It is usually the same as the run number of the strax context."
         )
 
-        return filename
+    if output_folder is None:
+        raise RuntimeError(
+            "output_folder must be specified to generate instruction file name. "
+            "It is usually the same as the output folder of the strax context."
+        )
+
+    run_id = str(run_id).zfill(6)
+    en_range = str(en_range[0]) + "_" + str(en_range[1])
+    rate = int(rate)
+    filename = os.path.join(
+        output_folder,
+        "-".join([run_id, str(nestid), generator_name, en_range, mode, str(rate)]) + ".csv",
+    )
+
+    if chunk_number is not None:
+        filename = filename.replace(".csv", f"_{chunk_number[0]}_{chunk_number[-1] + 1}.csv")
+
+    return filename
 
 
 def generator_se(
-    runid,
+    run_id,
     n_tot=None,
-    rate=1e9 / SALT_TIME_INTERVAL,
+    rate=units.s / SALT_TIME_INTERVAL,
     r_range=R_RANGE,
     z_range=Z_RANGE,
     time_mode="uniform",
-    **kwargs
 ):
     """Generate instructions for a run with single electron.
 
-    :param runid: run number in integer
-    :param n_tot: total number of events to generate, default: None i.e.
-        generate events until end_time
-    :param rate: rate of events in Hz, default: 1e9/SALT_TIME_INTERVAL
-    :param r_range: (r_min, r_max) in cm, default: R_RANGE, defined
-        above
-    :param z_range: (z_min, z_max) in cm, default: Z_RANGE, defined
-        above
-    :param time_mode: 'uniform' or 'realistic', default: 'uniform'
+    :param run_id: run number
+    :param n_tot: total number of events to generate (default: None)
+    :param rate: rate of events in Hz (default: units.s / SALT_TIME_INTERVAL)
+    :param r_range: (r_min, r_max) in cm (default: R_RANGE)
+    :param z_range: (z_min, z_max) in cm (default: Z_RANGE)
+    :param time_mode: 'uniform' or 'realistic' (default: 'uniform')
     :return: instructions in numpy array
+
     """
-    start_time, end_time = get_run_start_end(runid)
-    times = generate_times(start_time, end_time, size=n_tot, rate=rate, time_mode=time_mode)
+    rng = np.random.default_rng(seed=int(run_id))
+    start_time, end_time = get_run_start_end(run_id)
+    times = generate_times(
+        start_time, end_time, rng=rng, size=n_tot, rate=rate, time_mode=time_mode
+    )
     n_tot = len(times)
 
-    instr = np.zeros(n_tot, dtype=wfsim.instruction_dtype)
-    instr["event_number"] = np.arange(1, n_tot + 1)
-    instr["type"][:] = 2
-    instr["time"][:] = times
+    instr = np.zeros(n_tot, dtype=ChunkCsvInput.needed_csv_input_fields())
+    instr["eventid"] = instr["cluster_id"] = np.arange(n_tot)
+    instr["t"] = times
 
     # Generating unoformely distributed events for give R and Z range
-    x, y, z = generate_vertex(r_range=r_range, z_range=z_range, size=n_tot)
-    instr["x"][:] = x
-    instr["y"][:] = y
-    instr["z"][:] = z
+    instr["x"], instr["y"], instr["z"] = generate_vertex(
+        rng=rng, r_range=r_range, z_range=z_range, size=n_tot
+    )
 
-    # And generating quantas from nest
-    for i in range(0, n_tot):
-        instr["amp"][i] = 1
-        instr["n_excitons"][i] = 0
+    # And assigning quanta
+    instr["photons"] = 0
+    instr["electrons"] = 1
+    instr["excitons"] = 0
 
     return instr
 
 
-def generator_se_bootstrapped(runid, xyt_files_at=SE_INSTRUCTIONS_DIR, **kwargs):
+def generator_se_bootstrapped(
+    run_id,
+    se_instructions_file=SE_INSTRUCTIONS_FILE,
+):
     """Generate instructions for a run with single electron.
 
-    We will use XYT information from bootstrapped data single electrons
-    to make the simulation more realistic
-    :param runid: run number in integer
-    :param xyt_files_at: directory to search for instructions of x,y,t
-        information
+    We will use XYT information from bootstrapped data single electrons to make the simulation more
+    realistic
+    :param run_id: run number
+    :param se_instructions_file: file containing se instructions (default: SE_INSTRUCTIONS_FILE)
+    :param xyt_files_at: directory to search for instructions of x, y, t information
+    :return: instructions in numpy array
+
     """
     # load instructions
-    runid_str = str(runid).zfill(6)
-    with open(xyt_files_at + "se_xs_dict.pkl", "rb") as f:
-        xs = pickle.load(f)[runid_str]
-    with open(xyt_files_at + "se_ys_dict.pkl", "rb") as f:
-        ys = pickle.load(f)[runid_str]
-    with open(xyt_files_at + "se_ts_dict.pkl", "rb") as f:
-        ts = pickle.load(f)[runid_str]
+    run_id = str(run_id).zfill(6)
+    se_instructions = load_csv_gz(se_instructions_file)
+    se_instructions = se_instructions[se_instructions["run_id"] == int(run_id)]
 
     # stay in runtime range
-    start_time, end_time = get_run_start_end(runid)
-    mask_in_run = ts < (end_time - 1 / 20 * 1e9)  # empirical patch to stay in run
-    mask_in_run &= ts > (start_time + 1 / 20 * 1e9)  # empirical patch to stay in run
-    xs = xs[mask_in_run]
-    ys = ys[mask_in_run]
-    ts = ts[mask_in_run]
+    start_time, end_time = get_run_start_end(run_id)
+    # empirical patch to stay in run
+    mask_in_run = se_instructions["t"] < (end_time - 1 / 20 * units.s)
+    mask_in_run &= se_instructions["t"] > (start_time + 1 / 20 * units.s)
+    xs = se_instructions["x"][mask_in_run]
+    ys = se_instructions["y"][mask_in_run]
+    ts = se_instructions["t"][mask_in_run]
 
     # clean up nan
     mask_is_nan = np.isnan(xs) + np.isnan(ys) + np.isnan(ts)
@@ -304,232 +284,283 @@ def generator_se_bootstrapped(runid, xyt_files_at=SE_INSTRUCTIONS_DIR, **kwargs)
     xs, ys = constrain_radius(xs, ys)
 
     n_tot = len(ts)
-    instr = np.zeros(n_tot, dtype=wfsim.instruction_dtype)
-    instr["event_number"] = np.arange(1, n_tot + 1)
-    instr["type"][:] = 2
-    instr["time"][:] = ts
-    instr["x"][:] = xs
-    instr["y"][:] = ys
-    instr["z"][:] = -0.00001  # Just to avoid drift time
+    instr = np.zeros(n_tot, dtype=ChunkCsvInput.needed_csv_input_fields())
+    instr["eventid"] = instr["cluster_id"] = np.arange(n_tot)
+    instr["t"] = ts
+    instr["x"] = xs
+    instr["y"] = ys
+    instr["z"] = -0.00001  # Just to avoid drift time
+
+    # And assigning quanta
+    instr["photons"] = 0
+    instr["electrons"] = 1
+    instr["excitons"] = 0
+
+    return instr
+
+
+def generator_mc(
+    run_id,
+    efield_map,
+    nestid=0,
+    n_tot=None,
+    rate=units.s / SALT_TIME_INTERVAL,
+    nc=NC,
+    mode="all",
+    time_mode="uniform",
+    instructions_file=None,
+):
+    """Generate instructions for a run.
+
+    Instruction was first generated by full-chain simulation, and then feed this function. Each
+    event with a certain event_id in the instructions will be shifted in time based on the time_mode
+    you specified.
+    :param run_id: run number
+    :param n_tot: total number of events to generate (default: None)
+    :param rate: rate of events in Hz (default: units.s / SALT_TIME_INTERVAL)
+    :param nc: NEST calculator (default: NC)
+    :param mode: 's1', 's2', or 'all' (default: 'all')
+    :param time_mode: 'uniform' or 'realistic' (default: 'uniform')
+    :param instructions_file: file containing instructions (default: None)
+    :return: instructions in numpy array
+
+    """
+    # determine time offsets to shift instructions
+    rng = np.random.default_rng(seed=int(run_id))
+    start_time, end_time = get_run_start_end(run_id)
+    times_offset = generate_times(
+        start_time, end_time, rng=rng, size=n_tot, rate=rate, time_mode=time_mode
+    )
+    n_tot = len(times_offset)
+
+    instructions = load_csv_gz(instructions_file)
+    instructions = np.sort(instructions, order=["event_number", "time"], kind="mergesort")
+
+    # check nestid
+    unique_nestid = np.unique(instructions["nestid"])
+    if not np.all(unique_nestid == nestid):
+        log.warning(
+            f"NEST ID in instructions ({unique_nestid}) "
+            f"does not match the requested nestid ({nestid})."
+        )
+
+    # bootstrap instructions
+    if not np.all(np.diff(instructions["event_number"]) >= 0):
+        raise RuntimeError(
+            "Neutron instructions must be sorted by event_number in ascending order."
+        )
+    event_numbers, event_indices, event_counts = np.unique(
+        instructions["event_number"],
+        return_index=True,
+        return_counts=True,
+    )
+    event_indices = np.append(event_indices, len(instructions))
+
+    _indices = rng.choice(len(event_numbers), size=n_tot, replace=True)
+    t0 = np.array(
+        [instructions["time"][event_indices[i] : event_indices[i + 1]].min() for i in _indices]
+    )
+    indices = np.hstack([np.arange(event_indices[i], event_indices[i + 1]) for i in _indices])
+
+    # assign instructions
+    instr = np.zeros(len(indices), dtype=ChunkCsvInput.needed_csv_input_fields())
+    instr["eventid"] = np.repeat(np.arange(n_tot), event_counts[_indices])
+    instr["cluster_id"] = np.arange(len(instr))
+
+    instr["t"] = np.repeat(times_offset, event_counts[_indices])
+    instr["t"] += instructions["time"][indices] - np.repeat(t0, event_counts[_indices])
+
+    instr["x"] = instructions["x"][indices]
+    instr["y"] = instructions["y"][indices]
+    instr["z"] = instructions["z"][indices]
+    instr["ed"] = instructions["ed"][indices]
+
+    instr["nestid"] = instructions["nestid"][indices]
+
+    instr["e_field"] = efield_map(
+        np.array([np.sqrt(instr["x"] ** 2 + instr["y"] ** 2), instr["z"]]).T
+    )
 
     # And generating quantas from nest
-    for i in range(0, n_tot):
-        instr["amp"][i] = 1
-        instr["n_excitons"][i] = 0
+    NEST_RNG.set_seed(int(run_id))
+    NEST_RNG.lock_seed()
+    for i in range(len(instr)):
+        y = nc.GetYields(
+            interaction=nestpy.INTERACTION_TYPE(instr["nestid"][i]),
+            energy=instr["ed"][i],
+            drift_field=instr["e_field"][i],
+        )
+        quantas = nc.GetQuanta(y)
+        instr["photons"][i] = quantas.photons
+        instr["electrons"][i] = quantas.electrons
+        instr["excitons"][i] = quantas.excitons
+    NEST_RNG.unlock_seed()
+
+    ind = np.cumsum(event_counts[_indices])[:-1]
+    if np.any(instr["t"][ind] - instr["t"][ind - 1] < 0):
+        raise RuntimeError("Neutron instructions overlap with the next event.")
+
+    # Selecting event types
+    if mode == "s1":
+        instr["electrons"] = 0
+    elif mode == "s2":
+        instr["photons"] = 0
+    elif mode == "all":
+        pass
+    else:
+        raise RuntimeError(f"Unknown mode: {mode}")
 
     return instr
 
 
 def generator_ambe(
-    runid,
+    run_id,
+    efield_map,
+    nestid=0,
     n_tot=None,
-    rate=1e9 / SALT_TIME_INTERVAL,
+    rate=units.s / SALT_TIME_INTERVAL,
+    nc=NC,
+    mode="all",
     time_mode="uniform",
     ambe_instructions_file=AMBE_INSTRUCTIONS_FILE,
-    fmap=FIELD_MAP,
-    **kwargs
 ):
-    """Generate instructions for a run with AmBe source.
+    """Generate instructions for a AmBe run.
 
-    AmBe instruction was first generated by full-chain simulation, and
-    then passing the post-epix instruction to feed this function. Each
-    event with a certain event_id in the fed instructions will be
-    shifted in time based on the time_mode you specified.
-    :param runid: run number in integer
-    :param n_tot: total number of events to generate, default: None i.e.
-        generate events until end_time
-    :param rate: rate of events in Hz, default: 1e9/SALT_TIME_INTERVAL
-    :param time_mode: 'uniform' or 'realistic', default: 'uniform'
-    :param ambe_instructions_file: file containing ambe instructions,
-        default: AMBE_INSTRUCTIONS_FILE
-    :param fmap: field map, default: FIELD_MAP, defined above
+    :param run_id: run number
+    :param n_tot: total number of events to generate (default: None)
+    :param rate: rate of events in Hz (default: units.s / SALT_TIME_INTERVAL)
+    :param nc: NEST calculator (default: NC)
+    :param mode: 's1', 's2', or 'all' (default: 'all')
+    :param time_mode: 'uniform' or 'realistic' (default: 'uniform')
+    :param ambe_instructions_file: file containing ambe instructions (default:
+        AMBE_INSTRUCTIONS_FILE)
     :return: instructions in numpy array
+
     """
-    # determine time offsets to shift ambe instructions
-    start_time, end_time = get_run_start_end(runid)
-    times_offset = generate_times(start_time, end_time, size=n_tot, rate=rate, time_mode=time_mode)
-    n_tot = len(times_offset)
-
-    # bootstrap instructions
-    ambe_instructions = pd.read_csv(ambe_instructions_file)
-    ambe_event_numbers = np.random.choice(
-        np.unique(ambe_instructions.event_number), n_tot, replace=True
+    return generator_mc(
+        run_id=run_id,
+        efield_map=efield_map,
+        n_tot=n_tot,
+        rate=rate,
+        nc=nc,
+        mode=mode,
+        time_mode=time_mode,
+        instructions_file=ambe_instructions_file,
     )
-
-    # assign instructions
-    instr = np.zeros(0, dtype=wfsim.instruction_dtype)
-    for i in tqdm(range(n_tot)):
-        # bootstrapped ambe instruction
-        selected_ambe = ambe_instructions[
-            ambe_instructions["event_number"] == ambe_event_numbers[i]
-        ]
-        # instruction for i-th event
-        instr_i = np.zeros(len(selected_ambe), dtype=wfsim.instruction_dtype)
-        instr_i["time"] = times_offset[i] + selected_ambe["time"]
-        instr_i["event_number"] = i + 1
-        instr_i["type"] = selected_ambe["type"]
-        instr_i["x"] = selected_ambe["x"]
-        instr_i["y"] = selected_ambe["y"]
-        instr_i["z"] = selected_ambe["z"]
-        instr_i["recoil"] = selected_ambe["recoil"]
-        instr_i["e_dep"] = selected_ambe["e_dep"]
-        instr_i["amp"] = selected_ambe["amp"]
-        instr_i["n_excitons"] = selected_ambe["n_excitons"]
-        instr_i["local_field"] = fmap(np.array([np.sqrt(selected_ambe["x"]**2 + selected_ambe["y"]**2), 
-                                                selected_ambe["z"]]).T).repeat(2)
-
-        # concatenate instr
-        instr = np.concatenate((instr, instr_i))
-
-    # Filter out 0 amplitudes
-    instr = instr[instr["amp"] > 0]
-
-    return instr
 
 
 def generator_ybe(
-    runid,
+    run_id,
+    efield_map,
+    nestid=0,
     n_tot=None,
-    rate=1e9 / SALT_TIME_INTERVAL,
+    rate=units.s / SALT_TIME_INTERVAL,
+    nc=NC,
+    mode="all",
     time_mode="uniform",
     ybe_instructions_file=YBE_INSTRUCTIONS_FILE,
-    fmap=FIELD_MAP,
-    **kwargs
 ):
-    """Generate instructions for a run with YBe source.
+    """Generate instructions for a YBe run.
 
-    YBe instruction was first generated by full-chain simulation, and
-    then passing the post-epix instruction to feed this function. Each
-    event with a certain event_id in the fed instructions will be
-    shifted in time based on the time_mode you specified.
-    :param runid: run number in integer
-    :param n_tot: total number of events to generate, default: None i.e.
-        generate events until end_time
-    :param rate: rate of events in Hz, default: 1e9/SALT_TIME_INTERVAL
-    :param time_mode: 'uniform' or 'realistic', default: 'uniform'
-    :param ybe_instructions_file: file containing ybe instructions,
-        default: YBE_INSTRUCTIONS_FILE
-    :param fmap: field map, default: FIELD_MAP, defined above
+    :param run_id: run number
+    :param n_tot: total number of events to generate (default: None)
+    :param rate: rate of events in Hz (default: units.s / SALT_TIME_INTERVAL)
+    :param nc: NEST calculator (default: NC)
+    :param mode: 's1', 's2', or 'all' (default: 'all')
+    :param time_mode: 'uniform' or 'realistic' (default: 'uniform')
+    :param ybe_instructions_file: file containing ybe instructions (default: YBE_INSTRUCTIONS_FILE)
     :return: instructions in numpy array
+
     """
-    # determine time offsets to shift ybe instructions
-    start_time, end_time = get_run_start_end(runid)
-    times_offset = generate_times(start_time, end_time, size=n_tot, rate=rate, time_mode=time_mode)
-    n_tot = len(times_offset)
-
-    # bootstrap instructions
-    ybe_instructions = pd.read_csv(ybe_instructions_file)
-    ybe_event_numbers = np.random.choice(
-        np.unique(ybe_instructions.event_number), n_tot, replace=True
+    return generator_mc(
+        run_id=run_id,
+        efield_map=efield_map,
+        nestid=nestid,
+        n_tot=n_tot,
+        rate=rate,
+        nc=nc,
+        mode=mode,
+        time_mode=time_mode,
+        instructions_file=ybe_instructions_file,
     )
-
-    # assign instructions
-    instr = np.zeros(0, dtype=wfsim.instruction_dtype)
-    for i in tqdm(range(n_tot)):
-        # bootstrapped ybe instruction
-        selected_ybe = ybe_instructions[ybe_instructions["event_number"] == ybe_event_numbers[i]]
-        # instruction for i-th event
-        instr_i = np.zeros(len(selected_ybe), dtype=wfsim.instruction_dtype)
-        instr_i["time"] = times_offset[i] + selected_ybe["time"]
-        instr_i["event_number"] = i + 1
-        instr_i["type"] = selected_ybe["type"]
-        instr_i["x"] = selected_ybe["x"]
-        instr_i["y"] = selected_ybe["y"]
-        instr_i["z"] = selected_ybe["z"]
-        instr_i["recoil"] = selected_ybe["recoil"]
-        instr_i["e_dep"] = selected_ybe["e_dep"]
-        instr_i["amp"] = selected_ybe["amp"]
-        instr_i["n_excitons"] = selected_ybe["n_excitons"]
-        instr_i["local_field"] = fmap(np.array([np.sqrt(selected_ybe["x"]**2 + selected_ybe["y"]**2), 
-                                                selected_ybe["z"]]).T).repeat(2)
-
-        # concatenate instr
-        instr = np.concatenate((instr, instr_i))
-
-    # Filter out 0 amplitudes
-    instr = instr[instr["amp"] > 0]
-
-    return instr
 
 
 def generator_flat(
-    runid,
+    run_id,
+    efield_map,
     en_range=DEFAULT_EN_RANGE,
-    recoil=8,
+    nestid=8,
     n_tot=None,
-    rate=1e9 / SALT_TIME_INTERVAL,
-    fmap=FIELD_MAP,
+    rate=units.s / SALT_TIME_INTERVAL,
     nc=NC,
     r_range=R_RANGE,
     z_range=Z_RANGE,
     mode="all",
     time_mode="uniform",
-    **kwargs
 ):
     """Generate instructions for a run with flat energy spectrum.
 
-    :param runid: run number in integer
-    :param en_range: (en_min, en_max) in keV, default: (0.2, 15.0)
-    :param recoil: NEST recoil type, default: 8 (beta ER)
-    :param n_tot: total number of events to generate, default: None i.e.
-        generate events until end_time
-    :param rate: rate of events in Hz, default: 1e9/SALT_TIME_INTERVAL
-    :param fmap: field map, default: FIELD_MAP, defined above
-    :param nc: NEST calculator, default: NC, defined above
-    :param r_range: (r_min, r_max) in cm, default: R_RANGE, defined
-        above
-    :param z_range: (z_min, z_max) in cm, default: Z_RANGE, defined
-        above
-    :param mode: 's1', 's2', or 'all', default: 'all'
-    :param time_mode: 'uniform' or 'realistic', default: 'uniform'
+    :param run_id: run number
+    :param en_range: (en_min, en_max) in keV (default: (0.2, 15.0))
+    :param nestid: NEST recoil type (default: 8)
+    :param n_tot: total number of events to generate (default: None)
+    :param rate: rate of events in Hz (default: units.s / SALT_TIME_INTERVAL)
+    :param nc: NEST calculator (default: NC)
+    :param r_range: (r_min, r_max) in cm (default: R_RANGE)
+    :param z_range: (z_min, z_max) in cm (default: Z_RANGE)
+    :param mode: 's1', 's2', or 'all' (default: 'all')
+    :param time_mode: 'uniform' or 'realistic' (default: 'uniform')
     :return: instructions in numpy array
+
     """
-    start_time, end_time = get_run_start_end(runid)
-    times = generate_times(start_time, end_time, size=n_tot, rate=rate, time_mode=time_mode)
+    rng = np.random.default_rng(seed=int(run_id))
+    start_time, end_time = get_run_start_end(run_id)
+    times = generate_times(
+        start_time, end_time, rng=rng, size=n_tot, rate=rate, time_mode=time_mode
+    )
     n_tot = len(times)
 
-    instr = np.zeros(2 * n_tot, dtype=wfsim.instruction_dtype)
-    instr["event_number"] = np.arange(1, n_tot + 1).repeat(2)
-    instr["type"][:] = np.tile([1, 2], n_tot)
-    instr["time"][:] = times.repeat(2)
+    instr = np.zeros(n_tot, dtype=ChunkCsvInput.needed_csv_input_fields())
+    instr["eventid"] = instr["cluster_id"] = np.arange(n_tot)
+    instr["t"] = times
 
     # Generating unoformely distributed events for give R and Z range
-    x, y, z = generate_vertex(r_range=r_range, z_range=z_range, size=n_tot)
-    instr["x"][:] = x.repeat(2)
-    instr["y"][:] = y.repeat(2)
-    instr["z"][:] = z.repeat(2)
+    instr["x"], instr["y"], instr["z"] = generate_vertex(
+        rng=rng, r_range=r_range, z_range=z_range, size=n_tot
+    )
 
     # Making energy
-    ens = np.random.uniform(en_range[0], en_range[1], size=n_tot)
-    instr["recoil"][:] = recoil
-    instr["e_dep"][:] = ens.repeat(2)
+    instr["ed"] = rng.uniform(en_range[0], en_range[1], size=n_tot)
+    instr["nestid"] = nestid
 
     # Getting local field from field map
-    instr["local_field"] = fmap(np.array([np.sqrt(x**2 + y**2), z]).T).repeat(2)
+    instr["e_field"] = efield_map(
+        np.array([np.sqrt(instr["x"] ** 2 + instr["y"] ** 2), instr["z"]]).T
+    )
 
     # And generating quantas from nest
-    for i in range(0, n_tot):
+    NEST_RNG.set_seed(int(run_id))
+    NEST_RNG.lock_seed()
+    for i in range(n_tot):
         y = nc.GetYields(
-            interaction=nestpy.INTERACTION_TYPE(instr["recoil"][2 * i]),
-            energy=instr["e_dep"][2 * i],
-            drift_field=instr["local_field"][2 * i],
+            interaction=nestpy.INTERACTION_TYPE(instr["nestid"][i]),
+            energy=instr["ed"][i],
+            drift_field=instr["e_field"][i],
         )
         quantas = nc.GetQuanta(y)
-        instr["amp"][2 * i] = quantas.photons
-        instr["amp"][2 * i + 1] = quantas.electrons
-        instr["n_excitons"][2 * i : 2 * (i + 1)] = quantas.excitons
+        instr["photons"][i] = quantas.photons
+        instr["electrons"][i] = quantas.electrons
+        instr["excitons"][i] = quantas.excitons
+    NEST_RNG.unlock_seed()
 
     # Selecting event types
     if mode == "s1":
-        instr = instr[instr["type"] == 1]
+        instr["electrons"] = 0
     elif mode == "s2":
-        instr = instr[instr["type"] == 2]
+        instr["photons"] = 0
     elif mode == "all":
         pass
     else:
-        raise RuntimeError("Unknown mode: ", mode)
-
-    # Filter out 0 amplitudes
-    instr = instr[instr["amp"] > 0]
+        raise RuntimeError(f"Unknown mode: {mode}")
 
     return instr

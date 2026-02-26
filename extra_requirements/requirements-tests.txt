@@ -1,5 +1,0 @@
-# File for the requirements of saltax with the automated tests
-git+https://github.com/AxFoundation/strax
-git+https://github.com/XENONnT/straxen
-pytest-xdist
-xedocs

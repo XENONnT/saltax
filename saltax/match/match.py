@@ -1,13 +1,12 @@
 import numpy as np
-from tqdm import tqdm
 import strax
 
 
 def match_events(
     events_simu, events_salt, event_window_fuzz=0, s1_window_fuzz=100, s2_window_fuzz=0
 ):
-    """Match salted events to simulation events based on event or S1-S2 timing,
-    without checking simulation truth.
+    """Match salted events to simulation events based on event or S1-S2 timing, without checking
+    simulation truth.
 
     The procedures are:
         1. Filter out events_simu which is missing S1. Then the rest events_simu is like 'truth'
@@ -28,16 +27,17 @@ def match_events(
         7. Find indcies of events_simu_filtered whose S2 time range overlaps with events_salt_s2_found:
            ind_simu_s2_found. Those events_simu_filtered[ind_simu_s2_found] are called events_simu_s2_found.
            The processes in step 6 and 7 are repeated also for alt_s2.
-    :param events_simu: event_info from wfsim
+    :param events_simu: event_info from fuse
     :param events_salt: event_info from saltax
-    :param event_window_fuzz: extended time range to consider as matched for events, default 0 ns
-    :param s1_window_fuzz: extended time range to consider as matched for S1, default 100 ns. Reference
+    :param event_window_fuzz: extended time range to consider as matched for events (default: 0)
+    :param s1_window_fuzz: extended time range to consider as matched for S1 (default: 100). Reference
                            https://xe1t-wiki.lngs.infn.it/doku.php?id=xenon:xenonnt_sr1:ambe_selection
-    :param s2_window_fuzz: extended time range to consider as matched for S2, default 0 ns
+    :param s2_window_fuzz: extended time range to consider as matched for S2 (default: 0)
     :return: events_simu_filtered,
              ind_salt_event_found, ind_simu_event_found, ind_simu_event_lost, ind_simu_event_split,
              ind_salt_s1_found, ind_simu_s1_found, ind_salt_s1_made_alt, ind_simu_s1_made_alt,
              ind_salt_s2_found, ind_simu_s2_found, ind_salt_s2_made_alt, ind_simu_s2_made_alt
+
     """
     # Step 1.
     # Filter out events_simu which is missing S1
@@ -129,8 +129,8 @@ def match_events(
 
 
 def match_peaks(peaks_simu, peaks_salt):
-    """Match salted peaks to simulation peaks based on peak timing, without
-    checking simulation truth.
+    """Match salted peaks to simulation peaks based on peak timing, without checking simulation
+    truth.
 
     The procedures are:
         1. Find indices of peaks_salt whose time range overlaps with peaks_simu: ind_salt_peak_found.
@@ -140,11 +140,12 @@ def match_peaks(peaks_simu, peaks_salt):
         3. If window_length is 0, the sprinkled peak is lost: ind_simu_peak_lost.
         4. If window_length is larger than 1, the sprinkled peak is split: ind_simu_peak_split.
            When a peak is split, the peak with the largest area is selected.
-    :param peaks_simu: peaks from wfsim, typically peak_basics
+    :param peaks_simu: peaks from fuse, typically peak_basics
     :param peaks_salt: peaks from saltax, typically peak_basics
     :return: ind_salt_peak_found, ind_simu_peak_found,
              ind_simu_peak_lost,
              ind_salt_peak_split, ind_simu_peak_split
+
     """
     # Find indices of peaks_salt whose time range overlaps with peaks_simu
     peak_touching_windows = strax.touching_windows(peaks_salt, peaks_simu)

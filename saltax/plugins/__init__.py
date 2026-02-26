@@ -1,8 +1,8 @@
-from . import f_raw_records
-from .f_raw_records import *
+from . import csv_input
+from .csv_input import *
 
-from . import s_raw_records
-from .s_raw_records import *
+from . import raw_records
+from .raw_records import *
 
 from . import records
 from .records import *
