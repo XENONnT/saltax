@@ -176,7 +176,7 @@ def main():
     st = create_context(settings, run_id)
     data_types = get_data_types(settings)
     print_settings(settings)
-    
+
     process_data_types(st, str(runid).zfill(6), data_types)
 
     # Process data-only mode if required
@@ -203,11 +203,11 @@ def main():
 
     # Delete records if needed
     delete_records_if_needed(settings, str(runid).zfill(6), st)
- 
+
     logging.info("====================")
     logging.info(f"Finished all computations for run {run_id}.")
     logging.info("Exiting.")
-    
+
 
 if __name__ == "__main__":
     main()
