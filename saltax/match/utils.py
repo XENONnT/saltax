@@ -687,7 +687,7 @@ def get_cut_eff(
     :param bin_range: range of the coordinate, default to None
     :return: a dictionary of acceptance values
     """
-    coord_units = {"s1_area": "[PE]", "s2_area": "[PE]", "cs1": "[PE]", "cs2": "[PE]", "z": "[cm]"}
+    coord_units = {"s1_area": "[PE]", "s2_area": "[PE]", "cs1": "[PE]", "cs2": "[PE]", "z": "[cm]", 'e_ces': "[keV]"}
     if bin_range is not None:
         bins = np.linspace(bin_range[0], bin_range[1], n_bins)
     else:
@@ -1071,7 +1071,7 @@ def show_eff2d(
     # Compute efficiency
     eff = counts_selected / counts
     eff[np.isnan(eff)] = 0
-    eff[counts < min_counts] = 0
+    eff[counts < min_counts] = np.nan
 
     # Plot
     plt.figure(dpi=150)
