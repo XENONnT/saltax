@@ -1,10 +1,9 @@
 import os
 
-import sys
-
-import utilix
-from utilix.batchq import *
+import time
 import configparser
+
+from utilix import batchq
 
 config = configparser.ConfigParser()
 config.read("config.ini")
