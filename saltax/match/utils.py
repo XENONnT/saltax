@@ -156,6 +156,32 @@ def get_available_runs(
     print("=============================")
 
 
+def add_run_id_field(array, run_id_value, field_name="run_id", field_dtype="U10"):
+    """Add a new field to a structured NumPy array and set it to a given value.
+
+    Parameters:
+    - array: structured np.ndarray
+    - run_id_value: scalar value to assign to the new field
+    - field_name: name of the new field (default: 'run_id')
+    - field_dtype: dtype of the new field (default: 'U10')
+
+    Returns:
+    - New structured array with the added field and assigned value
+
+    """
+    new_dtype = array.dtype.descr + [(field_name, field_dtype)]
+    new_array = np.empty(array.shape, dtype=new_dtype)
+
+    # Copy existing data
+    for name in array.dtype.names:
+        new_array[name] = array[name]
+
+    # Assign the new field
+    new_array[field_name] = run_id_value
+
+    return new_array
+
+
 def load_peaks(runs, st_salt, st_simu, plugins=("peak_basics", "peak_positions_mlp"), **kwargs):
     """Load peaks from the runs and find matching indices for salted and simulated peaks.
 
@@ -271,8 +297,8 @@ def load_events(runs, st_salt, st_simu, plugins=("event_info", "cuts_basic"), **
         print(f"Loading run {run}")
 
         # Load plugins for both salt and simu
-        events_simu_i = st_simu.get_array(run, plugins, progress_bar=False)
-        events_salt_i = st_salt.get_array(run, plugins, progress_bar=False)
+        events_simu_i = add_run_id_field(st_simu.get_array(run, plugins, progress_bar=False), run)
+        events_salt_i = add_run_id_field(st_salt.get_array(run, plugins, progress_bar=False), run)
 
         # Get matching result
         (
@@ -938,6 +964,65 @@ def show_area_bias(
     result_dict["bias_2sig_l"] = bias_2sig_l
 
     return result_dict
+
+
+def show_eff2d(
+    events,
+    events_selected,
+    coord=("s1_area", "s2_area"),
+    bins=(np.linspace(0, 100, 101), np.linspace(500, 7000, 101)),
+    title="Matching Acceptance",
+    vmin_vmax=(0, 1),  # New parameter to set color bar range
+    min_counts=100,
+):
+    """Show the acceptance in 2D coordinates.
+
+    :param events: events before some selection
+    :param events_selected: events after some selection
+    :param coord: coordinates to be compared, default to ('s1_area', 's2_area')
+    :param bins: bins for the coordinates, default to (np.linspace(0,100,101),
+        np.linspace(500,7000,101))
+    :param title: title of the plot, default to "Matching Acceptance"
+    :param vmin_vmax: range of color bar, default to (0,1)
+    :param min_counts: minimum number of counts in a bin to be considered, default to 100
+    :return: efficiency, xedges, yedges
+
+    """
+    label_dict = {
+        "e_ces": "Simulated CES [keV]",
+        "s1_area": "Simulated S1 Area [PE]",
+        "s2_area": "Simulated S2 Area [PE]",
+        "z": "Z [cm]",
+    }
+
+    # Count the number of events in each bin
+    counts, xedges, yedges = np.histogram2d(events[coord[0]], events[coord[1]], bins=bins)
+    counts_selected, xedges, yedges = np.histogram2d(
+        events_selected[coord[0]], events_selected[coord[1]], bins=bins
+    )
+
+    # Compute efficiency
+    eff = counts_selected / counts
+    eff[np.isnan(eff)] = 0
+    eff[counts < min_counts] = np.nan
+
+    # Plot
+    plt.figure(dpi=150)
+    plt.imshow(
+        eff.T,
+        origin="lower",
+        extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]],
+        aspect="auto",
+        cmap="viridis",
+        vmin=vmin_vmax[0],  # Set minimum value for color scale
+        vmax=vmin_vmax[1],  # Set maximum value for color scale
+    )
+    plt.colorbar(label="Efficiency")
+    plt.xlabel(label_dict[coord[0]])
+    plt.ylabel(label_dict[coord[1]])
+    plt.title(title)
+    plt.show()
+    return eff, xedges, yedges
 
 
 def show_eff1d(
