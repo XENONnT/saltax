@@ -13,7 +13,14 @@ import strax
 import straxen
 import saltax
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO, 
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    stream=sys.stdout, # Good practice for Slurm: forces logs to standard output
+    force=True         # Forces Python to apply this config and override defaults
+)
+
+logging.info("Loading context...")
 
 
 TO_PROCESS_DTYPES_EV = [
@@ -23,8 +30,9 @@ TO_PROCESS_DTYPES_EV = [
     "merged_s2s",
     "peak_basics",
     "peak_positions_mlp",
-    "peak_positions_gcn",
-    "peak_positions_cnn",
+    "peak_positions_cnf",
+    # "peak_positions_gcn",
+    # "peak_positions_cnn",
     "event_basics",
     "event_info",
     "event_pattern_fit",
@@ -39,8 +47,9 @@ TO_PROCESS_DTYPES_SE = [
     "merged_s2s",
     "peak_basics",
     "peak_positions_mlp",
-    "peak_positions_cnn",
-    "peak_positions_gcn",
+    "peak_positions_cnf",
+    # "peak_positions_gcn",
+    # "peak_positions_cnn",
     "peak_shadow",
     "peak_ambience",
 ]
@@ -93,7 +102,7 @@ def parse_en_range(en_range_str):
 def create_context(settings, run_id):
     """Create the context for the given settings and run_id, and patch storage if needed."""
     st = saltax.contexts.sxenonnt(
-        run_id=run_id,
+        # run_id=run_id,
         saltax_mode=settings["saltax_mode"],
         generator_name=settings["generator_name"],
         nestid=settings["nestid"],
@@ -137,7 +146,6 @@ def process_data_types(st, run_id, data_types):
             logging.error(f"Error for data type {dt}: {str(e)}")
         gc.collect()
 
-
 def delete_records_if_needed(settings, run_id, st):
     """Delete records if needed."""
     if settings["delete_records"]:
@@ -147,7 +155,7 @@ def delete_records_if_needed(settings, run_id, st):
             # os.rmdir(records_path)
             shutil.rmtree(records_path)
             gc.collect()
-            logging.info("Deleted records for run %s in saltax mode salt. " % (runid))
+            logging.info("Deleted records for run %s in saltax mode salt. " % (run_id))
 
 
 def timeit(func):
@@ -169,7 +177,8 @@ def main():
     print_versions()
     _, run_id = sys.argv
     run_id = str(run_id).zfill(6)
-
+    print(run_id)
+    
     # Process the saltax desired mode
     logging.info("Loading context...")
     settings = load_config()
@@ -177,8 +186,8 @@ def main():
     data_types = get_data_types(settings)
     print_settings(settings)
 
-    process_data_types(st, str(runid).zfill(6), data_types)
-
+    process_data_types(st, str(run_id).zfill(6), data_types)
+    
     # Process data-only mode if required
     if settings["process_data"] and settings["saltax_mode"] == "salt":
         logging.info("====================")
@@ -202,7 +211,7 @@ def main():
         logging.info("Finished processing for simu-only mode.")
 
     # Delete records if needed
-    delete_records_if_needed(settings, str(runid).zfill(6), st)
+    delete_records_if_needed(settings, str(run_id).zfill(6), st)
 
     logging.info("====================")
     logging.info(f"Finished all computations for run {run_id}.")

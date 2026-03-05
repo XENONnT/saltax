@@ -81,7 +81,7 @@ class Submit:
             container=CONTAINER,
             bind=BIND,
             cpus_per_task=CPUS_PER_TASK,
-            bypass_validation=BYPASS_VALIDATION,
+            # bypass_validation=BYPASS_VALIDATION,
         )
 
 
