@@ -14,10 +14,10 @@ import straxen
 import saltax
 
 logging.basicConfig(
-    level=logging.INFO, 
+    level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
-    stream=sys.stdout, # Good practice for Slurm: forces logs to standard output
-    force=True         # Forces Python to apply this config and override defaults
+    stream=sys.stdout,  # Good practice for Slurm: forces logs to standard output
+    force=True,  # Forces Python to apply this config and override defaults
 )
 
 logging.info("Loading context...")
@@ -146,6 +146,7 @@ def process_data_types(st, run_id, data_types):
             logging.error(f"Error for data type {dt}: {str(e)}")
         gc.collect()
 
+
 def delete_records_if_needed(settings, run_id, st):
     """Delete records if needed."""
     if settings["delete_records"]:
@@ -178,7 +179,7 @@ def main():
     _, run_id = sys.argv
     run_id = str(run_id).zfill(6)
     print(run_id)
-    
+
     # Process the saltax desired mode
     logging.info("Loading context...")
     settings = load_config()
@@ -187,7 +188,7 @@ def main():
     print_settings(settings)
 
     process_data_types(st, str(run_id).zfill(6), data_types)
-    
+
     # Process data-only mode if required
     if settings["process_data"] and settings["saltax_mode"] == "salt":
         logging.info("====================")
