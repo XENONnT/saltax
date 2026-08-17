@@ -48,7 +48,6 @@ def sxenonnt(
     :return: strax context
 
     """
-
     if saltax_mode not in SALTAX_MODES:
         raise ValueError(f"saltax_mode must be one of {SALTAX_MODES} but got {saltax_mode}.")
 
