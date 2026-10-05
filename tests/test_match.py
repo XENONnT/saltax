@@ -7,7 +7,6 @@ from saltax.test_utils import TEST_DATA_TYPES, get_test_context
 
 def test_match():
     """Test match module."""
-
     # Init contexts for both salt and simu modes
     st = {}
     for saltax_mode in ["salt", "simu", "data"]:
@@ -28,10 +27,10 @@ def test_match():
         simu_available=["event_basics"],
     )
 
-    (peaks_simu, peaks_salt, inds_dict) = load_peaks([nt_test_run_id], st["salt"], st["simu"])
+    peaks_simu, peaks_salt, inds_dict = load_peaks([nt_test_run_id], st["salt"], st["simu"])
     peaks_simu_matched_to_salt = peaks_simu[inds_dict["ind_simu_peak_found"]]
 
-    (events_simu, events_salt, inds_dict) = load_events([nt_test_run_id], st["salt"], st["simu"])
+    events_simu, events_salt, inds_dict = load_events([nt_test_run_id], st["salt"], st["simu"])
     events_salt_matched_to_simu = events_salt[inds_dict["ind_salt_s1_found"]]
     events_simu_matched_to_salt = events_simu[inds_dict["ind_simu_s1_found"]]
 
