@@ -162,7 +162,6 @@ class SCsvFileLoader:
         Truncate the instructions to the chunk time range.
 
         """
-
         # truncate instructions to the chunk time range
         log.debug("Truncating instructions to the chunk time range!")
         log.debug(

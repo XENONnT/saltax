@@ -50,7 +50,6 @@ def setattr_module(mod: str, name: str, value):
     :param value: The value to set the attribute to.
 
     """
-
     parts = mod.split(".")
     for depth in range(1, len(parts) + 1):
         _name = ".".join(parts[:depth])
